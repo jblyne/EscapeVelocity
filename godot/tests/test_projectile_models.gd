@@ -11,7 +11,7 @@ func run() -> void:
 	game.traffic.enabled=false;game.muted=true;root.add_child(game)
 	game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
 	game.set_mode("flight");game.target_index=-1;game.environment_hazards.rocks=[]
-	for id in [131,132,139,140,150]:
+	for id in [131,132,139,140,141,150]:
 		check(game.arsenal.fire(id,Vector2(10000,10000),0),"updated projectile fires through actual arsenal: %d" % id)
 		var shot=game.shots.back()
 		check(shot.node.get_meta("projectile_model",-1)==id and shot.node.get_child_count()>0,"actual shot uses distinct reference model: %d" % id)

@@ -310,6 +310,11 @@ func v3(pos: Vector2, height: float = 0) -> Vector3:
 	return Vector3(pos.x, height, pos.y)
 
 func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) -> void:
+	var traveling_fighters: Array=[]
+	if arrival_heading!=null:
+		for escort in escorts:
+			if not escort.get("captured",false) and is_instance_valid(escort.model):
+				traveling_fighters.append(int(escort.id))
 	world_killer.reset_visuals()
 	ejection.reset()
 	missions.arrival_delays.clear()
@@ -388,6 +393,11 @@ func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) 
 	Models.set_thrust(player_model, 0, time)
 	cloak.rebind_model()
 	arsenal.restore_captured_fleet()
+	for i in traveling_fighters.size():
+		arsenal.launch_escort(traveling_fighters[i],pilot.position,pilot.heading)
+		var fighter: Dictionary=escorts.back()
+		fighter.arrival_delay=.35+i*.12
+		fighter.model.hide()
 	if arrival_heading != null: jump_visuals.arrive()
 	update_jump_visuals(0)
 	camera.position = v3(pilot.position + velocity * 0.2, 1200)

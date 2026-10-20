@@ -345,6 +345,30 @@ func restore_captured_fleet() -> void:
 func update_escorts(dt: float) -> void:
 	for escort in game.escorts:
 		if escort.get("captured",false): continue
+		if escort.has("arrival_delay"):
+			escort.arrival_delay-=dt
+			if escort.arrival_delay>0: continue
+			escort.erase("arrival_delay")
+			var forward=Vector2(sin(game.pilot.heading),-cos(game.pilot.heading))
+			var side=forward.orthogonal()
+			var slot: int=game.escorts.find(escort)
+			escort.position=game.pilot.position-forward*(100+slot*18)+side*((slot%2)*2-1)*(45+slot*12)
+			escort.heading=game.pilot.heading
+			escort.arrival_visual=EVJumpVisuals.new()
+			escort.arrival_visual.arrive()
+			escort.model.show()
+		if escort.has("arrival_visual"):
+			var visual=escort.arrival_visual
+			escort.position+=game.velocity*dt
+			escort.model.position=game.v3(escort.position)
+			escort.model.rotation.y=-escort.heading
+			escort.model.scale=visual.ship_scale(game.hyperdrive)
+			game.Models.set_thrust(escort.model,1.2,game.time)
+			visual.advance(dt)
+			if visual.arrival_age<0:
+				escort.model.scale=Vector3.ONE
+				escort.erase("arrival_visual")
+			continue
 		var contact=target(escort.position)
 		if not contact.is_empty() and (contact.disabled or contact.truce): contact = {}
 		var goal: Vector2=game.pilot.position+Vector2(100,80).rotated(float(game.escorts.find(escort)))

@@ -1,7 +1,7 @@
 extends RefCounted
 const Models=preload("res://scripts/models.gd")
 const GLOW=preload("res://shaders/projectile_glow.gdshader")
-const IDS=[131,132,139,140,150]
+const IDS=[131,132,139,140,141,150]
 
 static func tube(parent: Node3D,z: float,length: float,radius: float,material: Material,tip: float=-1) -> MeshInstance3D:
 	var node=MeshInstance3D.new();var mesh=CylinderMesh.new()
@@ -22,6 +22,20 @@ static func create(id: int) -> Node3D:
 		return root
 	var silver=Models.material(Color("a3adb4"),.6);silver.roughness=.48
 	var dark=Models.material(Color("313a40"),.6)
+	if id==141:
+		root.name="JavelinRocket"
+		# Original spïn 208 / PICT 216: short blunt silver body, white
+		# motor collar and a narrow blue plume; no broad missile fins.
+		tube(root,-1,9,1.8,silver)
+		tube(root,-6.5,2,1.8,silver,.9)
+		var collar=Models.material(Color("e4edf1"),.35);collar.roughness=.4
+		tube(root,4,2,1.95,collar)
+		tube(root,5.5,1,1.25,dark)
+		Models.add_exhaust(root,Vector3(0,0,6),0)
+		var plume=root.get_child(root.get_child_count()-1)
+		plume.scale=Vector3(5,1,6)
+		plume.position=Vector3(0,0,10.2)
+		return root
 	var paint=Models.material(Color("328a29") if id==139 else Color("c73529"),.15)
 	var bomb: bool=id==140
 	var heavy: bool=id==139

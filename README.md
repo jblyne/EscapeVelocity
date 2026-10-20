@@ -420,3 +420,19 @@ exports are excluded from Git. You can also run `godot --path godot` with Godot 
 your PATH. Regenerating original resource data is optional and requires the local
 resource dump described above. Update the machine-specific export template paths
 in `godot/export_presets.cfg` before exporting on another computer.
+
+
+## 0.1.61 — Javelin rocket artwork
+
+Javelin rockets now use a compact silver body, blunt tapered nose, bright motor
+collar and narrow blue exhaust, based on the original spïn 208 / PICT 216 frame.
+The new model replaces the generic box for player and NPC shots; damage, firing
+rate, flight speed and lifetime are unchanged.
+
+
+## 0.1.62 — Fighters follow hyperspace
+
+Launched bay fighters now survive normal and chain jumps. They warp in behind
+the flagship after a short staggered delay, using the ship arrival stretch and
+settling animation, then resume escort combat. Arrival delays advance only with
+flight simulation. Fresh pilot/system loads still clear transient bay fighters.
