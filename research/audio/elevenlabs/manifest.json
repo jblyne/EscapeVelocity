@@ -1,0 +1,522 @@
+[
+  {
+    "file": "panic_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_41_42_Roger - Laid-Back, Casual, Resonant_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Roger",
+    "prompt": "[panicked] No, no, [shouting] NOOO!",
+    "archived": true
+  },
+  {
+    "file": "panic_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_41_42_Roger - Laid-Back, Casual, Resonant_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Roger",
+    "prompt": "[panicked] No, no, [shouting] NOOO!",
+    "archived": true
+  },
+  {
+    "file": "panic_3.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_42_03_Roger - Laid-Back, Casual, Resonant_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Roger",
+    "prompt": "[terrified] Wait, WAIT! [shouting] LOOK OUT!",
+    "archived": true
+  },
+  {
+    "file": "panic_4.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_42_03_Roger - Laid-Back, Casual, Resonant_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Roger",
+    "prompt": "[terrified] Wait, WAIT! [shouting] LOOK OUT!",
+    "archived": true
+  },
+  {
+    "file": "panic_5.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_42_31_Jessica - Playful, Bright, Warm_pvc_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Jessica",
+    "prompt": "[panicked] No, no, NO! [shouting] GET US OUT OF HERE!",
+    "archived": true
+  },
+  {
+    "file": "panic_6.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_42_31_Jessica - Playful, Bright, Warm_pvc_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Jessica",
+    "prompt": "[panicked] No, no, NO! [shouting] GET US OUT OF HERE!",
+    "archived": true
+  },
+  {
+    "file": "panic_rebel_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_47_11_Jessica - Playful, Bright, Warm_pvc_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Jessica",
+    "prompt": "[urgent] For the Rebellion! [panicked] Eject! EJECT!",
+    "faction_group": "rebel",
+    "archived": true
+  },
+  {
+    "file": "panic_rebel_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_47_11_Jessica - Playful, Bright, Warm_pvc_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Jessica",
+    "prompt": "[urgent] For the Rebellion! [panicked] Eject! EJECT!",
+    "faction_group": "rebel",
+    "archived": true
+  },
+  {
+    "file": "panic_confed_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_48_02_Adam - American, Dark and Tough_pvc_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[urgent] Mayday! Confederation vessel! [shouting] All hands, EJECT!",
+    "faction_group": "confed",
+    "archived": true
+  },
+  {
+    "file": "panic_confed_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_48_02_Adam - American, Dark and Tough_pvc_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[urgent] Mayday! Confederation vessel! [shouting] All hands, EJECT!",
+    "faction_group": "confed",
+    "archived": true
+  },
+  {
+    "file": "panic_pirate_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_48_32_Adam - American, Dark and Tough_pvc_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[angry] You picked the wrong pirate! [panicked] No! NOOO!",
+    "faction_group": "pirate",
+    "archived": true
+  },
+  {
+    "file": "panic_pirate_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_48_32_Adam - American, Dark and Tough_pvc_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[angry] You picked the wrong pirate! [panicked] No! NOOO!",
+    "faction_group": "pirate",
+    "archived": true
+  },
+  {
+    "file": "panic_alien_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_49_04_Adam - American, Dark and Tough_pvc_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[guttural] Vesh ka! [panicked] Krah! [screaming] KRAAAH!",
+    "faction_group": "alien"
+  },
+  {
+    "file": "panic_alien_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_49_04_Adam - American, Dark and Tough_pvc_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[guttural] Vesh ka! [panicked] Krah! [screaming] KRAAAH!",
+    "faction_group": "alien"
+  },
+  {
+    "file": "death_cry_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_51_51_Adam - American, Dark and Tough_pvc_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[terrified][screaming] AAAAAH!",
+    "death_fade": true
+  },
+  {
+    "file": "death_cry_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_51_51_Adam - American, Dark and Tough_pvc_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[terrified][screaming] AAAAAH!",
+    "death_fade": true
+  },
+  {
+    "file": "panic_alien_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_49_04_Adam - American, Dark and Tough_pvc_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[guttural] Vesh ka! [panicked] Krah! [screaming] KRAAAH!",
+    "faction_group": "alien",
+    "output": "death_cry_alien.wav",
+    "death_fade": true,
+    "tail": true
+  },
+  {
+    "file": "panic_cmd_rebel_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_55_39_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[gruff][commanding] Hold the line! [shouting] Brace! BRACE!",
+    "faction_group": "rebel"
+  },
+  {
+    "file": "panic_cmd_rebel_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_55_39_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[gruff][commanding] Hold the line! [shouting] Brace! BRACE!",
+    "faction_group": "rebel"
+  },
+  {
+    "file": "panic_cmd_rebel_3.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_56_05_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[gruff][stern] Stay on target. [strained][shouting] EJECT! That\u2019s an ORDER!",
+    "faction_group": "rebel"
+  },
+  {
+    "file": "panic_cmd_rebel_4.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_56_05_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[gruff][stern] Stay on target. [strained][shouting] EJECT! That\u2019s an ORDER!",
+    "faction_group": "rebel"
+  },
+  {
+    "file": "panic_cmd_confed_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_56_58_George - Warm, Captivating Storyteller_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "George",
+    "prompt": "[gruff][stern][commanding] Helm, hard to port! [shouting] All hands, BRACE!",
+    "faction_group": "confed"
+  },
+  {
+    "file": "panic_cmd_confed_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_56_58_George - Warm, Captivating Storyteller_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "George",
+    "prompt": "[gruff][stern][commanding] Helm, hard to port! [shouting] All hands, BRACE!",
+    "faction_group": "confed"
+  },
+  {
+    "file": "panic_cmd_confed_3.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_57_16_George - Warm, Captivating Storyteller_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "George",
+    "prompt": "[gruff][urgent] Seal the bulkheads! [shouting] Move, damn you! MOVE!",
+    "faction_group": "confed"
+  },
+  {
+    "file": "panic_cmd_confed_4.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_57_16_George - Warm, Captivating Storyteller_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "George",
+    "prompt": "[gruff][urgent] Seal the bulkheads! [shouting] Move, damn you! MOVE!",
+    "faction_group": "confed"
+  },
+  {
+    "file": "panic_cmd_pirate_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_57_46_Callum - Husky Trickster_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[gruff][angry] Give \u2019em hell! [strained][shouting] Get to the pods! NOW!",
+    "faction_group": "pirate"
+  },
+  {
+    "file": "panic_cmd_pirate_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_57_46_Callum - Husky Trickster_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[gruff][angry] Give \u2019em hell! [strained][shouting] Get to the pods! NOW!",
+    "faction_group": "pirate"
+  },
+  {
+    "file": "panic_cmd_pirate_3.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_58_06_Callum - Husky Trickster_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[gruff][snarling] Not today, you bastards! [panicked] Hard over! HARD OVER!",
+    "faction_group": "pirate"
+  },
+  {
+    "file": "panic_cmd_pirate_4.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_58_06_Callum - Husky Trickster_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[gruff][snarling] Not today, you bastards! [panicked] Hard over! HARD OVER!",
+    "faction_group": "pirate"
+  },
+  {
+    "file": "panic_cmd_civilian_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_58_36_Charlie - Deep, Confident, Energetic_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Charlie",
+    "prompt": "[gruff][stern] Keep your heads! [shouting] Emergency thrust! NOW!",
+    "faction_group": "civilian"
+  },
+  {
+    "file": "panic_cmd_civilian_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_58_36_Charlie - Deep, Confident, Energetic_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Charlie",
+    "prompt": "[gruff][stern] Keep your heads! [shouting] Emergency thrust! NOW!",
+    "faction_group": "civilian"
+  },
+  {
+    "file": "panic_cmd_civilian_3.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_58_55_Charlie - Deep, Confident, Energetic_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Charlie",
+    "prompt": "[gruff][urgent] Cut the cargo loose! [strained][shouting] Get us clear!",
+    "faction_group": "civilian"
+  },
+  {
+    "file": "panic_cmd_civilian_4.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T03_58_55_Charlie - Deep, Confident, Energetic_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Charlie",
+    "prompt": "[gruff][urgent] Cut the cargo loose! [strained][shouting] Get us clear!",
+    "faction_group": "civilian"
+  },
+  {
+    "file": "panic_cmd_civilian_5.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_09_06_Charlie - Deep, Confident, Energetic_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Charlie",
+    "prompt": "[gruff][panicked] I just paid this thing off!"
+  },
+  {
+    "file": "panic_cmd_civilian_6.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_09_17_Charlie - Deep, Confident, Energetic_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Charlie",
+    "prompt": "[gruff][urgent][shouting] Mayday! Hull breach! Get out!"
+  },
+  {
+    "file": "panic_cmd_rebel_5.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_09_39_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[gruff][shouting] Who put the rookie at the helm?!"
+  },
+  {
+    "file": "panic_cmd_rebel_6.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_09_48_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[gruff][commanding][shouting] Abandon ship! I will cover you!"
+  },
+  {
+    "file": "panic_cmd_confed_5.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_10_06_George - Warm, Captivating Storyteller_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "George",
+    "prompt": "[gruff][stern][strained] This is NOT in the manual!"
+  },
+  {
+    "file": "panic_cmd_confed_6.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_10_20_George - Warm, Captivating Storyteller_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "George",
+    "prompt": "[gruff][commanding][shouting] Reactor critical! All hands, eject!"
+  },
+  {
+    "file": "panic_cmd_pirate_5.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_10_43_Callum - Husky Trickster_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[gruff][angry][shouting] I demand a refund on these shields!"
+  },
+  {
+    "file": "panic_cmd_pirate_6.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_10_56_Callum - Husky Trickster_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[gruff][urgent][shouting] Forget the loot! Get to the pods!"
+  },
+  {
+    "file": "death_cry_3.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_13_45_Callum - Husky Trickster_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[terrified][raspy][screaming] AAAAARGH!",
+    "death_fade": true
+  },
+  {
+    "file": "death_cry_4.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_13_45_Callum - Husky Trickster_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[terrified][raspy][screaming] AAAAARGH!",
+    "death_fade": true
+  },
+  {
+    "file": "death_cry_5.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_14_07_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[strained][terrified][screaming] AAAAAAH!",
+    "death_fade": true
+  },
+  {
+    "file": "death_cry_6.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_14_07_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[strained][terrified][screaming] AAAAAAH!",
+    "death_fade": true
+  },
+  {
+    "file": "death_cry_alien_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_14_43_Adam - Dominant, Firm_pre_sp100_s50_sb48_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[guttural][strained][screaming] KRAAAAGH!",
+    "death_fade": true
+  },
+  {
+    "file": "death_cry_alien_3.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_14_43_Adam - Dominant, Firm_pre_sp100_s50_sb48_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Adam",
+    "prompt": "[guttural][strained][screaming] KRAAAAGH!",
+    "death_fade": true
+  },
+  {
+    "file": "wreck_line_end_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_19_10_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[gruff][terrified][shouting] This is the end! [screaming] AAAAAAH!"
+  },
+  {
+    "file": "wreck_line_end_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_19_10_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[gruff][terrified][shouting] This is the end! [screaming] AAAAAAH!"
+  },
+  {
+    "file": "wreck_line_no_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_19_35_Callum - Husky Trickster_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[terrified][shouting] Oh NOOOOO! [screaming] AAAAARGH!"
+  },
+  {
+    "file": "wreck_line_no_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-19T04_19_35_Callum - Husky Trickster_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[terrified][shouting] Oh NOOOOO! [screaming] AAAAARGH!"
+  },
+  {
+    "file": "wreck_line_fathers_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-20T15_50_12_George - Warm, Captivating Storyteller_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "George",
+    "prompt": "[solemn][weary] I go to my fathers."
+  },
+  {
+    "file": "wreck_line_fathers_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-20T15_50_12_George - Warm, Captivating Storyteller_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "George",
+    "prompt": "[solemn][weary] I go to my fathers."
+  },
+  {
+    "file": "wreck_line_regret_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-20T15_51_44_Callum - Husky Trickster_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[panicked][frantic][shouting] Why did I fire on them?!"
+  },
+  {
+    "file": "wreck_line_regret_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-20T15_51_44_Callum - Husky Trickster_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[panicked][frantic][shouting] Why did I fire on them?!"
+  },
+  {
+    "file": "wreck_line_engines_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-20T15_52_19_Callum - Husky Trickster_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[urgent][shouting] The engines are gone! Everybody out!"
+  },
+  {
+    "file": "wreck_line_engines_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-20T15_52_19_Callum - Husky Trickster_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Callum",
+    "prompt": "[urgent][shouting] The engines are gone! Everybody out!"
+  },
+  {
+    "file": "wreck_line_family_1.mp3",
+    "source_filename": "ElevenLabs_2026-10-20T15_53_02_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4.mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[weary][gruff][sad] Tell my family I tried."
+  },
+  {
+    "file": "wreck_line_family_2.mp3",
+    "source_filename": "ElevenLabs_2026-10-20T15_53_02_Harry - Fierce Warrior_pre_sp100_s50_sb75_v4 (1).mp3",
+    "provider": "ElevenLabs",
+    "model": "Eleven v4",
+    "voice": "Harry",
+    "prompt": "[weary][gruff][sad] Tell my family I tried."
+  }
+]

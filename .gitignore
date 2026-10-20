@@ -1,0 +1,11 @@
+__pycache__/
+research/downloads/
+research/extracted/
+research/decoded/
+.tools/
+builds/
+godot/.godot/
+.DS_Store
+
+# Local account UI capture; not a game asset.
+research/audio/elevenlabs/wreck-voice-generation-0.1.49.jpg

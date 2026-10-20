@@ -1,0 +1,270 @@
+{
+  "source_page": "https://www.macintoshrepository.org/6700-escape-velocity",
+  "download_id": 9562,
+  "archive": "Escape_Velocity_1.0.5.sit",
+  "bytes": 5191661,
+  "sha1": "33f09cd3abe8747aaabdfb5ea8d1943d8b4363d8",
+  "sha256": "52392bb8e3eff318fc085f0a50579b169c5bcaeca27a64f35ac6df434bab8ec2",
+  "files": {
+    " • READ ME • .rsrc": {
+      "sha256": "e9cccc8a43187dc568951ff5b8e60e35333f89650afce96822bcc050e1a290b4",
+      "resource_count": 1,
+      "types": {
+        "styl": 1
+      }
+    },
+    "Ambrosia FAQ.text.rsrc": {
+      "sha256": "b3a0ba243680b5f9f513260d4651a5b222ee8564b3f2497f0ada6ac3f4797d26",
+      "resource_count": 4,
+      "types": {
+        "PICT": 1,
+        "styl": 1,
+        "vers": 2
+      }
+    },
+    "EV Data.rsrc": {
+      "sha256": "1165e3180e5cf6016983b04d310d412908004c42b156c9f9df19ede2bf0c33bc",
+      "resource_count": 1571,
+      "types": {
+        "STR#": 66,
+        "TMPL": 17,
+        "dësc": 644,
+        "düde": 67,
+        "flët": 19,
+        "gövt": 25,
+        "jünk": 19,
+        "mïsn": 116,
+        "nëbu": 2,
+        "oütf": 54,
+        "përs": 220,
+        "shïp": 27,
+        "spöb": 107,
+        "sÿst": 108,
+        "vers": 2,
+        "wëap": 26,
+        "öops": 52
+      }
+    },
+    "EV Graphics.rsrc": {
+      "sha256": "971e39abbc8edcaf6461f9a3d37f63b697957bd5d684fb94fe12e6c1bb8a8b4c",
+      "resource_count": 528,
+      "types": {
+        "PICT": 402,
+        "TMPL": 2,
+        "cicn": 29,
+        "ppat": 11,
+        "spïn": 81,
+        "spït": 1,
+        "vers": 2
+      }
+    },
+    "EV Music.rsrc": {
+      "sha256": "dada97074c1d493dab468c5435a598a0a9c9e3e24ad575105616f1ee248777ff",
+      "resource_count": 6,
+      "types": {
+        "snd ": 4,
+        "vers": 2
+      }
+    },
+    "EV Plug-Ins/EV Tuner.rsrc": {
+      "sha256": "9750358f5cf413b6fd1dd7e500b5cfb5fdb7a2279518d637283d5cc1f05a7719",
+      "resource_count": 2,
+      "types": {
+        "vers": 2
+      }
+    },
+    "EV Plug-Ins/Icon\r.rsrc": {
+      "sha256": "f74c8fd8c5f9b8389750e582690ee890516e40144997396c00d6f6a381c31307",
+      "resource_count": 6,
+      "types": {
+        "ICN#": 1,
+        "icl4": 1,
+        "icl8": 1,
+        "ics#": 1,
+        "ics4": 1,
+        "ics8": 1
+      }
+    },
+    "EV Sounds.rsrc": {
+      "sha256": "d8da1bc08365cca36861820d114502eeb402bab1203b4d6324d9ea282074c72a",
+      "resource_count": 61,
+      "types": {
+        "snd ": 59,
+        "vers": 2
+      }
+    },
+    "EV Titles.rsrc": {
+      "sha256": "2fc69d2c7f34eaa01e2ce682c72f21d29fb26060d3d07e8cc1a6e86f394c1b37",
+      "resource_count": 72,
+      "types": {
+        "PICT": 69,
+        "clut": 1,
+        "vers": 2
+      }
+    },
+    "Escape Velocity Documentation.rsrc": {
+      "sha256": "e4e4b7399c23ab09999d66ef3333709d7cbb58d1d5698aac7f82d435995da793",
+      "resource_count": 210,
+      "types": {
+        "ALRT": 1,
+        "BNDL": 1,
+        "CDEF": 1,
+        "CNTL": 2,
+        "CODE": 8,
+        "CURS": 1,
+        "DATA": 1,
+        "DITL": 6,
+        "DLOG": 5,
+        "Dk@P": 1,
+        "FREF": 1,
+        "ICN#": 1,
+        "ICON": 6,
+        "MENU": 4,
+        "PICT": 28,
+        "SIZE": 1,
+        "STR ": 15,
+        "STR#": 2,
+        "TEXT": 11,
+        "Wndo": 11,
+        "aete": 1,
+        "clut": 1,
+        "conp": 18,
+        "crsr": 1,
+        "foot": 1,
+        "icl4": 1,
+        "icl8": 1,
+        "ics#": 1,
+        "ics4": 1,
+        "ics8": 1,
+        "mstr": 2,
+        "pInf": 58,
+        "rQDF": 1,
+        "sTwD": 1,
+        "styl": 11,
+        "vers": 2,
+        "xtr2": 1
+      }
+    },
+    "Escape Velocity FAQ.text.rsrc": {
+      "sha256": "4dee1f8c1bb0c1063b56c6e3f50e6d19e59f2b3e7a664e2ede3a450551d3daf7",
+      "resource_count": 4,
+      "types": {
+        "PICT": 1,
+        "styl": 1,
+        "vers": 2
+      }
+    },
+    "Escape Velocity License.text.rsrc": {
+      "sha256": "961e05ec8e3a7ae5e3f0470465381877d46646a83d4ac7911dc24675aabdeae0",
+      "resource_count": 1,
+      "types": {
+        "styl": 1
+      }
+    },
+    "Escape Velocity.rsrc": {
+      "sha256": "374c2abdcea212d1addccab3446b1c1e18f1cf42bbf999858ffda4f832a58a21",
+      "resource_count": 180,
+      "types": {
+        "ALRT": 1,
+        "BNDL": 1,
+        "CODE": 12,
+        "CURS": 1,
+        "DATA": 1,
+        "DITL": 33,
+        "DLOG": 33,
+        "FOND": 1,
+        "FREF": 7,
+        "ICN#": 7,
+        "LDEF": 1,
+        "MBAR": 1,
+        "MBlt": 1,
+        "MENU": 3,
+        "Mërc": 1,
+        "PICT": 11,
+        "PMBl": 1,
+        "PRBl": 1,
+        "RBlt": 1,
+        "SIZE": 1,
+        "STR#": 12,
+        "TEXT": 3,
+        "WDEx": 1,
+        "cfrg": 1,
+        "clut": 1,
+        "hfdr": 1,
+        "icl4": 7,
+        "icl8": 7,
+        "ics#": 7,
+        "ics4": 7,
+        "ics8": 7,
+        "sfnt": 1,
+        "styl": 3,
+        "vers": 2,
+        "ëbug": 1
+      }
+    },
+    "Escape Velocity1.0.5 Notes.text.rsrc": {
+      "sha256": "c759c42616597e8549a163d20fcf272a8a58e2fbc350e72bb77cb6207034949f",
+      "resource_count": 1,
+      "types": {
+        "styl": 1
+      }
+    },
+    "Icon\r.rsrc": {
+      "sha256": "11a860f239e5118ceed34f12dbf6dd58d26af586cf2af71e603ad739c8f35c60",
+      "resource_count": 6,
+      "types": {
+        "ICN#": 1,
+        "icl4": 1,
+        "icl8": 1,
+        "ics#": 1,
+        "ics4": 1,
+        "ics8": 1
+      }
+    },
+    "Pilots/Icon\r.rsrc": {
+      "sha256": "6c47c5c14472d39f49cc0893fe731276036db971f1efebafe804eb2255831c7e",
+      "resource_count": 6,
+      "types": {
+        "ICN#": 1,
+        "icl4": 1,
+        "icl8": 1,
+        "ics#": 1,
+        "ics4": 1,
+        "ics8": 1
+      }
+    },
+    "Register Escape Velocity.rsrc": {
+      "sha256": "6faad8dcebe465501cce4aaa3b0e30a55dbb55afcb4d35a90c284e962d08a7fd",
+      "resource_count": 161,
+      "types": {
+        "ALRT": 2,
+        "Areg": 1,
+        "BNDL": 1,
+        "CODE": 7,
+        "DATA": 1,
+        "DITL": 2,
+        "FREF": 2,
+        "ICN#": 2,
+        "ICON": 6,
+        "MENU": 5,
+        "PICT": 11,
+        "SIZE": 1,
+        "STR#": 13,
+        "TEXT": 25,
+        "WIND": 1,
+        "aete": 1,
+        "cfrg": 1,
+        "cicn": 38,
+        "crsr": 1,
+        "icl4": 2,
+        "icl8": 2,
+        "ics#": 2,
+        "ics4": 2,
+        "ics8": 2,
+        "snd ": 3,
+        "styl": 25,
+        "vers": 2
+      }
+    }
+  }
+}

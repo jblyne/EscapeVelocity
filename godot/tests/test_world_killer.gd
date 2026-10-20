@@ -1,0 +1,246 @@
+extends SceneTree
+const Rupture=preload("res://scripts/planet_rupture.gd")
+var game
+var killer
+var checks: int=0
+var failures: int=0
+func check(ok: bool,message: String) -> void:
+	checks+=1
+	if ok: print("PASS: "+message)
+	else: failures+=1;push_error(message)
+func _initialize() -> void: call_deferred("run")
+func travel(id: int=128) -> void:
+	game.pilot.system_id=game.missions.system_of(id);game.load_system();game.set_mode("flight")
+	game.landing_target=id
+	game.pilot.position=killer.target_position(id)+Vector2(0,330)
+	game.velocity=Vector2.ZERO;game.previous_player_position=game.pilot.position
+	game.player_model.position=game.v3(game.pilot.position)
+	game.camera.position=game.v3(killer.target_position(id)+Vector2(100,350),1200)
+	game.camera.size=1100;game.camera.h_offset=165
+func click(name: String) -> void:
+	var b=game.hud.modal_root.find_child(name,true,false)
+	check(b is Button and not b.disabled,"Available interaction: "+name)
+	if b is Button and not b.disabled: b.pressed.emit()
+func deploy(id: int=128) -> void:
+	travel(id);game.world_activity.open_contact();click("ThreatenWorld");click("DeployWorldKiller")
+func refuse() -> void:
+	killer.advance(12);killer.deny()
+func remaining(value: float) -> void:
+	killer.advance(float(killer.bomb().remaining)-value)
+func close_camera() -> void:
+	game.pilot.position=killer.target_position(128)+Vector2(-200,330)
+	game.previous_player_position=game.pilot.position;game.player_model.position=game.v3(game.pilot.position)
+	game.camera.position=game.v3(killer.target_position(128)+Vector2(100,180),1200)
+	game.camera.size=800;game.camera.h_offset=120
+func screen(name: String) -> void:
+	if "--visual" not in OS.get_cmdline_user_args(): return
+	game.hud._process(0)
+	for i in 5: await process_frame
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../builds/death-star-"+name+("-small" if "--small" in OS.get_cmdline_user_args() else "")+".png"))
+	var area: Rect2=Rect2(Vector2.ZERO,root.get_visible_rect().size)
+	check(game.hud.modal_root.find_children("*","Button",true,false).all(func(b):return area.encloses(b.get_global_rect())),"Visible actions fit screen: "+name)
+func run() -> void:
+	if "--small" in OS.get_cmdline_user_args(): root.size=Vector2i(1100,740)
+	game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev-death-star-test.json"
+	if FileAccess.file_exists(game.save_path): DirAccess.remove_absolute(game.save_path)
+	game.traffic.enabled=false;game.muted=true;root.add_child(game);killer=game.world_killer
+	game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
+	game.restart();travel(129)
+	check(killer.reason(129).is_empty(),"Stations can receive world-killer ultimatum")
+	travel();game.world_activity.open_contact()
+	check(game.mode=="world_comms" and not game.world_activity.response.is_empty(),"Hailing receives planetary response")
+	check(killer.greeting(132).contains("scrap heap"),"Rude planetary replies remain available")
+	check(not killer.deploy(),"Deployment requires explicit threat")
+	click("ThreatenWorld");await screen("threat")
+	check(killer.launch_preview and game.world_activity.response.contains("bluffing"),"Threat opens battle-station deployment preview")
+	game.muted=false;click("DeployWorldKiller")
+	check(game.audio.arrival.playing,"Warp arrival plays normal ship arrival sound")
+	game.toggle_audio();check(not game.audio.arrival.playing,"Mute stops hyperspace sound immediately")
+	check(game.mode=="flight" and killer.bomb().phase=="warping" and killer.bomb().remaining==120,"Summoning starts two-minute countdown immediately")
+	check(is_instance_valid(killer.station) and killer.station.has_node("BattleStation/ArmoredSphere"),"Death Star replaces missile with armored spherical station")
+	check(killer.station.has_node("BattleStation/RecessedSuperlaserDish") and killer.station.feeds.size()==8,"Recessed dish has eight superlaser feeds")
+	killer.advance(.18);await screen("warp")
+	var normal_jump=preload("res://scripts/jump_visuals.gd").new()
+	normal_jump.arrival_age=.18
+	check(killer.station.hull.scale.is_equal_approx(normal_jump.ship_scale(killer.station.idle_drive)),"Arrival uses the same snap, squash and rebound as normal ships")
+	check(killer.DeathStar.WARP_SECONDS==normal_jump.SNAP_SECONDS and killer.bomb().remaining<120,"Normal 0.65-second arrival replaces slow portal reveal")
+	check(game.save_game(false),"Warp arrival saves")
+	game.load_game()
+	check(killer.bomb().phase=="warping" and is_instance_valid(killer.station),"Warp state restores from actual disk reload")
+	remaining(120-killer.DeathStar.WARP_SECONDS)
+	check(killer.bomb().phase=="approach" and killer.station.hull.scale.distance_to(Vector3.ONE)<.01,"Arrival settles promptly before distant approach")
+	var start=Vector2(killer.bomb().x,killer.bomb().y)
+	remaining(112)
+	check(Vector2(killer.bomb().x,killer.bomb().y).distance_to(start)>0 and killer.bomb().remaining==112,"Station slowly approaches while timer decreases")
+	game.set_mode("pause");start=Vector2(killer.bomb().x,killer.bomb().y);killer.advance(30)
+	check(Vector2(killer.bomb().x,killer.bomb().y)==start and killer.bomb().remaining==112,"Pause freezes station and countdown")
+	game.set_mode("flight");killer.advance(4)
+	check(game.mode=="flight" and killer.plea_pending and killer.bomb().plea_sent,"Planet hails back during approach and pleads for survival")
+	await screen("plea")
+	check(game.save_game(false),"Approach and incoming plea save")
+	game.load_game()
+	check(killer.bomb().remaining==108 and killer.plea_pending,"Reload preserves remaining time and pending appeal")
+	killer.open_active();click("SpareWorld")
+	check(killer.bomb().is_empty() and not killer.destroyed(128),"Accepting appeal cancels attack without destroying planet")
+	check(killer.effects.size()==1 and killer.effects[0].departing,"Mercy starts station withdrawal")
+	check(game.world_activity.response.contains("Thank you") and game.world_activity.landing_reason(128).is_empty(),"Spared world thanks pilot and retains services")
+	game.set_mode("flight");var outgoing=killer.effects[0]
+	var origin: Vector3=outgoing.position
+	killer.advance(3)
+	check(killer.effects.size()==1 and outgoing.position.distance_to(origin)>0,"Recalled station turns and slowly flies away before warping")
+	check((outgoing.position-origin).dot(outgoing.departure_direction)>0,"Withdrawal moves away from the planet")
+	await screen("withdrawal")
+	game.set_mode("pause");var held: Vector3=outgoing.position;killer.advance(5)
+	check(outgoing.position==held,"Pause freezes departing station movement")
+	game.set_mode("flight");killer.advance(11.1)
+	check(outgoing.position.distance_to(origin)>200 and outgoing.departure_audio!=null,"Station retreats a substantial distance before normal jump burn")
+	for tick in 3600:
+		if outgoing.departure.drive.phase=="accelerating": break
+		killer.advance(1.0/60)
+	game.muted=false;outgoing.set_audio_state(false,true)
+	check(outgoing.departure_audio.playing,"Outgoing station plays normal jump burn sound")
+	game.set_mode("pause");check(outgoing.departure_audio.stream_paused,"Departure jump sound pauses with gameplay")
+	game.set_mode("flight");game.toggle_audio()
+	check(not outgoing.departure_audio.playing,"Mute immediately silences departing station")
+	killer.advance(3)
+	check(outgoing.hull.scale.z>1.0,"Final departure uses normal ship-style hyperspace stretch")
+	game.camera.position=Vector3(outgoing.position.x+100,1200,outgoing.position.z)
+	await screen("outbound-jump")
+	killer.advance(3)
+	check(killer.effects.is_empty(),"Station eventually warps out and cleans up after retreat")
+	game.load_game();check(killer.bomb().is_empty(),"Mercy persists in save")
+	deploy();refuse()
+	check(game.mode=="flight" and killer.bomb().denied and not killer.plea_pending,"Denying plea continues station's approach")
+	remaining(20);close_camera();await screen("holding")
+	var b: Dictionary=killer.bomb();var pos=Vector2(b.x,b.y)
+	check(b.phase=="holding" and pos==Vector2(b.anchor_x,b.anchor_y),"Station reaches firing position with exactly twenty seconds left")
+	check(absf(pos.distance_to(killer.target_position(128))-killer.target_radius(128)-killer.DeathStar.RADIUS-killer.DeathStar.STANDOFF_GAP)<.1,"Station leaves a 200-unit surface gap at firing position")
+	check(killer.station.feed_count==0 and killer.station.main_beams.all(func(ray):return not ray.visible),"Weapons remain idle on arrival")
+	killer.advance(3)
+	check(killer.bomb().phase=="holding" and Vector2(killer.bomb().x,killer.bomb().y)==pos,"Station holds still for several seconds before charging")
+	killer.advance(2)
+	check(killer.bomb().phase=="charging" and killer.station.feed_count==1,"Charge sequence starts after five-second hold")
+	killer.advance(.055)
+	check(killer.station.feed_fractions[0]>.1 and killer.station.feed_fractions[0]<.5,"First charging laser visibly extends rather than snapping instantly")
+	killer.advance(.295);await screen("charging")
+	check(killer.station.feed_count>0 and killer.station.feed_count<8,"Eight emitters ignite in a rapid staggered sequence")
+	remaining(13.2)
+	check(killer.station.feed_count==8 and killer.station.feed_fractions.all(func(f):return f>.99),"All eight beams reach convergence within 1.8 seconds of charging")
+	var packet: Vector3=killer.station.packets[0].position;killer.advance(.03)
+	check(killer.station.packets[0].position.distance_to(packet)>0,"Fast energy packets race down the charging beams")
+	remaining(7);await screen("convergence")
+	check(killer.station.feed_count==8 and killer.station.feeds.all(func(ray):return ray.visible),"Eight green feeds converge before main laser fires")
+	check(killer.station.charge_ball.visible and killer.station.main_beams.all(func(ray):return not ray.visible),"Convergence glows while main beam remains gated")
+	check(game.save_game(false),"Partially charged superlaser saves")
+	game.load_game();close_camera()
+	check(killer.bomb().remaining==7 and killer.station.feed_count==8,"Reload resumes charged dish without restarting countdown")
+	game.muted=false;killer.audio_phase="";killer.sync_audio()
+	check(game.audio.death_star_charge.playing,"Charge phase plays its dedicated rising sound")
+	game.set_mode("pause")
+	check(game.audio.death_star_charge.stream_paused,"Pause freezes charge sound")
+	killer.advance(2);check(killer.bomb().remaining==7,"Pause freezes charge sequence")
+	game.set_mode("flight");remaining(4)
+	check(killer.bomb().phase=="firing" and killer.station.main_beams.all(func(ray):return ray.visible),"Converged superlaser fires at four seconds remaining")
+	check(game.audio.death_star_fire.playing and not game.audio.death_star_charge.playing,"Firing sound replaces charge audio")
+	remaining(3.6);await screen("firing")
+	check(killer.station.beam_fraction>.99 and killer.station.impact.visible,"Main laser reaches planet and produces impact glow")
+	check(is_instance_valid(killer.warning_shell),"Laser impact fractures planet before detonation")
+	check(game.save_game(false),"Firing state saves")
+	game.load_game();close_camera()
+	check(killer.bomb().phase=="firing" and killer.station.impact.visible,"Reload restores beam and impact at correct moment")
+	killer.open_active();click("SpareWorld")
+	check(not killer.destroyed(128) and not is_instance_valid(killer.warning_shell),"Last-second mercy stops laser and clears planetary fractures")
+	check(not game.audio.death_star_fire.playing,"Mercy immediately silences death laser")
+	game.muted=true
+	deploy();refuse();remaining(3.6);close_camera()
+	var copy=game.Pilot.new()
+	check(copy.restore(game.pilot.snapshot(),game.catalog),"Active station state passes pilot validation")
+	for field in ["remaining","system","x","phase","anchor_x"]:
+		var bad: Dictionary=game.pilot.snapshot()
+		bad.world_killer.active[field]={"remaining":-1,"system":9999,"x":"invalid","phase":"holding","anchor_x":999999}[field]
+		check(not copy.restore(bad,game.catalog),"Malformed station state rejected atomically: "+field)
+	var legacy: Dictionary=game.Pilot.new().snapshot();legacy.erase("world_killer")
+	check(copy.restore(legacy,game.catalog),"Pilots predating world-killer remain compatible")
+	var old_anchor: Vector2=killer.target_position(128)+Vector2(0,killer.target_radius(128)+38)
+	legacy=game.Pilot.new().snapshot()
+	legacy.world_killer={"destroyed":[],"threatened":[128],"active":{"id":128,"system":129,"phase":"armed","x":old_anchor.x,"y":old_anchor.y,"anchor_x":old_anchor.x,"anchor_y":old_anchor.y,"heading":0,"remaining":57.0,"elapsed":63.0,"plea_sent":true,"denied":true}}
+	check(copy.restore(legacy,game.catalog) and copy.world_killer.active.sequence==3 and copy.world_killer.active.remaining==57,"Existing deployed missile migrates into station without resetting timer")
+	check(copy.restore(copy.snapshot(),game.catalog),"Migrated station save validates on next reload")
+	var previous: Dictionary=legacy.duplicate(true)
+	var old_station: Dictionary=previous.world_killer.active
+	old_station.sequence=2;old_station.phase="approach"
+	old_station.anchor_y=killer.target_position(128).y+killer.target_radius(128)+killer.DeathStar.RADIUS+45
+	old_station.start_x=old_station.anchor_x;old_station.start_y=old_station.anchor_y+400
+	var old_position: Vector2=killer.sequence_position(old_station);old_station.x=old_position.x;old_station.y=old_position.y
+	check(copy.restore(previous,game.catalog) and copy.world_killer.active.sequence==3 and copy.world_killer.active.remaining==57,"Earlier Death Star saves migrate to wider spacing and normal arrival without resetting countdown")
+	game.world_activity.open_contact();var seconds: float=killer.bomb().remaining
+	check(not killer.deploy() and killer.bomb().remaining==seconds,"Duplicate deployment cannot reset live ultimatum")
+	game.set_mode("flight")
+	game.pilot.mission={"system":129,"object":128,"reward":1200};game.pilot.world_state.dominated.append(128)
+	var contract: Dictionary=game.missions.offer(128,133);contract.dest=128;contract.back=-1;game.pilot.campaign.active.append(contract)
+	remaining(.1)
+	check(not killer.destroyed(128),"Planet remains intact until countdown reaches zero")
+	remaining(0)
+	check(killer.destroyed(128) and killer.bomb().is_empty(),"Superlaser obliterates planet at zero")
+	check(game.planets.all(func(p):return int(p.id)!=128),"Destroyed body removed from landing and gravity")
+	check(not game.world_activity.landing_reason(128).is_empty(),"Destroyed world refuses landing")
+	check(128 not in game.pilot.world_state.dominated and game.pilot.mission.is_empty() and game.pilot.campaign.active.is_empty(),"Tribute and unreachable contracts end normally")
+	check(game.pilot.reputation.get("128")==-10000 and game.world_activity.headlines().any(func(t):return str(t).contains("obliterated")),"Government and news record world's destruction")
+	var blasts: Array=killer.effects.filter(func(e):return e.get_script()==Rupture)
+	check(blasts.size()==1 and blasts[0].fragments.size()==128,"Original planetary fracture effect follows laser impact")
+	check(killer.effects.any(func(effect):return effect.get_script()==preload("res://scripts/death_star.gd") and effect.visible),"Death Star stays visible while planet breaks apart")
+	await screen("detonation")
+	killer.advance(1.4);await screen("fracture")
+	check(blasts[0].fragments[0].node.position.length()>0,"Molten crust fragments expand")
+	game.set_mode("pause");var age: float=blasts[0].age;killer.advance(2)
+	check(blasts[0].age==age,"Pause freezes destruction and station departure")
+	game.set_mode("flight")
+	for tick in 3600:
+		if killer.effects.is_empty(): break
+		killer.advance(1.0/60)
+	check(killer.effects.is_empty(),"Station warps away and destruction effects clean up")
+	game.save_game(false);game.load_game()
+	check(killer.destroyed(128) and game.planets.all(func(p):return int(p.id)!=128),"Destroyed planet remains absent after disk reload")
+	check(game.world.find_child("ShatteredWorld128",true,false)!=null,"Debris field persists")
+	check(not game.missions.port_matches(128,128) and game.ejection.rescue_port()!=128,"Mission offers and rescue avoid destroyed ports")
+	check(int(game.courier_destination().object)!=128,"Courier jobs avoid destroyed destination")
+	var bad: Dictionary=game.pilot.snapshot();bad.world_killer.destroyed.append(128)
+	check(not copy.restore(bad,game.catalog),"Duplicate destruction records rejected")
+	game.restart();deploy();refuse();game.pilot.system_id=128;game.load_system();game.set_mode("flight")
+	check(not is_instance_valid(killer.station),"Remote battle station does not appear in unrelated system")
+	remaining(0)
+	check(killer.destroyed(128) and killer.effects.is_empty(),"Off-system attack completes without spawning local effects")
+	travel(128);check(game.planets.all(func(p):return int(p.id)!=128),"Returning reveals off-system destruction")
+	game.restart();travel();game.pilot.position=killer.target_position(128)
+	game.world_activity.open_contact();killer.threaten();killer.deploy();refuse();remaining(20)
+	check(Vector2(killer.bomb().x,killer.bomb().y).distance_to(killer.target_position(128))>killer.target_radius(128)+killer.DeathStar.RADIUS,"Point-blank summons still place station outside planet")
+	var route: Dictionary=killer.bomb().duplicate(true)
+	var positions: Array=[]
+	for rate in [30,60,120]:
+		var simulation: Dictionary=route.duplicate(true);simulation.remaining=120.0
+		for tick in 80*rate: simulation.remaining-=1.0/rate
+		positions.append(killer.sequence_position(simulation))
+	check(positions[0].distance_to(positions[1])<.001 and positions[1].distance_to(positions[2])<.001,"Approach trajectory remains consistent at 30, 60 and 120 Hz")
+	killer.open_active();killer.spare()
+	deploy(129)
+	check(killer.bomb().id==129,"station threat deploys Death Star")
+	var station_copy=game.Pilot.new()
+	check(station_copy.restore(game.pilot.snapshot(),game.catalog),"active station threat saves and restores")
+	killer.advance(12)
+	check(game.mode=="flight" and killer.bomb().bribe_offer>0,"station appeals and offers a bribe")
+	var before_bribe: int=game.pilot.credits
+	var station_bribe: int=killer.bomb().bribe_offer
+	killer.accept_bribe()
+	check(killer.bomb().is_empty() and not killer.destroyed(129) and game.pilot.credits==before_bribe+station_bribe,"station bribe recalls Death Star and pays once")
+	deploy(129);refuse();remaining(2)
+	check(not is_instance_valid(killer.warning_shell),"station firing skips planetary crust shader")
+	killer.advance(2)
+	check(killer.destroyed(129) and not game.planets.any(func(body):return int(body.id)==129),"station blast removes docking target")
+	check(station_copy.restore(game.pilot.snapshot(),game.catalog),"destroyed station state saves and restores")
+	check(not killer.remnants.is_empty() and killer.remnants.back().shards.size()==28,"station leaves outward metal debris")
+	killer.advance(.5);await screen("station-destroyed")
+	travel(129)
+	check(not game.planets.any(func(body):return int(body.id)==129) and not killer.remnants.is_empty(),"destroyed station stays gone on system reload")
+	game.free();await process_frame
+	print("DEATH STAR: %d checks; %d failures" % [checks,failures]);quit(1 if failures else 0)

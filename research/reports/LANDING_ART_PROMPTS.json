@@ -1,0 +1,223 @@
+{
+  "generator": "Built-in image_gen tool",
+  "reference_game": "Escape Velocity 1.0.5",
+  "preserved": "Composition, framing, horizon, distinctive palette and source picture assignments",
+  "assets": [
+    {
+      "picture_id": 10000,
+      "reference": "research/decoded/landing-reference/10000.png",
+      "asset": "res://assets/landing/10000.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: lush green grassy mountain valleys, sharp rocky ridges receding toward the horizon, saturated purple sky with pale streaked clouds. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10001,
+      "reference": "research/decoded/landing-reference/10001.png",
+      "asset": "res://assets/landing/10001.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: immense perfectly flat green forest canopy extending to a level horizon, luminous pale cyan sky with lilac cloud bands, aerial high viewpoint. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10002,
+      "reference": "research/decoded/landing-reference/10002.png",
+      "asset": "res://assets/landing/10002.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: green mountain plateau on left, sheer pale grey striated cliffs dropping steeply in foreground and right, distant rounded blue green mountains, bright pale blue sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10003,
+      "reference": "research/decoded/landing-reference/10003.png",
+      "asset": "res://assets/landing/10003.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: rippling emerald turquoise ocean filling lower two thirds, low dark island silhouette on horizon, lavender purple twilight sky with a very faint crescent upper left. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10004,
+      "reference": "research/decoded/landing-reference/10004.png",
+      "asset": "res://assets/landing/10004.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: barren dark grey-brown undulating badlands foreground, distant rose-red flat-topped mesa upper right, pale blue overcast sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10005,
+      "reference": "research/decoded/landing-reference/10005.png",
+      "asset": "res://assets/landing/10005.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: orange sandstone coastline sloping from foreground left toward dark cobalt sea on right, pale ochre rugged mountains at horizon, golden cloudy sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10006,
+      "reference": "research/decoded/landing-reference/10006.png",
+      "asset": "res://assets/landing/10006.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: small steep green rocky islands scattered across lavender-blue ocean, prominent dark leafy island at bottom left, small middle-distance islands, broad blue cloudy sky and yellow green horizon light. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10007,
+      "reference": "research/decoded/landing-reference/10007.png",
+      "asset": "res://assets/landing/10007.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: green mountainous island with reddish brown central volcanic peak, jagged grey pinnacles on right, calm lavender reflective water at lower edge, pale blue cloud-streaked sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10008,
+      "reference": "research/decoded/landing-reference/10008.png",
+      "asset": "res://assets/landing/10008.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: ochre rocky island cluster in violet purple ocean, big jagged island at mid-left, small foreground island bottom right, vivid purple sky with thin cream cloud streaks. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10009,
+      "reference": "research/decoded/landing-reference/10009.png",
+      "asset": "res://assets/landing/10009.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: flat arid plain dotted with tall orange sandstone buttes and mesas, monumental mesa on right foreground, warm amber horizon and peach-brown streaked clouds. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10010,
+      "reference": "research/decoded/landing-reference/10010.png",
+      "asset": "res://assets/landing/10010.png",
+      "prompt": "Generate a modern high-resolution remake of this original Escape Velocity planet landing scenery. Reference image is composition and color reference. Preserve its near-square 333:271 framing, horizon slightly above middle, pale peach and pink rolling sand dunes filling the lower half into a flat hazy horizon, and the dramatic layered streaks of deep navy-blue and grey clouds across upper half. Upgrade to detailed cinematic terrain matte painting with fine windblown dune ripples, atmospheric depth and realistic soft light. Keep the same broad shapes, empty alien desert, restrained pastel peach sands against dark blue sky, and original camera direction. No buildings, ships, people, mountains, UI, lettering, borders, logos or watermark. Single full-bleed landscape asset."
+    },
+    {
+      "picture_id": 10011,
+      "reference": "research/decoded/landing-reference/10011.png",
+      "asset": "res://assets/landing/10011.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: deep rusty red mountainous desert, dominant twin-peak ridge toward upper right, black red ridges in foreground, vivid orange to red sunset sky brightest at left horizon. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10012,
+      "reference": "research/decoded/landing-reference/10012.png",
+      "asset": "res://assets/landing/10012.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: sharp snow-covered alpine peaks and sunlit cream rock filling lower two thirds, tall dark peak at upper left, turquoise sky and small white clouds. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10013,
+      "reference": "research/decoded/landing-reference/10013.png",
+      "asset": "res://assets/landing/10013.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: vast densely packed snowy mountain range seen from above, pale blue-grey ridges extending from foreground to horizon, pale yellow green narrow sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10014,
+      "reference": "research/decoded/landing-reference/10014.png",
+      "asset": "res://assets/landing/10014.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: dark burgundy red jagged cliffs bordering narrow pale pink reflective channel stretching from lower right toward center mountains, flat khaki yellow overcast sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10015,
+      "reference": "research/decoded/landing-reference/10015.png",
+      "asset": "res://assets/landing/10015.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: dark burgundy ocean in foreground, serrated purple rocky island silhouettes at low horizon, dramatic coral-pink streaked clouds in slate blue sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10016,
+      "reference": "research/decoded/landing-reference/10016.png",
+      "asset": "res://assets/landing/10016.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: alien mountainous terrain rendered in intense crimson red with dark maroon shadow valleys, sharp highest peak left of center, horizontal deep red sky gradients. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10017,
+      "reference": "research/decoded/landing-reference/10017.png",
+      "asset": "res://assets/landing/10017.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: alien green mountains surrounded by heavy emerald fog, highest jagged peak left of center, glowing green atmospheric bands, near monochromatic saturated green palette. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10018,
+      "reference": "research/decoded/landing-reference/10018.png",
+      "asset": "res://assets/landing/10018.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: alien blue mountains with dominant twin peak massif right of center, deep midnight shadows, horizontal ultramarine blue atmospheric fog bands and sky, near monochromatic cobalt palette. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10019,
+      "reference": "research/decoded/landing-reference/10019.png",
+      "asset": "res://assets/landing/10019.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: low rough barren rocky reddish-brown terrain with a craggy ridge across lower half, dark maroon sky fading to dim red at horizon, dim moody atmosphere. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10020,
+      "reference": "research/decoded/landing-reference/10020.png",
+      "asset": "res://assets/landing/10020.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: barren black-maroon jagged rocky terrain filling lower half, brilliant saturated red sky, sharp silhouettes and small scattered craters, no sun. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10021,
+      "reference": "research/decoded/landing-reference/10021.png",
+      "asset": "res://assets/landing/10021.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: airless grey cratered lunar landscape, broad low ridge near horizon and irregular rocky foreground, absolute black sky with small white stars, no planet. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10022,
+      "reference": "research/decoded/landing-reference/10022.png",
+      "asset": "res://assets/landing/10022.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: airless grey lunar mountains and sharp low rocky ridges filling lower half, irregular protruding ridge at upper right, black starry sky, no planet. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10023,
+      "reference": "research/decoded/landing-reference/10023.png",
+      "asset": "res://assets/landing/10023.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: mysterious night landscape, dark green cliffs on right, winding dark reflective river in foreground, sparse stars and blue aurora nebula in black sky, diagonal rust-red luminous sky streaks from upper center. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10024,
+      "reference": "research/decoded/landing-reference/10024.png",
+      "asset": "res://assets/landing/10024.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: single oblique orbital ring station centered in black star field, ring elliptical running lower left to upper right, grey metal ring with yellow glowing windows, central tapered white hub and long thin antenna axis. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10025,
+      "reference": "research/decoded/landing-reference/10025.png",
+      "asset": "res://assets/landing/10025.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: two parallel overlapping orbital rings diagonally tilted, cylindrical connecting central silver hub with long white axis spike, warm yellow window bands around rings, centered against black star field. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10026,
+      "reference": "research/decoded/landing-reference/10026.png",
+      "asset": "res://assets/landing/10026.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: saucer-shaped grey orbital station with tiered central dome and yellow window bands, long vertical antenna, three smaller circular docking pods attached radially below, centered black star field. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10027,
+      "reference": "research/decoded/landing-reference/10027.png",
+      "asset": "res://assets/landing/10027.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: skeletal tetrahedral orbital station, four smooth silver spherical vertices joined by intricate thin triangular metal trusses, small cylinder within, centered black star field. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10028,
+      "reference": "research/decoded/landing-reference/10028.png",
+      "asset": "res://assets/landing/10028.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: airless rugged grey lunar terrain in foreground, huge Earth-like blue-green globe rising from left horizon occupying upper left, black starry sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10029,
+      "reference": "research/decoded/landing-reference/10029.png",
+      "asset": "res://assets/landing/10029.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: lush green mountain valley foreground, turquoise sea at horizon, enormous pale blue cloud-covered planet rising upper right filling much of sky, bright blue daylight. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10030,
+      "reference": "research/decoded/landing-reference/10030.png",
+      "asset": "res://assets/landing/10030.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: green island and low rounded green foreground hills in turquoise sea, enormous pale lavender planet partially cropped at upper left, light blue daytime sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10031,
+      "reference": "research/decoded/landing-reference/10031.png",
+      "asset": "res://assets/landing/10031.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: jagged dark green mountain range foreground with highest pointed peak left of center, enormous pale blue cloudy planet partly cropped top left, blue sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10032,
+      "reference": "research/decoded/landing-reference/10032.png",
+      "asset": "res://assets/landing/10032.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: ochre islands in lavender purple ocean, rocky island at lower right, broad low tan mountains at left horizon, enormous rose-pink planet cropped at upper left against purple sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 10033,
+      "reference": "research/decoded/landing-reference/10033.png",
+      "asset": "res://assets/landing/10033.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: crimson craggy lunar landscape foreground, giant glowing red planet with dark mottled lava-like continents rising upper right, black starry sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 11000,
+      "reference": "research/decoded/landing-reference/11000.png",
+      "asset": "res://assets/landing/11000.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: custom Stardock Alpha orbital vista: huge blue white cloud-covered Earth fills upper right cropped by top and right edges; small grey saucer station with luminous yellow band and three attached round docking pods at lower left, small grey spacecraft near right of station; black star field at left. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    },
+    {
+      "picture_id": 11001,
+      "reference": "research/decoded/landing-reference/11001.png",
+      "asset": "res://assets/landing/11001.png",
+      "prompt": "Generate a modern high-resolution remake of the attached original Escape Velocity landing scenery. Input is a composition and palette reference, not a UI. Preserve the original near-square 333:271 aspect, camera viewpoint, horizon height, dominant shapes, object placement and distinctive color palette. Upgrade the coarse 1990s rendering to a richly detailed cinematic science-fiction matte painting: physically convincing surface detail, atmospheric depth and sophisticated lighting, while keeping the original scene immediately recognizable. Scene: custom Darkstar surface vista: airless charcoal grey basalt terrain, tall sheer flat-topped dark mesa left midground, gigantic fiery red-orange volcanic planet cropped at top and right above horizon, red glowing pool at far lower right, black starry sky. Single full-bleed environment image. No UI, text, labels, borders, logos or watermarks. No added characters, cities or unrelated ships. Match the source's geometry and palette rather than inventing a new scene."
+    }
+  ]
+}

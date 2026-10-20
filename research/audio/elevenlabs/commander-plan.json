@@ -1,0 +1,42 @@
+[
+  {
+    "voice": "Harry",
+    "group": "rebel",
+    "prompt": "[gruff][commanding] Hold the line! [shouting] Brace! BRACE!"
+  },
+  {
+    "voice": "Harry",
+    "group": "rebel",
+    "prompt": "[gruff][stern] Stay on target. [strained][shouting] EJECT! That\u2019s an ORDER!"
+  },
+  {
+    "voice": "George",
+    "group": "confed",
+    "prompt": "[gruff][stern][commanding] Helm, hard to port! [shouting] All hands, BRACE!"
+  },
+  {
+    "voice": "George",
+    "group": "confed",
+    "prompt": "[gruff][urgent] Seal the bulkheads! [shouting] Move, damn you! MOVE!"
+  },
+  {
+    "voice": "Callum",
+    "group": "pirate",
+    "prompt": "[gruff][angry] Give \u2019em hell! [strained][shouting] Get to the pods! NOW!"
+  },
+  {
+    "voice": "Callum",
+    "group": "pirate",
+    "prompt": "[gruff][snarling] Not today, you bastards! [panicked] Hard over! HARD OVER!"
+  },
+  {
+    "voice": "Charlie",
+    "group": "civilian",
+    "prompt": "[gruff][stern] Keep your heads! [shouting] Emergency thrust! NOW!"
+  },
+  {
+    "voice": "Charlie",
+    "group": "civilian",
+    "prompt": "[gruff][urgent] Cut the cargo loose! [strained][shouting] Get us clear!"
+  }
+]
