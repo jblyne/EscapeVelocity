@@ -539,8 +539,17 @@ func broadcast() -> void:
 
 func launch_fireworks(words: String) -> void:
 	if bomb().is_empty() or int(bomb().system)!=game.pilot.system_id: return
+	var id: int=int(bomb().id)
+	var occupied: Array=[]
+	for effect in effects:
+		if is_instance_valid(effect) and effect.get_script()==preload("res://scripts/plea_fireworks.gd") and effect.target_id==id and effect.age<7:
+			occupied.append(effect.message_side)
+	var side: int=-1 if -1 not in occupied else 1
+	# Keep both existing messages readable rather than stacking a third on them.
+	if side in occupied: return
 	var show=preload("res://scripts/plea_fireworks.gd").new();game.world.add_child(show)
-	show.setup(game.v3(target_position(int(bomb().id)),150),words);effects.append(show)
+	show.target_id=id
+	show.setup(game.v3(target_position(id),150),words,side,target_radius(id)+90);effects.append(show)
 
 func evacuate() -> void:
 	if bomb().is_empty() or bomb().remaining>45 or int(bomb().system)!=game.pilot.system_id: return

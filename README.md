@@ -4,7 +4,7 @@ A playable Godot 4 prototype built around the original Escape Velocity 1.0.5 res
 
 ## Download and install (no Godot needed)
 
-Download **Escape-Velocity-HD-0.1.131-macOS.zip** from the [GitHub release](https://github.com/jblyne/EscapeVelocity/releases/tag/v0.1.131). This standalone Mac app includes both Apple Silicon and Intel builds.
+Download **Escape-Velocity-HD-0.1.132-macOS.zip** from the [latest GitHub release](https://github.com/jblyne/EscapeVelocity/releases/latest). This standalone Mac app includes both Apple Silicon and Intel builds.
 
 1. Unzip the download.
 2. Drag **Escape Velocity HD.app** into **Applications**.
@@ -805,3 +805,7 @@ Maverick wings now sweep back over two seconds during active afterburner use and
 
 - Projectiles now hit the nearest ship surface along their flight segment, rather than the first overlapping contact in the traffic list.
 - Sidewinder regression checks cover bulk freighter destruction, surviving target integrity updates, shield-only damage, and near misses.
+
+## 0.1.132 — Readable firework pleas
+
+Threatened worlds reserve separate firework message positions above and below their surface. A second active plea uses the bottom position; additional simultaneous launches are skipped instead of overlapping existing text. Expired messages release their position.

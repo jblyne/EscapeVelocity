@@ -1,11 +1,14 @@
 extends Node3D
 var age: float=0
+var target_id: int=-1
+var message_side: int=-1
 var sparks: Array=[]
 var words: Label3D
 var letters: MultiMeshInstance3D
 var destinations: Array=[]
-func setup(at: Vector3,text: String):
- position=at
+func setup(at: Vector3,text: String,side: int=-1,clearance: float=160):
+ message_side=side
+ position=at+Vector3(0,0,side*clearance)
  words=Label3D.new();words.text=text;words.font_size=64;words.pixel_size=.85;words.billboard=BaseMaterial3D.BILLBOARD_ENABLED;words.no_depth_test=true;words.modulate=Color("ffe79b");words.outline_modulate=Color("ed6c32");add_child(words);words.hide()
  build_letters(text)
  var rng=RandomNumberGenerator.new();rng.randomize()
@@ -59,7 +62,7 @@ func build_letters(text: String):
   x+=(str(glyph[0]).length()+1)*4.5
  for i in destinations.size():
   destinations[i].x-=x*.5
-  destinations[i].z-=160
+  destinations[i].z-=13.5
  letters=MultiMeshInstance3D.new();letters.multimesh=MultiMesh.new()
  letters.multimesh.transform_format=MultiMesh.TRANSFORM_3D
  var dot=SphereMesh.new();dot.radius=1.5;dot.height=3.0;dot.radial_segments=6;dot.rings=3
