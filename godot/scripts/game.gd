@@ -304,7 +304,7 @@ func setup_audio() -> void:
 		if key=="afterburner":
 			player.stream.loop_mode=AudioStreamWAV.LOOP_FORWARD;player.stream.loop_begin=0;player.stream.loop_end=44100
 			player.volume_db=-20;player.max_polyphony=1
-		if key=="maverick_afterburner": player.stream.loop=true;player.volume_db=-14;player.max_polyphony=1
+		if key=="maverick_afterburner": player.stream.loop=true;player.volume_db=-11;player.max_polyphony=1
 		if key=="maverick_gun": player.stream.loop=true;player.max_polyphony=1
 		if key=="maverick_warp":
 			player.stream.loop=true;player.volume_db=3.02;player.max_polyphony=1
@@ -321,16 +321,19 @@ func setup_audio() -> void:
 	engine_audio.volume_db = -20
 	add_child(engine_audio)
 
+func afterburner_engaged() -> bool:
+	return mode=="flight" and controls.pressed("thrust") and controls.pressed("afterburner") and pilot.outfit_count(157)>0 and pilot.fuel>0 and not hyperdrive.active() and chain_route.is_empty()
+
 func update_afterburner_audio(dt: float) -> void:
 	var player: AudioStreamPlayer=audio.maverick_afterburner if pilot.ship_id==900 else audio.afterburner
 	var other: AudioStreamPlayer=audio.afterburner if pilot.ship_id==900 else audio.maverick_afterburner
 	if other.playing: other.stop()
 	if muted or mode!="flight":
 		afterburner_audio_gain=0;player.stop();return
-	var burning: bool=controls.pressed("thrust") and controls.pressed("afterburner") and pilot.outfit_count(157)>0 and pilot.fuel>0 and not hyperdrive.active() and chain_route.is_empty()
+	var burning: bool=afterburner_engaged()
 	afterburner_audio_gain=move_toward(afterburner_audio_gain,1.0 if burning else 0.0,maxf(0,dt)/(.12 if burning else .22))
 	if afterburner_audio_gain<=0: player.stop();return
-	player.volume_db=(-14 if pilot.ship_id==900 else -20)+linear_to_db(maxf(.0001,afterburner_audio_gain))
+	player.volume_db=(-11 if pilot.ship_id==900 else -20)+linear_to_db(maxf(.0001,afterburner_audio_gain))
 	if not player.playing: player.play()
 
 func start_title_audio() -> void:
@@ -699,7 +702,7 @@ func _physics_process(dt: float) -> void:
 	var thrust: bool = controls.pressed("thrust")
 	var retrograde: bool = controls.pressed("retrograde")
 	var fields: Dictionary = pilot.flight_fields(catalog.record("ships",pilot.ship_id).fields)
-	var afterburning: bool = thrust and controls.pressed("afterburner") and pilot.outfit_count(157) > 0 and pilot.fuel > 0 and not hyperdrive.active()
+	var afterburning: bool = afterburner_engaged()
 	if afterburning:
 		fields.Speed *= traffic.maverick.AFTERBURNER_SPEED if pilot.ship_id==900 else 1.8
 		fields.Accel *= traffic.maverick.AFTERBURNER_ACCEL if pilot.ship_id==900 else 2.0
@@ -839,7 +842,7 @@ func update_jump_visuals(dt: float) -> void:
 		if rapid_stretch > 0:
 			var length: float = lerpf(1.0,JumpVisuals.MAX_LENGTH,rapid_stretch)
 			visual_scale = Vector3(pow(length,-0.32),1.0,length)
-		if mode=="flight": preload("res://scripts/maverick.gd").advance_wings(player_model,hyperdrive.active() or not chain_route.is_empty(),dt)
+		if mode=="flight": preload("res://scripts/maverick.gd").advance_wings(player_model,hyperdrive.active() or not chain_route.is_empty() or afterburner_engaged(),dt)
 		player_model.scale = player_base_scale*visual_scale
 		var vibration: Vector3 = jump_visuals.ship_offset(hyperdrive,rendered_clock)
 		player_model.position = rendered_player_position + Basis(Vector3.UP,player_model.rotation.y)*vibration
@@ -889,6 +892,19 @@ func selected_contact() -> Dictionary:
 
 func segment_distance(point: Vector2, a: Vector2, b: Vector2) -> float:
 	return point.distance_to(Geometry2D.get_closest_point_to_segment(point,a,b))
+
+# First surface crossed by a swept projectile, independent of contact list order.
+static func shot_entry_distance(center: Vector2, start: Vector2, end: Vector2, radius: float) -> float:
+	if start.distance_squared_to(center)<=radius*radius: return 0.0
+	var segment: Vector2=end-start
+	var length: float=segment.length()
+	if length<=0: return INF
+	var direction: Vector2=segment/length
+	var projection: float=(center-start).dot(direction)
+	var perpendicular: float=absf((center-start).cross(direction))
+	if projection<0 or perpendicular>radius: return INF
+	var entry: float=projection-sqrt(maxf(0,radius*radius-perpendicular*perpendicular))
+	return entry if entry<=length else INF
 
 func damage_npc(npc: Dictionary, amount: float, attacker: Dictionary = {}, impact_direction: Vector2 = Vector2.ZERO, hyperspace_wake: bool = false, armor_damage: float = -1) -> Node3D:
 	if npc not in npcs or (amount <= 0 and armor_damage<=0): return null
@@ -986,12 +1002,15 @@ func update_shots(dt: float) -> void:
 					hit = true
 					damage_player(shot.get("shield_damage",shot.damage),-shot.velocity.normalized(),shot.get("armor_damage",shot.damage))
 			if not hit and (not shot.enemy or shot.get("npc_shot",false)):
+				var closest: float=INF
 				for npc in npcs:
-					if traffic.can_hit(shot,npc) and segment_distance(npc.position,previous,shot.position) < npc.radius+shot.proximity:
-						hit = true
-						contact = npc
-						shot.position = Geometry2D.get_closest_point_to_segment(npc.position,previous,shot.position)
-						break
+					if not traffic.can_hit(shot,npc): continue
+					var distance: float=shot_entry_distance(npc.position,previous,shot.position,npc.radius+shot.proximity)
+					if distance<closest:
+						closest=distance;contact=npc
+				if not contact.is_empty():
+					hit=true
+					shot.position=previous+(shot.position-previous).normalized()*closest
 		var world_hit: Dictionary=world_killer.shot_intersection(previous,shot.position,shot)
 		if not world_hit.is_empty() and (contact.is_empty() or float(world_hit.distance)<previous.distance_to(shot.position)):
 			shot.position=world_hit.position;contact={};hit=true

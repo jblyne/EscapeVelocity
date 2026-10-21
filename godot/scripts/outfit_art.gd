@@ -64,6 +64,11 @@ static func cylinder(root: Node3D, pos: Vector3, radius: float, length: float, m
 	root.add_child(node)
 
 static func build(catalog, id: int) -> Node3D:
+	if id==902:
+		var missile=preload("res://scripts/projectile_models.gd").create(901);missile.scale=Vector3.ONE*.06
+		for part in missile.get_children():
+			if str(part.name).begins_with("Flame"): part.hide()
+		return missile
 	var f: Dictionary=catalog.record("outfits",id).fields
 	var type: int=int(f.ModType)
 	var root=Node3D.new()

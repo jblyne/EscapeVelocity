@@ -247,7 +247,7 @@ func fire(id: int, pos: Vector2, heading: float, enemy: bool = false, source: Di
 	if id==191:
 		node=Forklift.create();game.world.add_child(node);node.position=game.v3(origin,6)
 	elif id in ProjectileModels.IDS or id==901:
-		node=ProjectileModels.create(132 if id==901 else id);game.world.add_child(node);node.position=game.v3(origin,6)
+		node=ProjectileModels.create(id);game.world.add_child(node);node.position=game.v3(origin,6)
 	else:
 		node=game.Models.box(game.world,game.v3(origin,6),dimensions,game.Models.material(color,0,2))
 	node.rotation.y = -Flight.facing(direction)

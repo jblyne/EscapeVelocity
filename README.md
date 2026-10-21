@@ -2,6 +2,18 @@
 
 A playable Godot 4 prototype built around the original Escape Velocity 1.0.5 resource data. This is the first development milestone, not the complete recreation.
 
+## Download and install (no Godot needed)
+
+Download **Escape-Velocity-HD-0.1.131-macOS.zip** from the [GitHub release](https://github.com/jblyne/EscapeVelocity/releases/tag/v0.1.131). This standalone Mac app includes both Apple Silicon and Intel builds.
+
+1. Unzip the download.
+2. Drag **Escape Velocity HD.app** into **Applications**.
+3. Open it from Applications.
+
+This development build is ad-hoc signed, but is not Apple Developer ID signed or notarized. macOS may block the first launch. If you trust this download, use **System Settings → Privacy & Security → Open Anyway** after attempting to open it, then confirm Open. No Godot editor or separate asset download is required. Pilot saves stay in the app's user data folder when updating the app.
+
+Choose the macOS ZIP under **Assets**; GitHub's **Source code** archives are for development. Windows and Linux downloads are not included in this release.
+
 ## Classic menu and simplified flight screen
 
 The main menu now uses the recovered original bridge artwork, 17 mechanical button animation frames, and rotating globe sprites. Frame order and artwork come from EV Titles; playback cadence is reconstructed (15 fps for opening, 10 fps for globes), not measured original timing. `tools/extract_title_art.py` reproduces the PNGs from the local resource fork with Pillow.
@@ -776,3 +788,20 @@ Maverick afterburner playback now uses the supplied Afterburner Sound.mp3 on loo
 ## 0.1.127 — Revised, louder Maverick afterburner
 
 Replaced Maverick afterburner playback with the supplied Afterbuner 2.mp3 and raised its level by 6 dB, preserving looping and release fading.
+
+## 0.1.128 — Louder Maverick afterburner
+
+Raised the Maverick afterburner by 3 dB while retaining looping and smooth release fading.
+
+## 0.1.129 — Dedicated AIM-9 Sidewinder model
+
+Replaced the shared red missile mesh with a slim light-gray Sidewinder body, dark rounded seeker, four forward control fins, four larger tail fins, tail roller details, identification bands and a narrow rocket plume. Outfitter ammunition previews use the same model. Reference: USAF AIM-9 Sidewinder fact sheet and museum exhibit.
+
+## 0.1.130 — Afterburner wing sweep
+
+Maverick wings now sweep back over two seconds during active afterburner use and smoothly reopen on release, using the same animation as hyperspace. Speed, sound and wing animation share the actual afterburner activation check, including equipment and fuel requirements.
+
+## 0.1.131 — Reliable projectile hit selection
+
+- Projectiles now hit the nearest ship surface along their flight segment, rather than the first overlapping contact in the traffic list.
+- Sidewinder regression checks cover bulk freighter destruction, surviving target integrity updates, shield-only damage, and near misses.

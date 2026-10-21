@@ -1,7 +1,7 @@
 extends RefCounted
 const Models=preload("res://scripts/models.gd")
 const GLOW=preload("res://shaders/projectile_glow.gdshader")
-const IDS=[131,132,139,140,141,150]
+const IDS=[131,132,139,140,141,150,901]
 
 static func tube(parent: Node3D,z: float,length: float,radius: float,material: Material,tip: float=-1) -> MeshInstance3D:
 	var node=MeshInstance3D.new();var mesh=CylinderMesh.new()
@@ -11,6 +11,8 @@ static func tube(parent: Node3D,z: float,length: float,radius: float,material: M
 
 static func create(id: int) -> Node3D:
 	var root=Node3D.new();root.set_meta("projectile_model",id)
+	if id==901:
+		sidewinder(root);return root
 	if id in [131,150]:
 		root.name="Torpedo" if id==131 else "DecoyFlare"
 		var glow=MeshInstance3D.new();var plane=PlaneMesh.new()
@@ -57,6 +59,36 @@ static func create(id: int) -> Node3D:
 		plume.scale=Vector3(11 if heavy else 8,1,12 if heavy else 9)
 		plume.position=Vector3(0,0,length*.5+2+(.7*plume.scale.z))
 	return root
+
+static func sidewinder(root: Node3D) -> void:
+	root.name="AIM9Sidewinder"
+	var white=Models.material(Color("e8e7df"),.2)
+	var metal=Models.material(Color("7b8586"),.6)
+	var dark=Models.material(Color("252d2b"),.35)
+	var seeker=Models.material(Color("151d19"),.5);seeker.roughness=.18
+	var yellow=Models.material(Color("c6a144"),.1)
+	var brown=Models.material(Color("79563e"),.1)
+	tube(root,0,26,.68,white).name="SlimBody"
+	tube(root,-13.7,1.4,.68,dark,.47).name="SeekerHousing"
+	var lens=Models.sphere(root,Vector3(0,0,-14.55),.47,seeker);lens.scale.z=.75;lens.name="SeekerDome"
+	tube(root,-4.5,.55,.7,yellow).name="WarheadBand"
+	tube(root,3,.55,.7,brown).name="MotorBand"
+	tube(root,13.3,.65,.6,metal).name="MotorNozzle"
+	tube(root,13.7,.25,.43,dark).name="NozzleInterior"
+	for i in 4:
+		var forward=Models.hull(root,PackedVector2Array([Vector2(.6,-11.3),Vector2(2.05,-9.8),Vector2(1.95,-9.1),Vector2(.6,-7.5)]),.08,metal)
+		forward.name="ForwardFin%d" % i;forward.rotation.z=i*PI/2+PI/4
+		var tail=Models.hull(root,PackedVector2Array([Vector2(.6,6.7),Vector2(3.2,10),Vector2(3.2,12.8),Vector2(.6,12.5)]),.09,white)
+		tail.name="TailFin%d" % i;tail.rotation.z=i*PI/2+PI/4
+		var roller=Models.box(root,Vector3(3.0,.03,12.4),Vector3(.35,.18,.55),metal)
+		roller.name="TailRoller%d" % i
+		roller.position=Basis(Vector3.FORWARD,-(i*PI/2+PI/4))*roller.position
+		roller.rotation.z=i*PI/2+PI/4
+	Models.add_exhaust(root,Vector3(0,0,13.9),0)
+	var plume=root.get_child(root.get_child_count()-1)
+	plume.scale=Vector3(2.6,1,9);plume.position=Vector3(0,0,20.2)
+	plume.material_override.set_shader_parameter("afterburner_heat",1.0)
+	plume.material_override.set_shader_parameter("power",.8)
 
 static func advance(node: Node3D,clock: float) -> void:
 	if not node.has_meta("projectile_model"): return
