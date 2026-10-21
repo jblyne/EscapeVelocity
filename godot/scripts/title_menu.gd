@@ -15,11 +15,14 @@ var game
 var canvas: Control
 var screen: VBoxContainer
 
+var presentation_started: bool=false
+var discard_setup_delta: bool=false
 var animation_time: float = 0.0
 var animation_frames: Array[Texture2D] = []
 var globe: Texture2D
 var dialog: PanelContainer
 var pilot_readout: Label
+var pilot_picker: FileDialog
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -71,9 +74,20 @@ func _ready() -> void:
 		if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT and event.alt_pressed: original_credits(true))
 	canvas.add_child(logo)
 	pilot_info()
+	# Do not play panel machinery while the compositor still displays startup.
+	if DisplayServer.get_name()=="headless": get_tree().process_frame.connect(begin_presentation,CONNECT_ONE_SHOT)
+	else: RenderingServer.frame_post_draw.connect(begin_presentation,CONNECT_ONE_SHOT)
+
+func begin_presentation() -> void:
+	if not is_inside_tree() or is_queued_for_deletion() or game.mode!="title": return
+	presentation_started=true;discard_setup_delta=true
 	game.start_title_audio()
 
 func _process(dt: float) -> void:
+	if not presentation_started: return
+	# The first delta can include all synchronous scene setup/shader warming.
+	if discard_setup_delta:
+		discard_setup_delta=false;dt=0
 	if is_instance_valid(credits_scroll):
 		credits_position+=dt*20
 		credits_scroll.scroll_vertical=int(credits_position)
@@ -180,29 +194,44 @@ func pilot_info() -> void:
 func new_pilot() -> void:
 	clear_screen()
 	line("NEW PILOT",20)
-	line("Your current pilot is replaced when the new pilot is created.")
+	line("Your current pilot will be saved. The new pilot gets a separate file.")
 	var name=LineEdit.new();name.placeholder_text="Captain's name";name.max_length=64;screen.add_child(name)
 	name.grab_focus()
 	var strict=CheckBox.new();strict.text="Strict play — permanent death";screen.add_child(strict)
 	line("Strict pilots cannot reload after death. An escape pod can still save you.")
-	small_button("Begin new flight",func():game.create_pilot(name.text,strict.button_pressed))
+	small_button("Begin new flight",func():
+		if not game.create_pilot(name.text,strict.button_pressed):
+			clear_screen();line("PILOT NOT CREATED",20);line(game.pilot_file_error);small_button("Back",new_pilot);small_button("Cancel",pilot_info))
 	small_button("Cancel",pilot_info)
 
 func open_pilot() -> void:
-	if not FileAccess.file_exists(game.save_path):
-		clear_screen();line("NO SAVED PILOT",20);line("Choose New Pilot to begin.");return
-	var saved=JSON.parse_string(FileAccess.get_file_as_string(game.save_path))
-	if saved is Dictionary and saved.get("strict_dead",false):
-		clear_screen();line("PILOT DECEASED",20);line("This strict pilot cannot be resumed. Choose New Pilot to begin again.");return
-	if not game.pilot.restore(saved,game.catalog):
-		clear_screen();line("Unable to open this pilot file.");return
-	game.pilot_ready=true
-	game.load_system()
+	if is_instance_valid(pilot_picker):
+		pilot_picker.popup_centered(Vector2i(760,480));return
+	pilot_picker=FileDialog.new();pilot_picker.name="OpenPilotDialog"
+	pilot_picker.title="Open Pilot";pilot_picker.file_mode=FileDialog.FILE_MODE_OPEN_FILE
+	pilot_picker.access=FileDialog.ACCESS_FILESYSTEM
+	pilot_picker.filters=PackedStringArray(["*.json ; Escape Velocity HD pilots"])
+	pilot_picker.use_native_dialog=DisplayServer.get_name()!="headless"
+	var current: String=ProjectSettings.globalize_path(game.save_path)
+	pilot_picker.current_dir=current.get_base_dir()
+	if FileAccess.file_exists(current): pilot_picker.current_file=current.get_file()
+	add_child(pilot_picker)
+	pilot_picker.file_selected.connect(open_pilot_path)
+	pilot_picker.popup_centered(Vector2i(760,480))
+
+func open_pilot_path(path: String) -> void:
+	if is_instance_valid(pilot_picker): pilot_picker.hide()
+	var error: String=game.open_pilot_file(path)
+	if not error.is_empty():
+		clear_screen();line("UNABLE TO OPEN PILOT",20);line(error)
+		small_button("Choose another pilot",open_pilot)
+		small_button("Cancel",pilot_info)
+		return
 	pilot_info()
 	canvas.get_node("EnterShip").disabled=false
 
 func enter_ship() -> void:
-	if game.pilot_ready: game.set_mode("flight")
+	if game.pilot_ready: game.enter_ship_with_intro()
 
 func preferences() -> void:
 	clear_screen();line("PREFERENCES",20)
@@ -290,7 +319,7 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo: return
-	if dialog.visible or is_instance_valid(extras_panel): return
+	if dialog.visible or is_instance_valid(extras_panel) or (is_instance_valid(pilot_picker) and pilot_picker.visible): return
 	var key: int=event.physical_keycode if event.physical_keycode!=0 else event.keycode
 	var actions: Dictionary={KEY_N:new_pilot,KEY_O:open_pilot,KEY_Q:quit_game,KEY_E:enter_ship,KEY_ENTER:enter_ship,KEY_P:preferences,KEY_A:about}
 	if actions.has(key):

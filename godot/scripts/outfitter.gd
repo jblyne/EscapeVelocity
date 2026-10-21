@@ -88,6 +88,7 @@ func reason(id: int, buying: bool) -> String:
 func trade(id: int, buying: bool) -> bool:
 	var blocked = reason(id,buying)
 	if not blocked.is_empty():
+		game.sound("ui_error")
 		game.notify(blocked)
 		return false
 	var amount: int = 1 if buying else -1
@@ -105,6 +106,7 @@ func trade(id: int, buying: bool) -> bool:
 	game.pilot.armor = minf(game.pilot.armor,game.pilot.max_armor())
 	game.pilot.fuel = minf(game.pilot.fuel,game.pilot.fuel_capacity())
 	game.arsenal.available_ids()
+	game.sound("ui_confirm")
 	game.save_game(false)
 	game.hud.rebuild_modal()
 	return true

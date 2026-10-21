@@ -52,7 +52,8 @@ func set_audio_state(muted: bool,running: bool) -> void:
 
 func cancel() -> void:
 	if is_instance_valid(audio): audio.queue_free()
-	if is_instance_valid(visual): visual.scale=base_scale
+	if is_instance_valid(visual):
+		visual.scale=base_scale
 
 func advance(dt: float) -> bool:
 	if complete: return true
@@ -77,6 +78,7 @@ func advance(dt: float) -> bool:
 	complete=bool(step.complete)
 	host.position=Vector3(position.x,height,position.y)
 	host.rotation.y=-heading
+	preload("res://scripts/maverick.gd").advance_wings(visual,not clearing,dt)
 	visual.scale=base_scale*visuals.ship_scale(drive)
 	game.Models.set_thrust(host,thrust,age,drive.phase=="accelerating")
 	set_audio_state(game.muted,true)

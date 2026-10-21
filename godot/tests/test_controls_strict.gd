@@ -15,6 +15,11 @@ func run():
  check(copy.bindings==c.bindings,"bindings survive restart")
  c.preset(true);copy.load_settings()
  check(copy.bindings.afterburner==[KEY_2] and copy.bindings.cloak==[KEY_U],"classic flight preset survives reload")
+ check(not c.bind("left",KEY_A).is_empty(),"A is reserved for autopilot")
+ var legacy=c.bindings.duplicate(true);legacy.left=[KEY_A,KEY_LEFT];legacy.map=[KEY_Z]
+ var prefs=FileAccess.open(c.path,FileAccess.WRITE);prefs.store_string(JSON.stringify({"bindings":legacy,"speed":1.5}));prefs.close()
+ copy.load_settings()
+ check(copy.bindings.left==[KEY_LEFT] and copy.bindings.map==[KEY_Z] and copy.speed==1.5,"Old A steering migrates without losing custom bindings or speed")
  var game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev-strict-tests.json"
  game.controls.path="/tmp/ev-keybind-tests.json";game.traffic.enabled=false;game.muted=true;root.add_child(game)
  game.set_process(false);game.set_physics_process(false);game.controls.preset()

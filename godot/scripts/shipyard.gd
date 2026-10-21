@@ -4,7 +4,7 @@ var selected: int=131
 
 static func stock_outfits(catalog, ship: int) -> Dictionary:
 	if ship==128: return {"128":1}
-	var result: Dictionary={}
+	var result: Dictionary={"157":1} if ship==900 else {}
 	var f: Dictionary=catalog.record("ships",ship).fields
 	for i in f.WeapType.size():
 		var weapon: int=int(f.WeapType[i])
@@ -65,6 +65,7 @@ func buy(id: int) -> bool:
 	var retained: Dictionary={}
 	for outfit in game.pilot.outfits:
 		if int(game.catalog.field("outfits",int(outfit),"Flags"))&4: retained[outfit]=game.pilot.outfits[outfit]
+	if id==900: game.pilot.maverick_afterburner_granted=true
 	game.pilot.ship_id=id
 	game.pilot.ship_fields=game.catalog.record("ships",id).fields.duplicate(true)
 	game.pilot.outfits=stock_outfits(game.catalog,id)

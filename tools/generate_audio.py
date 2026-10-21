@@ -15,7 +15,7 @@ for name,duration in [('laser',0.18),('impact',0.22),('explosion',0.9),('jump',2
         elif name=='impact': value=(low*2+math.sin(t*2*math.pi*85)*0.35)*env
         elif name=='explosion': value=(low*3.5+noise*0.12)*env
         elif name=='jump':
-            phase+=2*math.pi*(60+u*u*750)/RATE; value=(math.sin(phase)*0.25+low*1.3)*(math.sin(math.pi*u)**0.6)
+            phase+=2*math.pi*(60+u*u*750)/RATE; value=(math.sin(phase)*0.25)*(math.sin(math.pi*u)**0.6)
         elif name=='land': value=(math.sin(2*math.pi*t*330)+math.sin(2*math.pi*t*440))*0.2*env
         else: value=(math.sin(t*2*math.pi*55)*0.32+math.sin(t*2*math.pi*110)*0.1+low*0.35)*0.5
         samples.append(struct.pack('<h',int(max(-1,min(1,value))*18000)))
@@ -24,6 +24,5 @@ for name,duration in [('laser',0.18),('impact',0.22),('explosion',0.9),('jump',2
     if name=='explosion': continue
     with wave.open(str(ROOT/(name+'.wav')),'wb') as f:
         f.setnchannels(1);f.setsampwidth(2);f.setframerate(RATE);f.writeframes(b''.join(samples))
-from generate_arrival_audio import generate
-generate(ROOT/'arrival.wav')
+# Arrival is recovered original snd 130; never overwrite it with a placeholder.
 print('Generated six placeholder sounds; preserved the original explosion recording.')

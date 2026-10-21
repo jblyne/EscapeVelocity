@@ -1,6 +1,6 @@
 extends RefCounted
-const DEFAULTS={"thrust":[KEY_W,KEY_UP],"retrograde":[KEY_S,KEY_DOWN],"left":[KEY_A,KEY_LEFT],"right":[KEY_D,KEY_RIGHT],"fire":[KEY_SPACE],"afterburner":[KEY_SHIFT],"face_target":[KEY_T],"jump":[KEY_J],"map":[KEY_M],"land":[KEY_L],"hail_ship":[KEY_Y],"hail_world":[KEY_H],"board":[KEY_B],"fleet":[KEY_F],"info":[KEY_P],"journal":[KEY_I],"cloak":[KEY_K],"next_destination":[KEY_N],"next_target":[KEY_TAB],"previous_weapon":[KEY_Q],"next_weapon":[KEY_E]}
-const RESERVED=[KEY_CAPSLOCK,KEY_ESCAPE,KEY_F5,KEY_F9,KEY_F11,KEY_C,KEY_G,KEY_V,KEY_X,KEY_1,KEY_3,KEY_4,KEY_F1,KEY_F2,KEY_F3,KEY_F4]
+const DEFAULTS={"thrust":[KEY_W,KEY_UP],"retrograde":[KEY_S,KEY_DOWN],"left":[KEY_LEFT],"right":[KEY_D,KEY_RIGHT],"fire":[KEY_SPACE],"afterburner":[KEY_SHIFT],"face_target":[KEY_T],"jump":[KEY_J],"map":[KEY_M],"land":[KEY_L],"hail_ship":[KEY_Y],"hail_world":[KEY_H],"board":[KEY_B],"fleet":[KEY_F],"info":[KEY_P],"journal":[KEY_I],"cloak":[KEY_K],"next_destination":[KEY_N],"next_target":[KEY_TAB],"previous_weapon":[KEY_Q],"next_weapon":[KEY_E]}
+const RESERVED=[KEY_A,KEY_CAPSLOCK,KEY_ESCAPE,KEY_F5,KEY_F9,KEY_F11,KEY_C,KEY_G,KEY_V,KEY_X,KEY_1,KEY_3,KEY_4,KEY_F1,KEY_F2,KEY_F3,KEY_F4]
 var bindings: Dictionary=DEFAULTS.duplicate(true)
 var speed: float=1.0
 var path: String="user://preferences.json"
@@ -14,6 +14,11 @@ func load_settings() -> void:
  for action in DEFAULTS:
   var keys=saved.get(action,DEFAULTS[action])
   if not keys is Array or keys.is_empty() or keys.size()>2: return
+  var migrated: Array=[]
+  for key in keys:
+   if not (key is int or key is float) or key!=int(key) or key<=0: return
+   if int(key)!=KEY_A: migrated.append(int(key))
+  keys=migrated if not migrated.is_empty() else DEFAULTS[action].duplicate()
   candidate[action]=[]
   for key in keys:
    if not (key is int or key is float) or key!=int(key) or key<=0 or int(key) in used: return
@@ -58,6 +63,7 @@ func remapped(event: InputEventKey) -> InputEventKey:
 func summary() -> String:
  var lines: PackedStringArray=[]
  for action in bindings: lines.append("%s    %s" % [caption(action),str(action).replace("_"," ").capitalize()])
+ lines.append("A    Autopilot / cancel")
  lines.append("F1–F4    Select world")
  lines.append("Shift+X    Escape pod")
  lines.append("F5 / F9    Save / load (living pilots)")

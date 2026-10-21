@@ -2,11 +2,17 @@ extends Control
 
 # Original manual PICT 2008: 440 x 396, rebuilt at twice its design size.
 const DESIGN=Vector2(880,792)
+const Intel=preload("res://scripts/system_intel.gd")
 const Chart=preload("res://scripts/map_view.gd")
 var game
 var canvas: Control
 var chart
 var font: Font
+var intel_open: bool=false
+var intel_section: String="leads"
+var intel_tabs: Array[Button]=[]
+var intel_body: RichTextLabel
+var intel_button: Button
 var clear_button: Button
 var readouts: Dictionary={}
 
@@ -25,6 +31,15 @@ func _ready() -> void:
 	make_button("ZoomIn","+",Rect2(140,730,52,44),func():chart.change_zoom(1.35)).tooltip_text="Zoom in · +"
 	clear_button=make_button("ClearRoute","Clear Route",Rect2(218,730,196,44),func():game.map_route.clear();game.destination=-1;chart.queue_redraw();refresh_details())
 	make_button("MapDone","Done",Rect2(674,730,148,44),func():game.set_mode(game.map_return_mode))
+	intel_button=make_button("SystemIntel","Leads & Unlocks",Rect2(438,730,210,44),func():intel_open=not intel_open;refresh_details())
+	intel_button.add_theme_font_size_override("font_size",19)
+	intel_body=RichTextLabel.new();intel_body.name="SystemIntelText";intel_body.position=Vector2(642,138);intel_body.size=Vector2(214,462)
+	intel_body.add_theme_font_override("normal_font",font);intel_body.add_theme_font_size_override("normal_font_size",15)
+	intel_body.add_theme_color_override("default_color",Color("dddddd"));intel_body.bbcode_enabled=false;intel_body.scroll_active=true
+	canvas.add_child(intel_body)
+	intel_tabs.append(make_button("IntelLeads","Leads",Rect2(642,94,102,32),func():intel_section="leads";refresh_details()))
+	intel_tabs.append(make_button("IntelStock","Stock",Rect2(752,94,102,32),func():intel_section="stock";refresh_details()))
+	for tab in intel_tabs: tab.add_theme_font_size_override("font_size",16)
 	resized.connect(fit);fit();refresh_details()
 
 func _draw() -> void:
@@ -70,14 +85,26 @@ func details() -> Dictionary:
 	if flags&2: services.append("Trading")
 	if flags&4: services.append("Outfitting")
 	if flags&8: services.append("Shipyard")
-	var goods: Array=[]
+	var goods: Array=[];var market: Dictionary={}
 	for i in game.catalog.data.commodities.size():
-		if explored and s.objects.any(func(port):return game.catalog.commodity_band(int(port),i)>0): goods.append(game.catalog.data.commodities[i].name)
-	return {"id":id,"name":s.get("name","Unknown"),"explored":explored,"gov":game.catalog.government(id) if explored else "Unknown","legal":legal,"shattered":chart.shattered_worlds(id),"ports":ports,"goods":goods,"services":services,"hazards":"Unknown" if not explored else ", ".join((["Asteroids"] if int(s.fields.Asteroids)>0 else [])+(["Scanner interference"] if int(s.fields.Interference)>0 else [])) if int(s.fields.Asteroids)>0 or int(s.fields.Interference)>0 else "None"}
+		var quotes: Array=[]
+		if explored:
+			for port in s.objects:
+				var obj: Dictionary=game.catalog.record("objects",int(port))
+				if game.world_killer.destroyed(int(port)) or not int(obj.fields.Flags)&1 or not int(obj.fields.Flags)&2: continue
+				if game.catalog.commodity_band(int(port),i)<=0: continue
+				quotes.append({"port":int(port),"name":obj.name,"price":int(game.world_activity.prices(int(port))[i])})
+		if not quotes.is_empty():
+			var good: String=game.catalog.data.commodities[i].name
+			goods.append(good);market[good]=quotes
+	return {"id":id,"name":s.get("name","Unknown"),"explored":explored,"gov":game.catalog.government(id) if explored else "Unknown","legal":legal,"shattered":chart.shattered_worlds(id),"ports":ports,"goods":goods,"market":market,"services":services,"hazards":"Unknown" if not explored else ", ".join((["Asteroids"] if int(s.fields.Asteroids)>0 else [])+(["Scanner interference"] if int(s.fields.Interference)>0 else [])) if int(s.fields.Asteroids)>0 or int(s.fields.Interference)>0 else "None"}
 
 func refresh_details() -> void:
 	for label in readouts.values(): label.hide()
 	var d=details()
+	intel_body.visible=intel_open
+	for tab in intel_tabs: tab.visible=intel_open
+	intel_button.text="System Details" if intel_open else "Leads & Unlocks"
 	text(Vector2(646,40),"Current System:" if int(d.id)==game.pilot.system_id else "Selected System:")
 	text(Vector2(656,66),d.name)
 	if not d.shattered.is_empty():
@@ -85,9 +112,21 @@ func refresh_details() -> void:
 		text(Vector2(656,130),", ".join(d.shattered),Color("ffad60"))
 	text(Vector2(646,164),"Government:");text(Vector2(656,190),d.gov)
 	text(Vector2(646,252),"Legal Status:");text(Vector2(656,278),d.legal)
-	text(Vector2(646,326),"Goods Traded:")
+	text(Vector2(646,326),"Goods Traded (cr/t):")
 	var y: float=352
-	for good in d.goods: text(Vector2(656,y),good);y+=22
+	for good in d.goods:
+		var low: int=2147483647;var high: int=0;var tooltip: Array[String]=[]
+		for quote in d.market[good]:
+			low=mini(low,int(quote.price));high=maxi(high,int(quote.price))
+			tooltip.append("%s: %d cr/t" % [quote.name,quote.price])
+		text(Vector2(646,y),good,Color("dddddd"),14)
+		readouts[str(Vector2(646,y))].size.x=108
+		text(Vector2(754,y),str(low) if low==high else "%d–%d" % [low,high],Color("dddddd"),14)
+		var price_label: Label=readouts[str(Vector2(754,y))]
+		price_label.size.x=100;price_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT
+		price_label.mouse_filter=Control.MOUSE_FILTER_PASS
+		price_label.tooltip_text="Current exchange price per tonne.\n"+"\n".join(tooltip)
+		y+=22
 	if d.goods.is_empty(): text(Vector2(656,y),"None" if d.explored else "Unknown")
 	text(Vector2(646,502),"Services:");y=528
 	for service in d.services: text(Vector2(656,y),service);y+=22
@@ -97,8 +136,11 @@ func refresh_details() -> void:
 	text(Vector2(36,650),"Ports: "+names.left(92))
 	text(Vector2(36,698),"Navigation Hazards: "+d.hazards)
 	text(Vector2(702,698),"Day %d" % game.pilot.campaign.day,Color("777777"),14)
-	text(Vector2(438,756),"Orange fragments:",Color("ffad60"),14)
-	text(Vector2(438,774),"destroyed world / station",Color("ffad60"),14)
+	if intel_open:
+		for at in readouts:
+			if readouts[at].position.x>=628 and readouts[at].position.y>70: readouts[at].hide()
+		intel_body.text=Intel.text(Intel.report(game,int(d.id)),intel_section)
+		intel_body.scroll_to_line(0)
 	clear_button.disabled=(game.map_route.is_empty() and game.destination<0) or game.hyperdrive.active() or not game.chain_route.is_empty()
 
 func _unhandled_key_input(event: InputEvent) -> void:

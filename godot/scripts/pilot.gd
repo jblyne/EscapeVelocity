@@ -11,6 +11,8 @@ var world_state: Dictionary=WorldState.fresh()
 var persons: Dictionary={"gone":[],"grudges":[]}
 var secrets: Dictionary={"forklift":false}
 var campaign: Dictionary = CampaignState.fresh()
+const AchievementState=preload("res://scripts/achievements.gd")
+var achievements: Dictionary=AchievementState.fresh()
 const SAVE_VERSION = 1
 const FUEL_CAPACITY: float = 400.0
 const LEGACY_TEST_FUEL: float = 100000.0
@@ -43,6 +45,7 @@ var interaction_history: Dictionary=History.fresh()
 var local_records: Dictionary = {}
 var fleet: Array = []
 var outfits: Dictionary = {}
+var maverick_afterburner_granted: bool=false
 
 func outfit_count(id: int) -> int:
 	return int(outfits.get(str(id),0))
@@ -116,20 +119,24 @@ func deliver(object_id: int) -> int:
 		return 0
 	var reward: int = int(mission.reward)
 	credits += reward
+	achievements.courier_deliveries+=1
+	achievements.contracts_completed+=1
 	mission = {}
 	return reward
 
 func snapshot() -> Dictionary:
 	return {"version": SAVE_VERSION, "fuel_rules":2, "system_id": system_id, "ship_id": ship_id,
-		"pilot_name":pilot_name,"strict":strict,"strict_dead":strict_dead,"credits": credits, "fuel": fuel, "shield": shield, "armor": armor,
+		"maverick_afterburner_granted":maverick_afterburner_granted,"pilot_name":pilot_name,"strict":strict,"strict_dead":strict_dead,"credits": credits, "fuel": fuel, "shield": shield, "armor": armor,
 		"lasers": lasers, "cargo": cargo.duplicate(), "mission": mission.duplicate(),
 		"visited": visited.duplicate(), "position": [position.x, position.y], "heading": heading,
 		"cheats": {"cloak": cheat_cloak, "chain_jump": cheat_chain_jump, "all_weapons": cheat_all_weapons, "infinite_fuel": cheat_infinite_fuel, "invincibility": cheat_invincibility, "deflection": cheat_deflection, "weapon": selected_weapon if selected_weapon < 10000 else 128},
-		"interaction_history":interaction_history.duplicate(true), "world_killer":world_killer.duplicate(true), "local_records":local_records.duplicate(), "world":world_state.duplicate(true), "surveyed":surveyed.duplicate(), "persons":persons.duplicate(true), "secrets":secrets.duplicate(), "campaign": campaign.duplicate(true), "reputation": reputation.duplicate(), "fleet": fleet.duplicate(true), "outfits": outfits.duplicate()}
+		"achievements":achievements.duplicate(true), "interaction_history":interaction_history.duplicate(true), "world_killer":world_killer.duplicate(true), "local_records":local_records.duplicate(), "world":world_state.duplicate(true), "surveyed":surveyed.duplicate(), "persons":persons.duplicate(true), "secrets":secrets.duplicate(), "campaign": campaign.duplicate(true), "reputation": reputation.duplicate(), "fleet": fleet.duplicate(true), "outfits": outfits.duplicate()}
 
 func restore(value: Variant, catalog: EVCatalog) -> bool:
 	if not value is Dictionary:
 		return false
+	var saved_achievements=value.get("achievements",AchievementState.fresh())
+	if not AchievementState.valid(saved_achievements): return false
 	if not value.get("strict",false) is bool or not value.get("strict_dead",false) is bool or not value.get("pilot_name","Captain") is String: return false
 	if value.get("strict_dead",false): return false
 	if str(value.get("pilot_name","Captain")).length()>64: return false
@@ -183,6 +190,10 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 		if record.is_empty() or int(record.fields.ModType) not in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]: return false
 		if not (quantity is int or quantity is float) or not is_finite(float(quantity)) or quantity != int(quantity) or quantity <= 0 or quantity > maxi(int(record.fields.Max),int(stock.get(id,0))): return false
 		candidate.outfits[id] = int(quantity)
+	if not value.get("maverick_afterburner_granted",false) is bool: return false
+	candidate.maverick_afterburner_granted=value.get("maverick_afterburner_granted",false)
+	if candidate.ship_id==900 and not candidate.maverick_afterburner_granted:
+		candidate.outfits["157"]=1;candidate.maverick_afterburner_granted=true
 	var mass: int = int(value.lasers)*5-Shipyard.stock_mass(catalog,candidate.ship_id)
 	var guns: int = int(value.lasers)
 	var turrets: int = 0
@@ -277,6 +288,7 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 	ship_id=candidate.ship_id
 	ship_fields=candidate.ship_fields
 	campaign=CampaignState.normalized(saved_campaign)
+	achievements=AchievementState.normalized(saved_achievements)
 	system_id = int(value.system_id)
 	credits = int(value.credits)
 	fuel = minf(float(value.fuel),candidate.fuel_capacity())
@@ -298,6 +310,7 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 	cheat_invincibility = cheats.get("invincibility",false)
 	cheat_deflection = cheats.get("deflection",false)
 	outfits = candidate.outfits.duplicate()
+	maverick_afterburner_granted=candidate.maverick_afterburner_granted
 	selected_weapon = int(weapon)
 	reputation = {}
 	for id in records: reputation[id] = int(records[id])

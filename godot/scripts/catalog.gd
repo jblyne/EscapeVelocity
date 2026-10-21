@@ -7,6 +7,13 @@ func _init() -> void:
 	var content = JSON.parse_string(FileAccess.get_file_as_string("res://data/original_catalog.json"))
 	assert(content is Dictionary, "Run tools/build_catalog.py before opening this project.")
 	data = content
+	preload("res://scripts/maverick.gd").install(self)
+	# Requested forklift buff; retain the recovered source catalog unchanged.
+	data.weapons["191"].fields.MassDmg*=3
+	data.weapons["191"].fields.EnergyDmg*=3
+	# Sidewinders deal half the forklift's current mass and energy damage.
+	data.weapons["901"].fields.MassDmg=data.weapons["191"].fields.MassDmg*.5
+	data.weapons["901"].fields.EnergyDmg=data.weapons["191"].fields.EnergyDmg*.5
 	# JSON numbers arrive as floats; Array membership in Godot is type-sensitive.
 	# Normalize identifiers at the boundary so navigation/save references agree.
 	for s in data.systems.values():

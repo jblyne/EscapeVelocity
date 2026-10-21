@@ -168,7 +168,7 @@ func restore_visuals() -> void:
 		if int(bomb().system)==game.pilot.system_id: create_station()
 	for id in state().destroyed:
 		if int(game.catalog.field("objects",int(id),"System"))==game.pilot.system_id:
-			create_remnant(int(id))
+			create_remnant(int(id),true)
 
 func is_space_station(id: int) -> bool:
 	return game.catalog.stellar_type(int(game.catalog.field("objects",id,"Type"))).kind=="station"
@@ -481,9 +481,9 @@ func detonate() -> void:
 	game.notify("%s OBLITERATED. Only a shattered debris field remains." % world_name(id))
 	game.save_game(false)
 
-func create_remnant(id: int) -> void:
+func create_remnant(id: int,restored: bool=false) -> void:
 	var debris=preload("res://scripts/planet_debris.gd").new();debris.name="ShatteredWorld%d" % id
-	game.world.add_child(debris);debris.setup(game.v3(target_position(id),-35 if is_space_station(id) else -90),target_radius(id),id,is_space_station(id))
+	game.world.add_child(debris);debris.setup(game.v3(target_position(id),-35 if is_space_station(id) else -90),target_radius(id),id,is_space_station(id),restored)
 	remnants.append(debris)
 
 const APPEAL_VOICES=[

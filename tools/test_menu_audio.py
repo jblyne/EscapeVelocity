@@ -2,6 +2,9 @@
 import unittest
 import wave
 from extract_menu_audio import ROOT, SOURCES
+from extract_interface_audio import SOUNDS
+SOURCES={fork:dict(names) for fork,names in SOURCES.items()}
+SOURCES["EV Sounds.rsrc"].update(SOUNDS)
 from extract_special_effects import pcm_sound
 from inspect_ev import read_resources
 

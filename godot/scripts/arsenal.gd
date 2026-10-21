@@ -65,6 +65,7 @@ var last_panics: Dictionary={}
 var panic_owner: Node3D
 var panic_key: String=""
 var game
+var gun_audio_hold: float=0.0
 var ship_weapons: Dictionary = {}
 var next_ship_weapon: int = 10000
 
@@ -137,7 +138,7 @@ func kind(id: int) -> String:
 	if id == 150: return "flare"
 	if id in [142,147,152]: return "beam"
 	if id == 140: return "bomb"
-	if id in [131,132,148,191]: return "seeker"
+	if id in [131,132,148,191,901]: return "seeker"
 	return "bolt"
 
 func description(id: int) -> String:
@@ -155,6 +156,7 @@ func description(id: int) -> String:
 	return "Forward-firing weapon. Point your ship at the target and hold Space."
 
 func tint(id: int) -> Color:
+	if id==900: return Color("ffe6a3")
 	if id in [129,147,152]: return Color("bb7aff")
 	if id in [130,134]: return Color("8dff9e")
 	if id in [131,132,139,140,141]: return Color("ffc36b")
@@ -176,12 +178,13 @@ func target(pos: Vector2, selected: bool = true) -> Dictionary:
 	return nearest
 
 func weapon_sound_key(id: int) -> String:
+	if id==901: return "sidewinder_launch"
 	var sound: int=int(game.catalog.field("weapons",id,"Sound"))
 	return "weapon_%d" % (200+sound) if sound>=0 else ""
 
 func play_weapon_sound(id: int,pos: Vector2) -> void:
 	if game.muted: return
-	var key=weapon_sound_key(id)
+	var key="maverick_gun" if id==900 else weapon_sound_key(id)
 	if not game.audio.has(key): return
 	var player: AudioStreamPlayer=game.audio[key]
 	# Rapid beam ticks sustain the sample rather than restarting it every frame.
@@ -189,7 +192,15 @@ func play_weapon_sound(id: int,pos: Vector2) -> void:
 	var distance: float=pos.distance_to(game.pilot.position)
 	if distance>2400: return
 	player.volume_db=-10.0-linear_to_db(1.0+distance/350.0)
+	if id==900:
+		gun_audio_hold=.14
+		if player.playing: return
 	player.play()
+
+func advance_gun_audio(dt: float) -> void:
+	gun_audio_hold=maxf(0,gun_audio_hold-dt)
+	if game.mode!="flight" or game.muted: gun_audio_hold=0
+	if gun_audio_hold<=0 and game.audio.maverick_gun.playing: game.audio.maverick_gun.stop()
 
 func fire(id: int, pos: Vector2, heading: float, enemy: bool = false, source: Dictionary = {}, target_override: Dictionary = {}) -> bool:
 	if ship_weapons.has(id) and not enemy and source.is_empty(): return fire_ship(id)
@@ -208,6 +219,11 @@ func fire(id: int, pos: Vector2, heading: float, enemy: bool = false, source: Di
 		play_weapon_sound(id,pos)
 		return true
 	play_weapon_sound(id,pos)
+	if id in [132,901] and (int(source.id)==900 if npc_shot else game.pilot.ship_id==900) and not game.muted:
+		var distance: float=pos.distance_to(game.pilot.position)
+		if distance<2400:
+			game.audio.maverick_missile.volume_db=-12-linear_to_db(1.0+distance/350.0)
+			game.sound("maverick_missile")
 	var direction = Vector2(sin(heading),-cos(heading))
 	if id == 143: direction = -direction
 	if not contact.is_empty() and id in [133,134,143,144,149]:
@@ -219,22 +235,25 @@ func fire(id: int, pos: Vector2, heading: float, enemy: bool = false, source: Di
 	var muzzle: float = maxf(35,float(source.get("radius",0))+8)
 	var origin = pos + direction * (maxf(48,muzzle) if type in ["bomb","flare"] else muzzle)
 	if type in ["bomb","flare"]: origin = pos-direction*45
+	if id==901:
+		var launcher: Node3D=source.get("model") if npc_shot else game.player_model
+		origin=preload("res://scripts/maverick.gd").missile_origin(launcher,pos,heading)
 	var color: Color = Color("ff896f") if enemy else tint(id)
-	var dimensions = Vector3(3,3,22)
+	var dimensions = Vector3(2,2,7) if id==900 else Vector3(3,3,22)
 	if type == "seeker" or id in [139,141]: dimensions = Vector3(7,5,26)
 	if type in ["bomb","flare"]: dimensions = Vector3(12,8,12)
 	if id == 191: dimensions = Vector3(22,12,28)
 	var node: Node3D
 	if id==191:
 		node=Forklift.create();game.world.add_child(node);node.position=game.v3(origin,6)
-	elif id in ProjectileModels.IDS:
-		node=ProjectileModels.create(id);game.world.add_child(node);node.position=game.v3(origin,6)
+	elif id in ProjectileModels.IDS or id==901:
+		node=ProjectileModels.create(132 if id==901 else id);game.world.add_child(node);node.position=game.v3(origin,6)
 	else:
 		node=game.Models.box(game.world,game.v3(origin,6),dimensions,game.Models.material(color,0,2))
 	node.rotation.y = -Flight.facing(direction)
 	var lifetime: float = clampf(float(fields.Count)/60.0,0.3,20.0)
 	if id == 128: lifetime = 1.5 # Preserve the existing normal laser's range.
-	var speed: float = fields.Speed
+	var speed: float = minf(230,float(fields.Speed)) if id==901 else float(fields.Speed)
 	var target_node = contact.get("model") if npc_shot else (game.player_model if enemy else contact.get("model"))
 	game.shots.append({"node":node,"weapon":id,"kind":type,"position":origin,
 		"velocity":direction*speed,"speed":speed,"enemy":enemy,"life":lifetime,
@@ -303,6 +322,11 @@ func fire_beam(id: int, pos: Vector2, direction: Vector2, contact: Dictionary, s
 		"velocity":Vector2.ZERO,"enemy":enemy,"life":0.07,"damage":0.0,"blast":0.0,"proximity":0.0,"color":tint(id),"source":source,"npc_shot":not source.is_empty()})
 
 func steer(shot: Dictionary, dt: float) -> void:
+	if int(shot.get("weapon",-1))==901:
+		shot.boost_age=float(shot.get("boost_age",0))+dt
+		var cruise: float=float(game.catalog.field("weapons",901,"Speed"))
+		shot.speed=lerpf(minf(230,cruise),cruise,smoothstep(.15,.7,shot.boost_age))
+		shot.velocity=shot.velocity.normalized()*shot.speed
 	if shot.kind != "seeker" and not shot.get("reflected",false): return
 	var destination: Node3D = shot.target if is_instance_valid(shot.target) else null
 	if shot.enemy:

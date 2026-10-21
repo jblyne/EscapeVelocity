@@ -22,7 +22,7 @@ func _initialize() -> void:
 func run() -> void:
 	test_travel_rules()
 	var c=Catalog.new()
-	check(c.data.systems.size()==108 and c.data.ships.size()==27,"original catalog counts")
+	check(c.data.systems.size()==108 and c.data.ships.size()==28,"original catalog plus SS-Maverick counts")
 	var p=Pilot.new()
 	check(p.fuel==400,"new pilots use the original four-jump shuttle tank")
 	check(not p.trade(0,false,120,20),"cannot sell absent cargo")
@@ -303,7 +303,8 @@ func test_return_jump(game) -> void:
 			check(game.hyperdrive.remaining==remaining,"pause freezes the aligned spool countdown")
 			game.set_mode("flight")
 		if not game.hyperdrive.active(): break
-	check(game.pilot.system_id==128 and duration>=7 and duration<=8,"return jump uses a shorter spool and longer burn in about 7–8 seconds")
+	var recording_extension: float=game.audio.jump_start.stream.get_length()-game.hyperdrive.SPOOL_SECONDS-game.hyperdrive.ACCELERATION_SECONDS
+	check(game.pilot.system_id==128 and duration>=7+recording_extension and duration<=8+recording_extension,"return jump preserves alignment time and the complete native warp recording")
 	print("Observed-reference return maneuver in remake: %.3f s" % duration)
 	check(game.pilot.fuel==reserve-100 and game.velocity.x>0 and game.velocity.y<0 and game.pilot.position.x<0 and game.pilot.position.y>0,"Rigel to Levo arrives from the opposite side, moving northeast, spending fuel once")
 	# Select a new route after the one-hop navigation reset.

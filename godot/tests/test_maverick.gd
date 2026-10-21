@@ -1,0 +1,154 @@
+extends SceneTree
+var checks=0
+var failures=0
+func check(ok: bool,message: String) -> void:
+ checks+=1
+ if not ok: failures+=1;push_error(message)
+ else: print("PASS: "+message)
+func _initialize() -> void: call_deferred("run")
+func run() -> void:
+ if FileAccess.file_exists("/tmp/ev101-maverick.json"): DirAccess.remove_absolute("/tmp/ev101-maverick.json")
+ var game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev101-maverick.json";game.controls.path="/tmp/ev101-controls.json";game.traffic.enabled=false;game.muted=true
+ root.add_child(game);game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
+ var forklift_power=game.Combat.powers(game.catalog.record("weapons",191).fields)
+ var sidewinder_power=game.Combat.powers(game.catalog.record("weapons",901).fields)
+ check(sidewinder_power.is_equal_approx(forklift_power*.5),"Sidewinder deals exactly half forklift damage to shields and armor")
+ game.pilot.credits=2000000;game.docked_id=128;game.set_mode("shipyard")
+ check(900 in game.shipyard.ships() and game.shipyard.reason(900).is_empty(),"SS-Maverick available at a tech-three shipyard")
+ check(game.shipyard.buy(900),"SS-Maverick can be purchased")
+ check(game.pilot.ship_id==900 and game.pilot.outfit_count(900)==1 and game.pilot.outfit_count(901)==1 and game.pilot.outfit_count(902)==8,"Purchase includes machine gun, rail and eight Sidewinders")
+ var restored=game.Pilot.new()
+ check(restored.restore(JSON.parse_string(JSON.stringify(game.pilot.snapshot())),game.catalog) and restored.ship_id==900,"Custom hull and loadout survive save restoration")
+ check(game.pilot.outfit_count(157)==1,"New Maverick comes with an afterburner installed")
+ var legacy=game.pilot.snapshot();legacy.erase("maverick_afterburner_granted");legacy.outfits.erase("157")
+ var upgraded=game.Pilot.new()
+ check(upgraded.restore(JSON.parse_string(JSON.stringify(legacy)),game.catalog) and upgraded.outfit_count(157)==1,"Existing Maverick save receives its stock afterburner")
+ var sold=upgraded.snapshot();sold.outfits.erase("157")
+ check(upgraded.restore(JSON.parse_string(JSON.stringify(sold)),game.catalog) and upgraded.outfit_count(157)==0,"A deliberately sold afterburner is not granted again")
+ game.set_mode("flight");game.pilot.position=Vector2(20000,20000);game.velocity=Vector2.ZERO
+ for key in [KEY_UP,KEY_SHIFT]:
+  var event=InputEventKey.new();event.physical_keycode=key;event.pressed=true;Input.parse_input_event(event)
+ Input.flush_buffered_events()
+ for i in 150: game._physics_process(1.0/30)
+ check(game.velocity.length()>float(game.pilot.ship_fields.Speed)*1.8,"Maverick afterburner exceeds the standard afterburner's top speed")
+ game.muted=false;game.update_afterburner_audio(.12)
+ check(game.audio.maverick_afterburner.playing,"Active Maverick afterburner plays the supplied loop")
+ check(game.audio.maverick_afterburner.stream.resource_path=="res://audio/maverick_afterburner.mp3" and game.audio.maverick_afterburner.stream.loop,"Maverick uses the supplied repeating MP3")
+ var plume=game.player_model.get_node("Flame1")
+ check(is_equal_approx(float(plume.material_override.get_shader_parameter("afterburner_heat")),1),"Active Maverick afterburner selects fiery orange exhaust")
+ for key in [KEY_UP,KEY_SHIFT]:
+  var event=InputEventKey.new();event.physical_keycode=key;event.pressed=false;Input.parse_input_event(event)
+ Input.flush_buffered_events();game._physics_process(.02)
+ check(is_zero_approx(float(plume.material_override.get_shader_parameter("afterburner_heat"))),"Releasing afterburner restores ordinary exhaust color")
+ game.Models.set_thrust(game.player_model,1.6,1.0,true)
+ check(is_equal_approx(float(plume.material_override.get_shader_parameter("afterburner_heat")),1),"Maverick hyperspace acceleration uses the same orange exhaust as its afterburner")
+ var standard=game.ShipModels.create(game.catalog,128);game.world.add_child(standard)
+ game.Models.set_thrust(standard,1.6,1.0,true)
+ check(is_zero_approx(float(standard.get_node("Flame1").material_override.get_shader_parameter("afterburner_heat"))),"Other ships retain their existing hyperspace exhaust color")
+ standard.queue_free()
+ game.update_afterburner_audio(.3)
+ check(not game.audio.maverick_afterburner.playing,"Afterburner sound fades out when released")
+ game.muted=true
+ game.velocity=Vector2.ZERO
+ var wing=game.player_model.get_node_or_null("WingRight")
+ check(wing!=null and wing.get_child_count()>0,"Pivoted wing meshes survive template instantiation")
+ game.set_mode("flight");game.hyperdrive.begin(136,0);game.update_jump_visuals(.5)
+ var partial: float=absf(wing.rotation.y)
+ check(partial>0 and partial<deg_to_rad(43),"Jump preparation begins a gradual wing sweep")
+ game.update_jump_visuals(1.5)
+ check(is_equal_approx(absf(wing.rotation.y),deg_to_rad(43)),"Wings reach their fully swept V after two seconds")
+ game.cancel_jump(false);game.update_jump_visuals(.5)
+ check(absf(wing.rotation.y)>0 and absf(wing.rotation.y)<deg_to_rad(43),"Canceled jump opens the wings gradually")
+ game.update_jump_visuals(1.5)
+ check(is_zero_approx(wing.rotation.y),"Wings return fully open")
+ var second=game.ShipModels.create(game.catalog,900)
+ game.world.add_child(second);game.traffic.maverick.advance_wings(second,true,2)
+ check(is_zero_approx(wing.rotation.y),"Wing sweep is independent per ship instance")
+ second.queue_free()
+ game.set_mode("flight");game.pilot.selected_weapon=900;game.cooldown=0
+ check(game.fire_player() and game.shots.back().weapon==900,"Machine gun fires a live projectile")
+ game.pilot.selected_weapon=901;game.cooldown=0
+ check(game.fire_player() and game.shots.back().kind=="seeker" and game.pilot.outfit_count(902)==7,"Sidewinder is guided and consumes its own ammunition")
+ var launch_position: Vector2=game.pilot.position
+ var right: Vector2=Vector2(cos(game.pilot.heading),sin(game.pilot.heading))
+ var left_origin: Vector2=game.shots.back().position
+ check((left_origin-launch_position).dot(right)<0,"First Sidewinder launches from the left wing")
+ game.arsenal.fire(901,launch_position,game.pilot.heading)
+ var right_origin: Vector2=game.shots.back().position
+ check((game.shots.back().position-launch_position).dot(right)>0,"Second Sidewinder launches from the right wing")
+ game.arsenal.fire(901,launch_position,game.pilot.heading)
+ check(game.shots.back().position.is_equal_approx(left_origin),"Third Sidewinder returns to the left wing")
+ var other=game.traffic.spawn(900,136,3,launch_position+Vector2(300,0))
+ game.arsenal.fire(901,other.position,0,false,other)
+ check(game.shots.back().position.x<other.position.x,"NPC Tomcat has an independent left-first launcher sequence")
+ game.traffic.maverick.advance_wings(game.player_model,true,2)
+ var swept_origin: Vector2=game.traffic.maverick.missile_origin(game.player_model,launch_position,game.pilot.heading)
+ check(not swept_origin.is_equal_approx(right_origin) and absf((swept_origin-launch_position).dot(right))<absf((right_origin-launch_position).dot(right)),"Folded wings carry the launchers inward with their pylons")
+ game.traffic.maverick.advance_wings(game.player_model,false,2)
+ var missile: Dictionary=game.shots.filter(func(shot):return shot.weapon==901 and shot.source.is_empty())[0]
+ check(is_equal_approx(missile.speed,230),"Sidewinder deploys slowly at 230 instead of full cruise speed")
+ game.arsenal.steer(missile,.15)
+ check(is_equal_approx(missile.speed,230),"Sidewinder has a brief deployment interval before boosting")
+ game.arsenal.steer(missile,.275)
+ check(missile.speed>230 and missile.speed<900,"Sidewinder accelerates smoothly between launch and cruise speeds")
+ game.arsenal.steer(missile,.275)
+ check(is_equal_approx(missile.speed,900) and is_equal_approx(missile.velocity.length(),900),"Sidewinder reaches full cruise speed after 0.7 seconds even without a target")
+ game.missile_smoke.emit_segment(missile,Vector2.ZERO,Vector2(100,0));game.missile_smoke.advance(.1)
+ check(game.missile_smoke.puffs.size()>0 and game.missile_smoke.instances.visible_instance_count>0,"Boosted Sidewinder leaves a visible smoke trail")
+ var smoke_position: Vector2=game.missile_smoke.puffs[0].position
+ check(smoke_position.x<100,"Smoke is deposited behind the missile rather than attached to it")
+ game.missile_smoke.advance(2)
+ check(game.missile_smoke.puffs.is_empty() and game.missile_smoke.instances.visible_instance_count==0,"Smoke dissipates after the missile has passed")
+ game.docked_id=128;game.set_mode("outfitter")
+ check(game.outfitter.trade(902,true) and game.pilot.outfit_count(902)==8,"Sidewinders can be purchased to rearm")
+ game.set_mode("flight");var npc=game.traffic.maverick.spawn(game)
+ check(not npc.is_empty() and npc.name=="SS-Maverick" and npc.id==900,"Rare encounter uses the custom ship")
+ var previous="";var repeated=false
+ for i in 30:
+  var line=game.traffic.maverick.quote(game.traffic.rng)
+  if line==previous: repeated=true
+  previous=line
+ check(not repeated,"Radio chatter avoids consecutive repeats")
+ game.muted=false
+ var target=game.traffic.spawn(128,130,1,game.pilot.position+Vector2(500,0))
+ game.damage_npc(target,100000)
+ check(is_instance_valid(game.traffic.maverick.victory) and game.traffic.maverick.victory.playing,"Player Tomcat kill starts the supplied Maverick music")
+ check(game.traffic.maverick.victory.stream.resource_path in game.traffic.maverick.VICTORY_TRACKS and game.traffic.maverick.victory.stream.get_length()>0,"A supplied victory track is selected")
+ var active_stream=game.traffic.maverick.victory.stream
+ game.traffic.maverick.victory_cooldown=0;game.traffic.maverick.celebrate(game)
+ check(game.traffic.maverick.victory_cooldown==0 and game.traffic.maverick.victory.stream==active_stream,"Further kills do not restart music already playing")
+ game.toggle_audio()
+ check(not game.traffic.maverick.victory.playing,"Mute stops the victory sting")
+ game.toggle_audio();game.target_index=-1
+ var tab=InputEventKey.new();tab.physical_keycode=KEY_TAB;tab.pressed=true
+ game.audio.ui_target.stop();game._unhandled_key_input(tab)
+ check(game.audio.maverick_target.playing and not game.audio.ui_target.playing,"Tomcat Tab targeting uses the supplied beep instead of the default")
+ game.audio.maverick_target.stop();game.pilot.ship_id=128;game._unhandled_key_input(tab)
+ check(game.audio.ui_target.playing and not game.audio.maverick_target.playing,"Other ships retain the original target sound")
+ game.audio.weapon_204.stop()
+ game.pilot.ship_id=900;game.arsenal.fire(901,game.pilot.position,game.pilot.heading)
+ check(game.audio.maverick_missile.playing and game.audio.sidewinder_launch.playing,"Sidewinder plays the new launch sound alongside the extra Maverick cue")
+ check(not game.audio.weapon_204.playing and game.arsenal.weapon_sound_key(132)=="weapon_204","Sidewinder replaces the stock launch sample while normal missiles retain it")
+ game.toggle_audio()
+ check(not game.audio.sidewinder_launch.playing and not game.audio.maverick_target.playing and not game.audio.maverick_missile.playing,"Mute stops both supplied effects")
+ game.toggle_audio();game.arsenal.fire(900,game.pilot.position,game.pilot.heading)
+ check(game.audio.maverick_gun.playing and game.audio.maverick_gun.stream.loop and game.audio.maverick_gun.stream.resource_path=="res://audio/maverick_gun.mp3","M61 uses the supplied looping gun clip")
+ for i in 12:
+  game.arsenal.advance_gun_audio(.07);game.arsenal.play_weapon_sound(900,game.pilot.position)
+ check(game.audio.maverick_gun.playing and game.audio.maverick_gun.max_polyphony==1,"Sustained gunfire keeps one repeating audio voice")
+ game.arsenal.advance_gun_audio(.15)
+ check(not game.audio.maverick_gun.playing,"Gun audio stops promptly after firing stops")
+ game.arsenal.fire(900,game.pilot.position,game.pilot.heading);game.set_mode("pause");game.arsenal.advance_gun_audio(.01)
+ check(not game.audio.maverick_gun.playing,"Gun loop stops when flight is paused")
+ game.set_mode("flight");game.muted=false
+ var heard: Dictionary={}
+ for i in 32:
+  game.traffic.maverick.victory.stop();game.traffic.maverick.victory_cooldown=0;game.traffic.maverick.celebrate(game)
+  heard[game.traffic.maverick.victory.stream.resource_path]=true
+ check(heard.size()==2 and heard.has("res://audio/maverick_music.mp3") and heard.has("res://audio/maverick_great_balls.mp3"),"Repeated victory cues randomly select both supplied tracks")
+ var fading_track="res://audio/maverick_great_balls.mp3"
+ check(is_equal_approx(game.traffic.maverick.victory_gain(fading_track,3,6.7),1),"Great Balls of Fire stays at full level before its final two seconds")
+ check(is_equal_approx(game.traffic.maverick.victory_gain(fading_track,5.7,6.7),.5) and is_zero_approx(game.traffic.maverick.victory_gain(fading_track,6.7,6.7)),"Great Balls of Fire fades smoothly to silence over the final two seconds")
+ check(is_equal_approx(game.traffic.maverick.victory_gain("res://audio/maverick_music.mp3",8,8.9),1),"Existing victory track keeps its playback level")
+ game.free();await process_frame
+ print("MAVERICK: %d checks; %d failures" % [checks,failures]);quit(1 if failures else 0)

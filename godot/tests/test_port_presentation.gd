@@ -43,15 +43,18 @@ func run() -> void:
 	check(port.scenery.texture!=null and port.scenery.size==Vector2(666,542),"Dune uses generated scenery in original 333:271 panel proportions")
 	check(Art.picture_id(game.catalog,dune)==10010,"Dune retains its original desert scenery type")
 	var body=port.find_child("PortDescription",true,false)
-	check(body.text==game.catalog.data.descriptions[str(dune)],"Landing shows original world description")
+	check(body.text.ends_with(str(game.catalog.data.descriptions[str(dune)])),"Landing shows original world description")
 	check(body.position.x>port.scenery.position.x+port.scenery.size.x,"Description sits to right of scenery")
 	check(body.size.x==488 and body.get_minimum_size().y<=276,"World text wraps inside the original description column")
 	for id in ["RefuelShip","OpenExchange","OpenOutfitter","OpenSpaceportBar","OpenMissions","LeavePort"]:
 		check(port.find_child(id,true,false) is Button,"Original landing service present: "+id)
 	await capture("dune")
+	check(port.find_child("RefuelShip",true,false).disabled,"Full tank disables Refuel Ship")
 	var money: int=game.pilot.credits;game.pilot.fuel-=100;game.pilot.armor-=10
+	game.hud.rebuild_modal()
 	var cost: int=game.refuel_cost();var armor: float=game.pilot.armor;click("RefuelShip")
 	check(game.pilot.credits==money-cost and game.pilot.fuel==game.pilot.fuel_capacity() and game.pilot.armor==armor,"Classic Refuel Ship charges for fuel without altering armor")
+	check(game.hud.modal_root.find_child("RefuelShip",true,false).disabled,"Refueling immediately disables the full-tank button")
 	click("OpenExchange");check(game.mode=="dock" and game.hud.port_page=="exchange","Commodity Exchange opens separate paused port screen")
 	var price: int=game.world_activity.prices(dune)[0];money=game.pilot.credits
 	click("BuyCommodity")
@@ -95,7 +98,7 @@ func run() -> void:
 		click("OpenShipyard");check(game.mode=="shipyard","Visit Shipyard retains ship purchasing")
 		dock(163);await process_frame
 		var description=screen().find_child("PortDescription",true,false)
-		check(description.size==Vector2(488,276) and description.get_content_height()<=276,"Longest original world description fits its panel")
+		check(description.size==Vector2(488,226) and description.scroll_active,"Longest original world description stays scrollable in its panel")
 	if "--visual" in OS.get_cmdline_user_args():
 		dock(dune);DisplayServer.window_set_size(Vector2i(1000,650));await process_frame;await capture("small")
 	print("PORT PRESENTATION: %d checks; %d failures" % [checks,failures]);game.queue_free();await process_frame;quit(1 if failures else 0)

@@ -31,6 +31,9 @@ const Breakup = preload("res://scripts/breakup.gd")
 var breakup_chance: float = 0.28
 const ShipInteractions = preload("res://scripts/ship_interactions.gd")
 var save_path: String = "user://pilot-v1.json"
+var pilot_file_error: String=""
+var remember_pilot_selection: bool=false
+var pilot_selection_path: String="user://active-pilot.json"
 var catalog: EVCatalog
 var pilot: EVPilot
 var velocity = Vector2.ZERO
@@ -47,9 +50,13 @@ var player_model: Node3D
 var planets: Array = []
 var npcs: Array = []
 var escorts: Array = []
+var autopilot=preload("res://scripts/autopilot.gd").new()
 var arsenal = Arsenal.new()
 var shipyard = Shipyard.new()
 var missions = Missions.new()
+var achievements=preload("res://scripts/achievements.gd").new()
+var achievements_return_mode: String="pause"
+var achievement_clock: float=0
 var cloak = Cloak.new()
 var outfitter = Outfitter.new()
 var traffic = Traffic.new()
@@ -59,6 +66,7 @@ var cheat_return_mode: String = "flight"
 var fleet_return_mode: String = "flight"
 var shots: Array = []
 var sparks: Array = []
+var missile_smoke: Node3D
 var explosions: Array = []
 var shield_hits: Array = []
 const MAX_EXPLOSIONS = 8
@@ -82,6 +90,8 @@ var physics_step_dt: float = 0
 var rendered_player_position = Vector3.ZERO
 var rendered_player_velocity = Vector2.ZERO
 var rendered_clock: float = 0
+var auto_landing: bool=false
+var last_land_tap: int=-1000
 var landing_target: int = -1
 var landing_clearance: int = -1
 var docked_id: int = -1
@@ -90,6 +100,7 @@ var muted: bool = false
 var audio: Dictionary = {}
 var title_music_position: float=0.0
 var engine_audio: AudioStreamPlayer
+var afterburner_audio_gain: float=0.0
 var zoom: float = 900
 var autosave_clock: float = 0
 var damage_clock: float = 0
@@ -103,6 +114,11 @@ var controls=preload("res://scripts/control_settings.gd").new()
 var controls_return_mode: String="pause"
 var fast_time: bool=false
 
+func open_achievements() -> void:
+	achievements_return_mode=mode
+	if achievements.update(false): save_game(false)
+	set_mode("achievements")
+
 func open_controls() -> void:
 	controls_return_mode=mode;set_mode("controls")
 
@@ -113,12 +129,18 @@ func _ready() -> void:
 	for i in launch_args.size():
 		if launch_args[i] == "--save-path" and i+1 < launch_args.size():
 			save_path = launch_args[i+1]
+	remember_pilot_selection=save_path=="user://pilot-v1.json" and "--save-path" not in launch_args
+	if remember_pilot_selection and FileAccess.file_exists(pilot_selection_path):
+		var selection=JSON.parse_string(FileAccess.get_file_as_string(pilot_selection_path))
+		if selection is Dictionary and selection.get("path",null) is String and FileAccess.file_exists(selection.path): save_path=selection.path
 	catalog = Catalog.new()
 	environment_hazards.game=self
 	arsenal.game = self
+	autopilot.game=self
 	outfitter.game = self
 	cloak.game = self
 	missions.game = self
+	achievements.game=self
 	shipyard.game = self
 	traffic.game = self
 	fleet_service.game = self
@@ -133,12 +155,13 @@ func _ready() -> void:
 	setup_audio()
 	if FileAccess.file_exists(save_path):
 		var saved = JSON.parse_string(FileAccess.get_file_as_string(save_path))
-		pilot.restore(saved, catalog)
+		opening_story_seen=pilot.restore(saved, catalog)
 	load_system()
 	hud = HUD.new()
 	hud.game = self
 	add_child(hud)
-	notify("W / Up thrust · A / D turn · S / Down face against drift, then thrust to slow.")
+	achievements.update(false)
+	notify("W / Up thrust · Left / Right turn · S / Down face against drift, then thrust to slow.")
 	notify("L requests landing clearance. Approach slowly, then L again to land.")
 	get_tree().auto_accept_quit = false
 	var args = OS.get_cmdline_user_args()
@@ -249,9 +272,14 @@ func setup_environment() -> void:
 	add_child(camera)
 
 func setup_audio() -> void:
-	for key in ["laser", "impact", "explosion", "heavy_explosion", "jump", "land", "arrival", "forklift", "cloak_on", "cloak_off", "menu_click", "menu_hum", "menu_slam", "menu_music", "death_star_warp", "death_star_charge", "death_star_fire"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS:
+	for key in ["maverick_afterburner", "afterburner", "maverick_warp", "sidewinder_launch", "maverick_target", "maverick_missile", "maverick_gun", "laser", "impact", "explosion", "heavy_explosion", "jump", "land", "arrival", "forklift", "cloak_on", "cloak_off", "menu_click", "menu_hum", "menu_slam", "menu_music", "ui_target", "ui_open", "ui_select", "ui_error", "ui_confirm", "airlock", "jump_start", "death_star_warp", "death_star_charge", "death_star_fire"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS:
+		if key=="menu_music":
+			var boot_music=get_tree().root.get_node_or_null("BootTitleMusic")
+			if boot_music!=null:
+				boot_music.reparent(self);audio[key]=boot_music
+				continue
 		var player = AudioStreamPlayer.new()
-		player.stream = load("res://audio/" + key + ".wav")
+		player.stream = load("res://audio/" + key + (".mp3" if key in ["maverick_afterburner","maverick_gun","maverick_warp","sidewinder_launch","maverick_target","maverick_missile"] else ".wav"))
 		# Stretch the rising jump sound across the complete departure burn.
 		if key == "jump": player.pitch_scale = player.stream.get_length() / Hyperspace.ACCELERATION_SECONDS
 		player.volume_db = -4 if (key.begins_with("panic_") or key.begins_with("death_cry")) else (-13 if key == "laser" else -9)
@@ -270,6 +298,18 @@ func setup_audio() -> void:
 		if key.begins_with("menu_"):
 			player.volume_db={"menu_click":-12,"menu_hum":-17,"menu_slam":-18,"menu_music":-20}[key]
 			player.max_polyphony=1
+		if key.begins_with("ui_"):
+			player.volume_db=-14;player.max_polyphony=1
+		if key in ["sidewinder_launch","maverick_target","maverick_missile"]: player.volume_db=-12;player.max_polyphony=1
+		if key=="afterburner":
+			player.stream.loop_mode=AudioStreamWAV.LOOP_FORWARD;player.stream.loop_begin=0;player.stream.loop_end=44100
+			player.volume_db=-20;player.max_polyphony=1
+		if key=="maverick_afterburner": player.stream.loop=true;player.volume_db=-14;player.max_polyphony=1
+		if key=="maverick_gun": player.stream.loop=true;player.max_polyphony=1
+		if key=="maverick_warp":
+			player.stream.loop=true;player.volume_db=3.02;player.max_polyphony=1
+		if key=="airlock": player.volume_db=-18;player.max_polyphony=1
+		if key=="jump_start": player.volume_db=-15;player.max_polyphony=1
 		add_child(player)
 		audio[key] = player
 	engine_audio = AudioStreamPlayer.new()
@@ -281,9 +321,21 @@ func setup_audio() -> void:
 	engine_audio.volume_db = -20
 	add_child(engine_audio)
 
+func update_afterburner_audio(dt: float) -> void:
+	var player: AudioStreamPlayer=audio.maverick_afterburner if pilot.ship_id==900 else audio.afterburner
+	var other: AudioStreamPlayer=audio.afterburner if pilot.ship_id==900 else audio.maverick_afterburner
+	if other.playing: other.stop()
+	if muted or mode!="flight":
+		afterburner_audio_gain=0;player.stop();return
+	var burning: bool=controls.pressed("thrust") and controls.pressed("afterburner") and pilot.outfit_count(157)>0 and pilot.fuel>0 and not hyperdrive.active() and chain_route.is_empty()
+	afterburner_audio_gain=move_toward(afterburner_audio_gain,1.0 if burning else 0.0,maxf(0,dt)/(.12 if burning else .22))
+	if afterburner_audio_gain<=0: player.stop();return
+	player.volume_db=(-14 if pilot.ship_id==900 else -20)+linear_to_db(maxf(.0001,afterburner_audio_gain))
+	if not player.playing: player.play()
+
 func start_title_audio() -> void:
 	if mode!="title": return
-	title_music_position=0.0
+	title_music_position=audio.menu_music.get_playback_position() if audio.menu_music.playing else 0.0
 	if not muted:
 		if not audio.menu_music.playing: audio.menu_music.play()
 		audio.menu_hum.play()
@@ -310,6 +362,8 @@ func v3(pos: Vector2, height: float = 0) -> Vector3:
 	return Vector3(pos.x, height, pos.y)
 
 func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) -> void:
+	missions.approach={};missions.approach_port=-1
+	auto_landing=false;last_land_tap=-1000
 	var traveling_fighters: Array=[]
 	if arrival_heading!=null:
 		for escort in escorts:
@@ -338,8 +392,9 @@ func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) 
 	jump_visuals.reset()
 	if is_instance_valid(engine_audio): engine_audio.stop()
 	if audio.has("jump"): audio.jump.stop()
+	if audio.has("jump_start"): audio.jump_start.stop()
 	if audio.has("arrival"): audio.arrival.stop()
-	for key in ["forklift","cloak_on","cloak_off"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS:
+	for key in ["sidewinder_launch","maverick_target","maverick_missile","maverick_gun","forklift","cloak_on","cloak_off"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS:
 		if key in ["cloak_on","cloak_off"] and arrival_heading!=null: continue
 		if audio.has(key): audio[key].stop()
 	landing_target = -1
@@ -349,6 +404,7 @@ func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) 
 		world.queue_free()
 	world = Node3D.new()
 	add_child(world)
+	missile_smoke=preload("res://scripts/sidewinder_smoke.gd").new();world.add_child(missile_smoke)
 	planets.clear()
 	npcs.clear()
 	escorts.clear()
@@ -381,6 +437,7 @@ func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) 
 	player_model = ShipModels.create(catalog,pilot.ship_id,-1)
 	player_base_scale = player_model.scale
 	world.add_child(player_model)
+	if arrival_heading!=null: preload("res://scripts/maverick.gd").advance_wings(player_model,true,2.0)
 	player_model.position = v3(pilot.position)
 	player_model.rotation.y = -pilot.heading
 	previous_player_position = pilot.position
@@ -460,14 +517,18 @@ func finish_map_hop() -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
+	if event.physical_keycode==KEY_A and mode not in ["title","intro"]:
+		autopilot.toggle();return
 	if mode=="controls":
 		if event.physical_keycode==KEY_ESCAPE: set_mode(controls_return_mode)
 		return
-	if mode == "title":
+	if mode in ["title","intro"]:
 		return
 	if event.physical_keycode==KEY_CAPSLOCK:
 		fast_time=not fast_time;notify("Time acceleration: 2×" if fast_time else "Time acceleration off");return
+	if mode=="dock" and hud.port_page=="bar": missions.bar_activity()
 	event=controls.remapped(event)
+	if autopilot.active() and event.physical_keycode in [KEY_J,KEY_L,KEY_N,KEY_1,KEY_2,KEY_3,KEY_4,KEY_F1,KEY_F2,KEY_F3,KEY_F4]: autopilot.cancel("Manual navigation command.")
 	if mode in ["ejecting","rescue"] and event.physical_keycode not in [KEY_F9,KEY_V,KEY_F11]: return
 	match event.physical_keycode:
 		KEY_ESCAPE:
@@ -478,6 +539,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			elif mode in ["pause","info","eject_confirm"]: set_mode("flight")
 			elif mode == "map": set_mode(map_return_mode)
 			elif mode == "missions": set_mode(missions.return_mode)
+			elif mode == "autopilot": set_mode(autopilot.return_mode)
+			elif mode == "achievements": set_mode(achievements_return_mode)
+			elif mode == "mission_offer": missions.resolve_approach(false)
 			elif mode == "mission_report": missions.dismiss_landing_report()
 			elif mode=="news": set_mode(world_activity.return_mode)
 			elif mode=="world_comms": set_mode("flight")
@@ -500,7 +564,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			elif mode == "map": set_mode(map_return_mode)
 			elif mode=="missions" and not missions.selected.is_empty(): open_mission_map(missions.selected,missions.channel!=2)
 		KEY_L:
-			if mode == "flight": land()
+			if mode == "flight": land_pressed()
 			elif mode == "dock": launch()
 		KEY_F1, KEY_F2, KEY_F3, KEY_F4:
 			if mode=="flight": select_landing_target(event.physical_keycode-KEY_F1)
@@ -512,7 +576,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			if mode == "flight": start_jump()
 		KEY_TAB:
 			if mode == "flight":
+				var previous=target_index
 				target_index = target_index+1 if target_index >= -1 and target_index < npcs.size()-1 else -1
+				if previous!=target_index: sound("maverick_target" if pilot.ship_id==900 else "ui_target")
 		KEY_Y: interactions.open_hail()
 		KEY_B:
 			if event.shift_pressed: combat_drill()
@@ -554,6 +620,8 @@ func toggle_audio() -> void:
 	notify("Sound off" if muted else "Sound on")
 
 func set_mode(value: String) -> void:
+	if value in ["dead","title","ejecting","rescue"]: autopilot.cancel("Flight ended.",false)
+	if value!="flight": auto_landing=false;last_land_tap=-1000
 	if value=="flight" and pilot.strict_dead: value="dead"
 	if value=="outfitter" and mode!="outfitter": outfitter.begin_visit()
 	if value!="title": stop_title_audio()
@@ -568,8 +636,9 @@ func set_mode(value: String) -> void:
 	if value == "dead": cancel_jump(false)
 	for key in ["death_star_warp","death_star_charge","death_star_fire"]: audio[key].stream_paused=value!="flight"
 	if audio.has("jump"): audio.jump.stream_paused = value != "flight"
+	if audio.has("jump_start"): audio.jump_start.stream_paused=value!="flight"
 	if audio.has("arrival"): audio.arrival.stream_paused = value != "flight"
-	for key in ["forklift","cloak_on","cloak_off"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS: audio[key].stream_paused=value!="flight"
+	for key in ["maverick_warp","sidewinder_launch","maverick_target","maverick_missile","maverick_gun","forklift","cloak_on","cloak_off"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS: audio[key].stream_paused=value!="flight"
 	if value=="dead":
 		for key in Arsenal.DEATH_KEYS: audio[key].stream_paused=false
 	for effect in explosions:
@@ -581,10 +650,14 @@ func set_mode(value: String) -> void:
 func _physics_process(dt: float) -> void:
 	dt*=controls.speed*(2.0 if fast_time else 1.0)
 	ejection.advance(dt)
+	if mode=="flight" and autopilot.active() and (controls.pressed("left") or controls.pressed("right") or controls.pressed("thrust") or controls.pressed("retrograde")):
+		autopilot.cancel("Manual flight controls.")
+	autopilot.tick(dt)
 	if mode in ["flight", "dead", "ejecting"]:
 		update_shields(dt)
 		update_explosions(dt)
 		update_sparks(dt)
+		missile_smoke.advance(dt)
 	if mode == "dead" and death_reveal_time > 0:
 		death_reveal_time = maxf(0,death_reveal_time-dt)
 		if death_reveal_time == 0: hud.rebuild_modal()
@@ -607,7 +680,7 @@ func _physics_process(dt: float) -> void:
 		player_model.position = v3(pilot.position)
 		chain_timer -= dt
 		apply_hyperspace_wake(blast_start,pilot.position)
-		Models.set_thrust(player_model,1.6*cloak.visibility_factor(),time)
+		Models.set_thrust(player_model,1.6*cloak.visibility_factor(),time,true)
 		if chain_timer <= 0:
 			chain_hop()
 		else:
@@ -628,16 +701,24 @@ func _physics_process(dt: float) -> void:
 	var fields: Dictionary = pilot.flight_fields(catalog.record("ships",pilot.ship_id).fields)
 	var afterburning: bool = thrust and controls.pressed("afterburner") and pilot.outfit_count(157) > 0 and pilot.fuel > 0 and not hyperdrive.active()
 	if afterburning:
-		fields.Speed *= 1.8
-		fields.Accel *= 2.0
+		fields.Speed *= traffic.maverick.AFTERBURNER_SPEED if pilot.ship_id==900 else 1.8
+		fields.Accel *= traffic.maverick.AFTERBURNER_ACCEL if pilot.ship_id==900 else 2.0
 		if not pilot.cheat_infinite_fuel: pilot.fuel = maxf(0,pilot.fuel-10*dt)
 	if pilot.outfit_count(168) > 0: pilot.fuel = minf(pilot.fuel_capacity(),pilot.fuel+dt)
+	if auto_landing and (not is_zero_approx(turn) or thrust or retrograde):
+		auto_landing=false;notify("Auto landing canceled: manual controls.")
 	var previous_phase: String = hyperdrive.phase
 	var step: Dictionary
 	var engine_throttle: float = (1.6 if afterburning else 1.0) if thrust else 0.0
 	if hyperdrive.active():
 		step = hyperdrive.step(pilot.position, velocity, pilot.heading, fields, dt)
 		engine_throttle = step.thrust
+	elif auto_landing:
+		step=auto_landing_step(fields,dt)
+		engine_throttle=1.0 if (step.velocity-velocity).length()>0.01 else 0.0
+	elif autopilot.active() and autopilot.steering:
+		step=autopilot.helm(fields,dt)
+		engine_throttle=1.0 if (step.velocity-velocity).length()>0.01 else 0.0
 	else:
 		if controls.pressed("face_target") and is_zero_approx(turn) and not retrograde:
 			turn = target_facing_turn(fields,dt)
@@ -657,7 +738,9 @@ func _physics_process(dt: float) -> void:
 			cancel_jump(false)
 			notify("Hyperspace canceled: too close to %s. No fuel used." % obstacle.body.name)
 		else:
-			if hyperdrive.phase != previous_phase and hyperdrive.phase == "accelerating": sound("jump")
+			if hyperdrive.phase != previous_phase and hyperdrive.phase == "spooling":
+				# Original Warp Up begins once stopped and aligned, and continues through the burn.
+				sound("jump_start")
 			if step.complete:
 				if not chain_route.is_empty():
 					chain_hop()
@@ -674,10 +757,11 @@ func _physics_process(dt: float) -> void:
 				else:
 					cancel_jump()
 				return
-	Models.set_thrust(player_model, engine_throttle*cloak.visibility_factor(), time, hyperdrive.phase == "accelerating")
-	if engine_throttle > 0 and not muted:
-		if not engine_audio.playing: engine_audio.play()
-	else: engine_audio.stop()
+	if auto_landing:
+		var port: Dictionary=selected_planet()
+		if not port.is_empty() and pilot.position.distance_to(port.position)<=port.radius and velocity.length()<=Travel.MAX_LANDING_SPEED:
+			auto_landing=false;land();return
+	Models.set_thrust(player_model, engine_throttle*cloak.visibility_factor(), time, hyperdrive.phase == "accelerating",afterburning)
 	if controls.pressed("fire"): fire_player()
 	if not cloak.active:
 		var recovered: Vector2=Combat.recover(pilot.shield,pilot.armor,pilot.max_shield(),pilot.max_armor(),pilot.shield_recharge(),dt)
@@ -691,6 +775,16 @@ func _physics_process(dt: float) -> void:
 		save_game(false)
 
 func _process(dt: float) -> void:
+	update_afterburner_audio(dt)
+	traffic.maverick.advance_warp(self,dt)
+	traffic.maverick.advance_victory_fade()
+	arsenal.advance_gun_audio(dt)
+	missions.advance_bar(dt)
+	if mode in ["flight","dock","missions","mission_report"]:
+		achievement_clock+=dt
+		if achievement_clock>=1:
+			achievement_clock=0
+			if achievements.update(): save_game(false)
 	dt*=controls.speed*(2.0 if fast_time else 1.0) if mode in ["flight","dead","ejecting"] else 1.0
 	if not is_instance_valid(player_model): return
 	if mode == "flight":
@@ -745,6 +839,7 @@ func update_jump_visuals(dt: float) -> void:
 		if rapid_stretch > 0:
 			var length: float = lerpf(1.0,JumpVisuals.MAX_LENGTH,rapid_stretch)
 			visual_scale = Vector3(pow(length,-0.32),1.0,length)
+		if mode=="flight": preload("res://scripts/maverick.gd").advance_wings(player_model,hyperdrive.active() or not chain_route.is_empty(),dt)
 		player_model.scale = player_base_scale*visual_scale
 		var vibration: Vector3 = jump_visuals.ship_offset(hyperdrive,rendered_clock)
 		player_model.position = rendered_player_position + Basis(Vector3.UP,player_model.rotation.y)*vibration
@@ -834,6 +929,7 @@ func damage_npc(npc: Dictionary, amount: float, attacker: Dictionary = {}, impac
 		persons.destroyed(npc)
 		world_activity.resolved(npc)
 		if (attacker.is_empty() or attacker.has("fleet_uid") or attacker.get("player_ally",false)) and not hyperspace_wake: pilot.campaign.rating+=maxi(1,int(catalog.field("ships",int(npc.id),"Crew")))
+		if pilot.ship_id==900 and attacker.is_empty() and not hyperspace_wake: traffic.maverick.celebrate(self)
 		notify("Contact destroyed.")
 		return wreck
 	return null
@@ -871,6 +967,7 @@ func update_shots(dt: float) -> void:
 		arsenal.warn_lethal_impact(shot)
 		var previous: Vector2 = shot.position
 		shot.position += shot.velocity*dt
+		if int(shot.get("weapon",-1))==901: missile_smoke.emit_segment(shot,previous,shot.position)
 		var end_position: Vector2=shot.position
 		if shot.kind != "beam_visual": shot.node.position = v3(shot.position,6)
 		shot.life -= dt
@@ -989,11 +1086,15 @@ func select_landing_target(index: int) -> void:
 	if mode != "flight" or not chain_route.is_empty() or hyperdrive.active() or index < 0 or index >= planets.size(): return
 	var planet: Dictionary = planets[index]
 	if landing_target != planet.id:
+		auto_landing=false
 		landing_target = planet.id
 		landing_clearance = -1
+		sound("ui_select")
 	notify("Selected %s · L to request landing clearance." % planet.name if landing_clearance != planet.id else "Clearance retained for %s." % planet.name)
 
 func landing_guidance() -> String:
+	if autopilot.active(): return "Autopilot · "+autopilot.status+" · A cancels"
+	if auto_landing: return "Auto landing · %s · L or steering cancels" % selected_planet().get("name", "destination")
 	var planet = selected_planet()
 	if planet.is_empty():
 		planet = nearest_planet()
@@ -1007,6 +1108,39 @@ func landing_guidance() -> String:
 		return "Cleared for %s · S / Down turns against drift; W / Up slows you · speed ≤ %d" % [planet.name, Travel.MAX_LANDING_SPEED]
 	return "Cleared for %s · L again to land" % planet.name
 
+func land_pressed() -> void:
+	var now: int=Time.get_ticks_msec()
+	if auto_landing:
+		auto_landing=false;last_land_tap=-1000;notify("Auto landing canceled.");return
+	var double_tap: bool=now-last_land_tap<=350
+	last_land_tap=now
+	if not double_tap:
+		land();return
+	last_land_tap=-1000
+	if mode!="flight" or hyperdrive.active() or not chain_route.is_empty(): return
+	var port: Dictionary=selected_planet()
+	if port.is_empty(): port=nearest_planet()
+	if port.is_empty(): return
+	var refusal: String=world_activity.landing_reason(int(port.id))
+	if not refusal.is_empty(): sound("ui_error");notify(port.name+": "+refusal);return
+	landing_target=port.id;landing_clearance=port.id;auto_landing=true
+	notify("Auto landing at %s · L or steering cancels." % port.name)
+
+func auto_landing_step(fields: Dictionary, dt: float) -> Dictionary:
+	var port: Dictionary=selected_planet()
+	if port.is_empty() or not world_activity.landing_reason(int(port.id)).is_empty():
+		auto_landing=false;notify("Auto landing canceled: destination unavailable.")
+		return Flight.step(pilot.position,velocity,pilot.heading,0,false,false,fields,dt)
+	var offset: Vector2=port.position-pilot.position
+	var acceleration: float=maxf(1,float(fields.Accel)*Flight.ACCEL_SCALE)
+	# Slow well before the surface, allowing time to turn the main engine retrograde.
+	var desired_speed: float=minf(float(fields.Speed)*0.65,sqrt(2*acceleration*maxf(0,offset.length()-port.radius*.45))*.45)
+	var correction: Vector2=offset.normalized()*desired_speed-velocity
+	var heading: float=Flight.facing(correction) if correction.length()>1 else pilot.heading
+	var turn: float=Flight.steering(pilot.heading,heading,fields,dt)
+	var aligned: bool=absf(angle_difference(pilot.heading,heading))<0.12
+	return Flight.step(pilot.position,velocity,pilot.heading,turn,aligned and correction.length()>1,false,fields,dt,minf(1,correction.length()/(acceleration*dt)))
+
 func land() -> void:
 	if mode != "flight" or not chain_route.is_empty() or hyperdrive.active(): return
 	var p = selected_planet()
@@ -1018,16 +1152,19 @@ func land() -> void:
 		landing_target = p.id
 	var refusal: String=world_activity.landing_reason(int(p.id))
 	if not refusal.is_empty():
-		landing_clearance=-1;notify(p.name+": "+refusal);return
+		landing_clearance=-1;sound("ui_error");notify(p.name+": "+refusal);return
 	if landing_clearance != p.id:
 		landing_clearance = p.id
+		sound("ui_confirm")
 		notify("%s: landing clearance granted. Approach slowly; press L again over the world." % p.name)
 		return
 	if pilot.position.distance_to(p.position) > p.radius or velocity.length() > Travel.MAX_LANDING_SPEED:
+		sound("ui_error")
 		notify(landing_guidance())
 		return
 	world_activity.abort()
 	docked_id = p.id
+	missions.begin_port_visit()
 	velocity = Vector2.ZERO
 	missions.landed(docked_id,true)
 	world_activity.sync()
@@ -1037,7 +1174,8 @@ func land() -> void:
 	# Original port-return path 0x32e80 restores the combined shield/armor pool.
 	pilot.armor = pilot.max_armor()
 	outfitter.auto_refuel()
-	sound("land")
+	if autopilot.active(): refuel()
+	sound("ui_open")
 	set_mode("dock")
 	missions.show_next_landing_report()
 	save_game(false)
@@ -1061,9 +1199,11 @@ func cycle_destination() -> void:
 	map_route.clear()
 	var i: int = links.find(destination)
 	destination = int(links[(i+1)%links.size()])
+	sound("ui_select")
 	notify("Navigation set: " + catalog.system(destination).name)
 
 func select_destination(id: int) -> void:
+	if autopilot.active(): autopilot.cancel("Manual navigation destination.")
 	if not chain_route.is_empty(): return
 	if hyperdrive.active():
 		notify("Navigation locked during hyperspace. Return to flight and press J to cancel.")
@@ -1073,6 +1213,7 @@ func select_destination(id: int) -> void:
 		notify("Select a connected system for your next jump.")
 		return
 	destination = id
+	sound("ui_select")
 	notify("Navigation set: " + catalog.system(id).name)
 	if is_instance_valid(hud): hud.rebuild_modal()
 
@@ -1112,7 +1253,13 @@ func start_jump() -> void:
 	var target: Dictionary = catalog.system(first_hop).fields
 	var direction = Vector2(target.xPos - origin.xPos, target.yPos - origin.yPos)
 	jump_visuals.reset()
+	auto_landing=false
+	# Keep the native recording intact: spool plus burn ends at its final sample.
+	hyperdrive.burn_seconds = maxf(0.01, audio.jump_start.stream.get_length() - Hyperspace.SPOOL_SECONDS)
 	hyperdrive.begin(first_hop, Flight.facing(direction))
+	traffic.maverick.begin_warp(self)
+	# Original input dispatch at 0x328bc uses interface sound slot 2 (snd 152).
+	sound("ui_select")
 	notify("Hyperspace: stop, align, spool, accelerate · %s · J cancels" % catalog.system(destination).name)
 
 func cancel_jump(announce: bool = true) -> void:
@@ -1122,6 +1269,7 @@ func cancel_jump(announce: bool = true) -> void:
 	jump_visuals.reset()
 	update_jump_visuals(0)
 	if audio.has("jump"): audio.jump.stop()
+	if audio.has("jump_start"): audio.jump_start.stop()
 	if was_active and announce: notify("Hyperspace canceled. No fuel used; manual flight restored.")
 
 func route_to(target: int) -> Array:
@@ -1345,6 +1493,7 @@ func save_game(announce: bool = true) -> bool:
 	missions.sync_actors()
 	fleet_service.sync()
 	if pilot.armor <= 0 and pilot.shield <= 0 and not pilot.strict_dead: return false
+	achievements.update(is_instance_valid(hud) and mode not in ["title","intro"])
 	var f = FileAccess.open(save_path + ".tmp",FileAccess.WRITE)
 	if f == null:
 		if announce: notify("Could not write the pilot save.")
@@ -1358,29 +1507,88 @@ func save_game(announce: bool = true) -> bool:
 	if announce: notify("Pilot saved.")
 	return true
 
-func load_game() -> void:
-	if not FileAccess.file_exists(save_path):
-		notify("No saved pilot yet. F5 creates a save.")
-		return
-	var saved=JSON.parse_string(FileAccess.get_file_as_string(save_path))
-	if saved is Dictionary and saved.get("strict_dead",false):
-		notify("This strict pilot has died permanently. Create a new pilot to continue.");return
-	if not pilot.restore(saved,catalog):
-		notify("The save is invalid or belongs to a different version.")
-		return
+func open_pilot_file(path: String) -> String:
+	if not FileAccess.file_exists(path): return "That pilot file could not be found. Choose an Escape Velocity HD pilot JSON file."
+	var file=FileAccess.open(path,FileAccess.READ)
+	if file==null: return "That pilot file could not be read. Check its permissions and try again."
+	var saved=JSON.parse_string(file.get_as_text());file.close()
+	if saved is Dictionary and saved.get("strict_dead",false): return "This strict pilot has died permanently. Choose another pilot or create a new one."
+	var restored=Pilot.new()
+	if not restored.restore(saved,catalog): return "This is not a valid Escape Velocity HD pilot file, or it belongs to an unsupported version."
+	if ProjectSettings.globalize_path(path)!=ProjectSettings.globalize_path(save_path):
+		var preservation_error: String=preserve_current_pilot()
+		if not preservation_error.is_empty(): return preservation_error
+	autopilot.cancel("Pilot restored.",false)
+	# Discard transient encounters and reports belonging to the previous pilot.
+	missions.reset_bar_encounters();missions.landing_reports.clear();missions.active_landing_report.clear()
+	pilot=restored;save_path=path;pilot_ready=true;opening_story_seen=true
+	remember_active_pilot()
+	messages.clear()
 	load_system()
+	return ""
+
+func load_game() -> void:
+	var error: String=open_pilot_file(save_path)
+	if not error.is_empty(): notify(error);return
 	set_mode("flight")
 	notify("Pilot restored.")
 
-func create_pilot(name: String,strict_rules: bool) -> void:
-	restart();pilot.pilot_name=name.strip_edges().left(64) if not name.strip_edges().is_empty() else "Captain"
-	pilot.strict=strict_rules;save_game(false)
+var opening_story_seen: bool=false
+func enter_ship_with_intro(force_intro: bool=false) -> void:
+	if not pilot_ready: return
+	if opening_story_seen or (DisplayServer.get_name()=="headless" and not force_intro):
+		set_mode("flight");return
+	opening_story_seen=true
+	set_mode("intro")
+	var layer=CanvasLayer.new();layer.layer=50;add_child(layer)
+	var intro=load("res://scripts/startup.gd").new();intro.story_only=true;intro.music_muted=muted
+	intro.story_finished.connect(func():
+		layer.queue_free();set_mode("flight"))
+	layer.add_child(intro)
 
-func restart() -> void:
+func remember_active_pilot() -> void:
+	if not remember_pilot_selection: return
+	var file=FileAccess.open(pilot_selection_path+".tmp",FileAccess.WRITE)
+	if file==null: return
+	file.store_string(JSON.stringify({"path":ProjectSettings.globalize_path(save_path)}));file.close()
+	DirAccess.rename_absolute(ProjectSettings.globalize_path(pilot_selection_path+".tmp"),ProjectSettings.globalize_path(pilot_selection_path))
+
+func preserve_current_pilot() -> String:
+	if not pilot_ready: return ""
+	# A normal dead pilot retains its last living save; never overwrite it with the wreck.
+	if pilot.shield<=0 and pilot.armor<=0 and not pilot.strict_dead: return ""
+	return "" if save_game(false) else "Could not save the current pilot. No pilot was replaced. Check the save folder permissions and try again."
+
+func create_pilot(name: String,strict_rules: bool) -> bool:
+	pilot_file_error=preserve_current_pilot()
+	if not pilot_file_error.is_empty(): return false
+	var candidate=Pilot.new()
+	candidate.pilot_name=name.strip_edges().left(64) if not name.strip_edges().is_empty() else "Captain"
+	candidate.strict=strict_rules
+	var stem: String="pilot-"+candidate.pilot_name.to_snake_case().validate_filename().left(48)
+	var directory: String=save_path.get_base_dir()
+	var path: String=directory.path_join(stem+".json")
+	var suffix: int=2
+	while FileAccess.file_exists(path) or FileAccess.file_exists(path+".tmp") or ProjectSettings.globalize_path(path)==ProjectSettings.globalize_path(save_path):
+		path=directory.path_join(stem+"-%d.json" % suffix);suffix+=1
+	# Write the new pilot successfully before changing the active pilot or file.
+	var file=FileAccess.open(path+".tmp",FileAccess.WRITE)
+	if file==null:
+		pilot_file_error="Could not create the new pilot file. Your current pilot is still active.";return false
+	file.store_string(JSON.stringify(candidate.snapshot(),"\t"));file.close()
+	if DirAccess.rename_absolute(ProjectSettings.globalize_path(path+".tmp"),ProjectSettings.globalize_path(path))!=OK:
+		pilot_file_error="Could not finish saving the new pilot. Your current pilot is still active.";return false
+	save_path=path;remember_active_pilot();restart(candidate);opening_story_seen=false
+	enter_ship_with_intro()
+	return true
+
+func restart(new_pilot: Variant=null) -> void:
+	autopilot.cancel("New flight.",false)
 	pilot_ready = true
+	missions.approach={};missions.approached.clear();missions.approach_port=-1;missions.bar_port=-1;missions.bar_rolls.clear();missions.bar_queue.clear()
 	missions.landing_reports.clear()
 	missions.active_landing_report.clear()
-	pilot = Pilot.new()
+	pilot = Pilot.new() if new_pilot==null else new_pilot
 	load_system()
 	set_mode("flight")
 	notify("Fresh test flight. Save with F5 when ready.")

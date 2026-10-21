@@ -9,6 +9,7 @@ var game
 var rng = RandomNumberGenerator.new()
 var timer: float = 10
 var enabled: bool = true
+var maverick=preload("res://scripts/maverick.gd").new()
 
 func _init() -> void:
 	rng.randomize()
@@ -140,6 +141,9 @@ func advance_departure(npc: Dictionary,dt: float) -> bool:
 	return true
 
 func set_audio_state(muted: bool,running: bool) -> void:
+	if is_instance_valid(maverick.victory):
+		if muted: maverick.victory.stop()
+		else: maverick.victory.stream_paused=not running
 	for npc in game.npcs:
 		if npc.has("departure"): npc.departure.set_audio_state(muted,running)
 
@@ -184,7 +188,9 @@ func can_hit(shot: Dictionary, npc: Dictionary) -> bool:
 
 func update(dt: float) -> void:
 	if game.mode!="flight": return
-	if enabled: game.hector.advance(dt)
+	if enabled:
+		game.hector.advance(dt)
+		maverick.advance(game,dt)
 	if enabled:
 		timer-=dt
 		if timer<=0:
@@ -202,8 +208,10 @@ func update(dt: float) -> void:
 	for npc in game.npcs.duplicate():
 		if npc not in game.npcs: continue
 		npc.age+=dt
+		if npc.get("maverick",false): maverick.update(game,npc,dt)
 		game.Combat.regenerate(npc,game.catalog.record("ships",npc.id).fields,dt)
 		if advance_departure(npc,dt): continue
+		if npc.id==900: maverick.advance_wings(npc.model,false,dt)
 		if npc.get("hector",false):
 			game.hector.fly(npc,dt)
 			continue

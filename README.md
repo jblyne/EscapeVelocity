@@ -436,3 +436,343 @@ Launched bay fighters now survive normal and chain jumps. They warp in behind
 the flagship after a short staggered delay, using the ship arrival stretch and
 settling animation, then resume escort combat. Arrival delays advance only with
 flight simulation. Fresh pilot/system loads still clear transient bay fighters.
+
+
+## 0.1.63 — Persistent remnant fields
+
+Revisiting a destroyed planet or station restores a cold, seeded debris field at
+the body's former location. Rocky fragments or torn metal plates slowly tumble
+in place instead of replaying the outward blast. Fresh destruction still throws
+fragments outward continuously.
+
+## 0.1.64 — Classic startup sequence
+
+Normal app launch now shows the original Ambrosia publisher logo (PICT 8100),
+Escape Velocity launch artwork (PICT 131) with actual threaded scene-loading
+progress, then the original STR# 20000 story over PICT 8200 before the main menu.
+Click, Space or Escape advances the logo or skips the story. The full story
+scrolls automatically; modern display durations, scroll rate and text shading
+are reconstructed rather than verified frame-for-frame original timing.
+The game menu and pilot save behavior remain unchanged. `--skip-intro` and the
+existing direct-screen debug arguments bypass the introduction.
+
+
+## 0.1.65 — Detailed drifting wreckage
+
+Persistent station fields mix broken pressure modules, structural ring sections,
+torn equipment panels and hull plates, scattered through the field instead of
+forming an empty ring. Planet and station remnants tumble more visibly and
+follow gentle, seeded local drift paths that remain bounded around their
+original positions. The initial blast still sends loose fragments outward.
+
+## 0.1.66 — Original startup music and cue order
+
+Verified the original executable's startup calls: title music (snd 30000) begins
+with the publisher logo and continues through loading and the main menu without
+restarting. The story belongs to a new pilot's first ship entry, rather than
+before the menu; loaded pilots skip it. The Levo image plays Transition (30003)
+and holds up to eight seconds, followed by the black story scroll with Drum
+Intro (30001) handing off to Drum Loop (30002). All music preserves original PCM.
+The story's normal source scroll rate is 30 pixels/second at 640×480. Loading
+length remains dependent on hardware. See
+[the source cue audit](research/reports/ORIGINAL_STARTUP_0_1_66.md).
+
+## 0.1.67 — Original interface and boarding sounds
+
+Restored all five original interface beeps and the Airlock recording. Ship/world
+and navigation targeting, service-list selection, landing clearance/completion,
+refusals, equipment transactions, mission acceptance and boarding now have
+original sound feedback. Landing no longer plays its generated two-tone chime.
+Generic modal buttons also use the original Click recording. Audio remains
+mutable and selection sounds do not repeat during UI refreshes. Some cue
+placements adapt original sounds to the remake's interactions; see
+[the interface audio notes](research/reports/ORIGINAL_INTERFACE_AUDIO_0_1_67.md).
+
+
+## 0.1.68 — Mission comparison indicators
+
+Mission offers now show shortest connected jump counts beside each title and
+a gold star for the closest offers. Sort: nearest toggles distance ordering while
+retaining the selected mission; Sort: original restores source order. The detail
+pane summarizes the next objective, cargo requirement, reward and days remaining,
+with a warning when cargo space is insufficient. Courier jobs participate too.
+Distances are to the next known objective, not a promise of total mission travel;
+return legs and later stages can add jumps. Unknown/disconnected goals are marked
+explicitly and never use the chain-jump cheat's isolated-system fallback.
+
+
+## 0.1.69 — Classic ship communications
+
+Ship hailing now uses a compact black dialog with a thin square border, captain
+response at upper left, ship portrait and identity at right, and grey beveled
+communication buttons below. Assistance, bribes and offered contracts use the
+same presentation, with scrolling for long responses. Existing actions and
+keyboard shortcuts remain; boarding remains accessible via its shortcut. The
+layout follows the observed original hail arrangement documented in
+[the interaction reference](research/reports/ORIGINAL_SHIP_INTERACTIONS.md).
+
+
+## 0.1.70 — Full-tank refuel button
+
+The planet/station Refuel Ship button is disabled when fuel reaches tank
+capacity, with a Fuel tank full tooltip. The existing post-purchase refresh
+updates the button immediately after refueling.
+
+## 0.1.71 — Menu machinery waits for presentation
+
+Panel animation and its machinery sound now begin only after the first menu
+frame has rendered. The first subsequent process delta discards scene-loading
+and shader-warmup time, preventing a premature panel slam behind startup art.
+Leaving the menu before its first draw cancels the pending sound. The original
+title music continues uninterrupted across the startup/menu handoff.
+
+
+## 0.1.72 — Classic ship-destroyed dialog
+
+The ship-destroyed screen now follows the compact black message-dialog style,
+with a thin square border, plain text and grey beveled recovery buttons. It
+retains the explosion reveal delay, last-living-save protection and strict-pilot
+restrictions; Load Last Save is disabled when no pilot file exists.
+
+
+## 0.1.73 — Commodity prices on the map
+
+The selected-system panel now shows current commodity exchange prices in cr/t,
+using the same reputation and active-event pricing as the ports. Multiple local
+markets show a minimum–maximum range; hovering the price lists each port's quote.
+Unexplored systems retain hidden market information, and destroyed or non-trading
+ports contribute no quotes.
+
+
+## 0.1.74 — Silent thrusters
+
+Normal thrust and afterburner flight no longer play the looping engine sound.
+Thruster visuals and the other game sounds retain their existing behavior.
+
+
+## 0.1.75 — Original jump-initiation sound
+
+A valid J jump request now immediately plays original Warp Up (snd 128), with
+its original PCM and pitch. It pauses with flight and stops on cancellation,
+system reload, or handoff to the existing acceleration sound. Invalid requests
+and the second J used to cancel do not start the recording. Original reference:
+0x5b304 loads snd 128; the hyperspace charge path plays it at 0x35810–0x35828.
+The remake starts it on the accepted request so the stop/align phase has audible
+feedback too.
+
+
+## 0.1.76 — Silent hyperspace acceleration
+
+Removed the generated acceleration/engine sound during hyperspace as well as
+normal thrust. Original Warp Up still plays when J initiates a valid jump; the
+existing arrival effect is retained.
+
+## 0.1.77 — Hyperspace hum without wind
+
+Restored the rising tonal hum during the departure burn, removing the noise layer from its waveform. Ordinary thrusters remain silent; original jump initiation and arrival cues remain.
+
+## 0.1.78 — Original hyperspace recordings and phase timing
+
+J is silent during stopping and alignment. Original snd 128 Warp Up begins at spooling and continues through acceleration, without synthesized jump audio. Original snd 130 Warp Out replaces the generated arrival sound. Both play at native pitch.
+
+## 0.1.79 — Jump confirmation and complete warp recording
+
+Accepted J plays original Beep3 (snd 152). Spool plus departure burn now lasts the full native Warp Up recording, rather than cutting it short at a fixed burn duration.
+
+## 0.1.80 — Mission landing arrows
+
+Red flight arrows label the specific planet or station needed for each current landing objective, including courier deliveries and return stops. Offscreen arrows point toward the destination and stay clear of the right instrument panel. Markers follow mission progress and omit destroyed worlds.
+
+## 0.1.81 — Double-tap auto landing
+
+Double-tap L within 350 ms to approach the selected world (or nearest if unselected), brake using the main engine, and land after clearance, position and speed checks. L, manual steering/thrust, changing destination, menus or jumping cancel the approach. Landing refusals remain enforced.
+
+## 0.1.82 — Original capital ship silhouettes
+
+Rebuilt Confederate Frigate/Cruiser and Rebel Destroyer/Cruiser geometry against original PICT 1010, 1012, 1024 and 1026. Restored silver spines, swept blue Confederate aft housings, cruiser hangar asymmetry, and narrow Rebel hulls with red outriggers and squared engine bays. Ship statistics and weapons remain unchanged.
+
+## 0.1.83 — Rush labels on mission map arrows
+
+Timed mission arrows now show RUSH and remaining game days, highlighting deadlines due today or tomorrow. Shared destinations show the number of rush contracts and earliest deadline. Untimed and hidden-arrow missions retain their existing presentation.
+
+## 0.1.84 — Classic pause menu
+
+Restyled flight pause menu to the shared black, gray bordered classic interface with gray buttons. Controls use current bindings in a compact two-column reference with its own scroll area; menu actions remain visible alongside it. Added the auto-land shortcut to the reference.
+
+## 0.1.85 — Local leads and unlock guides
+
+Map Leads & Unlocks and landing Local Leads & Unlocks present story leads gated by campaign progress, with combat/reputation advice and intermittent-offer guidance. Lists derive local special-tech outfits and shipyard stock from original port technology and clearance requirements. Unknown systems require exploration; destroyed ports are omitted.
+
+## 0.1.86 — Bar approaches and landing trigger audit
+
+Entering a spaceport bar now presents eligible original mission approaches with original offer prose and accept/decline controls. Resolved offers do not repeat during the same landing visit; original chance, progression, reputation, cargo and slot limits apply. Accepted jobs show their original briefing. Physical landing refreshes the visit seed and retains completion/cargo report sequencing before newly unlocked bar follow-ups.
+
+## 0.1.87 — Achievement badges and overall progress
+
+Persistent per-pilot badges recognize contracts, exploration, wealth, combat rating, fleets, story milestones, experimental equipment and the reckoning. New badges display a nonblocking medal toast and remain earned after spending credits or losing ships. Open Achievements from the pause menu or ship information. Overall completion is 40% systems visited and 60% seven main story tracks, counting the chosen military and special-operations branch; opposite-faction paths and repeat jobs are not required. Existing pilots recover milestones from recorded history; older saves remain compatible.
+
+## 0.1.88 — Gray unavailable outfitter items
+
+Outfitter items unavailable at the current port now have dim grayscale icons and gray names, including their selected preview. They remain selectable for descriptions and selling owned units. Affordability and free-space limits do not gray items that the port actually stocks.
+
+## 0.1.89 — Original bar encounter ordering
+
+Bar entry prepares encounters; approaches now appear through the bar idle loop after the bar is visible, rather than immediately inside the entry button. Restored the original idle-counter ranges and stable same-port chance rolls. Re-entering or landing at the same bar no longer rerolls its encounters; visiting another bar refreshes the rolls. Mission prerequisites are rechecked before presentation. Null events are represented at nominal 60 Hz, rather than claiming identical vintage Macintosh wall-clock cadence.
+
+## 0.1.90 — Mission and commodity autopilot
+
+Autopilot / F6 opens active transport missions or known adjacent-system low/high commodity loops. Choosing a row engages normal flight, gravity-well departure, connected jumps, landing and paid refueling. Trade loops buy cargo with a fuel reserve, sell only the units acquired for the loop, and return to repeat; live price/access changes stop the route. Story reports wait for Okay, and combat/boarding objectives require manual completion. The button or F6 cancels immediately; steering or manual navigation also cancels. Automation is deliberately transient and does not resume after loading a pilot.
+
+## 0.1.91 — Consistent classic dialogs
+
+Converted the remaining shared blue rounded dialogs to black panels, thin gray borders, Geneva-style text and the same beveled gray buttons as the classic port screens. This includes ship information, target inspection, cheats and confirmation dialogs. Ship information actions use a compact two-column layout. Existing dialog animations and actions are preserved.
+
+## 0.1.92 — Autopilot interruption and shortcut
+
+Autopilot now uses A, with left steering on the Left arrow. Existing saved A bindings are migrated while preserving other customized controls. Manual flight input cancels automation before it can start another jump or chain hop, and cancellation clears the automated map route so the picker can be reopened.
+
+## 0.1.93 — Flight reputation readout
+
+A compact classic HUD below Autopilot displays live combat rating, progress between combat achievement milestones, and signed government standing with centered reputation gauges. Confederation and Rebellion are always visible; other local governments or independent local legal records appear when applicable. Red indicates negative or hostile standing, green positive standing, gray neutral.
+
+## 0.1.94 — Compact reputation instruments
+
+Replaced the floating reputation box with a thin three-cell instrument row between navigation and weapons in the classic sidebar. Crossed blades show combat progress, a blue shield Confederation standing, and a red winged star Rebellion standing. Hover for exact names and scores; signed reputation gauges extend left or right of neutral.
+
+## 0.1.95 — Existing cargo in trade autopilot
+
+Trade autopilot recognizes the chosen commodity already carried by the flagship or fleet and sells it at the low-price stop first, then starts the normal buy-low/sell-high loop. Route selection previews the existing quantity and first sale destination. Unrelated goods remain aboard.
+
+## 0.1.96 — Sell existing trade cargo high first
+
+Following the clarified route behavior, autopilot takes existing cargo of the selected commodity directly to the high-price stop for sale, then returns to buy low and repeats the normal loop. The route picker previews that first sale destination. This supersedes the low-price initial sale in 0.1.95.
+
+## 0.1.97 — Autopilot activity indicator
+
+Replaced the persistent Autopilot button with an active-only classic readout showing the mission or commodity route, both trading stops, and the current flight step. Manual interruption hides it. A remains the shortcut to open or cancel autopilot.
+
+## 0.1.98 — Unframed autopilot readout
+
+Removed the background and border from the active autopilot indicator, leaving its text directly over space.
+
+## 0.1.99 — Matching ratings panel bevel
+
+The ratings row now uses the same shared recessed background and raised gray bevel as the navigation, weapons, and other sidebar panels.
+
+## 0.1.100 — Simpler autopilot overlay
+
+Removed the current-step row from the autopilot overlay; only the active status and selected route or mission remain.
+
+## 0.1.101 — SS-Maverick Tomcat
+
+Added a space-rated F-14-inspired Tomcat with swept wings, tandem cockpit, twin engine nacelles and twin fins. SS-Maverick appears as an occasional neutral radio contact (checks every 3–7 minutes of flight; one at a time) and leaves after its flyby. Radio chatter mixes two short film quotes with original space-pilot banter and avoids immediate repeats. Hailing the ship also produces its chatter.
+
+The ship is sold at tech-level-three shipyards for a base 650,000 credits, with an M61 machine gun, Sidewinder rail and eight guided AIM-9 missiles. All three outfits are stocked at tech-three outfitters. Hull, loadout and ammunition persist through saves.
+
+Player kills while flying the Tomcat trigger an original synthesized victory sting, with an eight-second cooldown. No Top Gun soundtrack recording is included. A user-supplied licensed Ogg Vorbis file named `maverick_victory.ogg` in the game's user data directory replaces the sting (restart required). `tools/generate_maverick_audio.py` reproducibly generates the original gun and victory effects.
+
+## 0.1.102 — Supplied Maverick music
+
+Bundled the user-supplied Maverick Music.mp3 as the Tomcat kill cue, replacing the synthesized placeholder. The complete roughly nine-second clip plays once; further kills do not restart it while it is playing. Pause and mute behavior and the optional user-data Ogg override are retained.
+
+## 0.1.103 — Open Pilot file selection
+
+Open Pilot now presents a filesystem chooser for saved pilot JSON files, starting in the active save directory. Selecting a valid pilot updates the title readout and enables Enter Ship; subsequent saves use the selected file. Invalid, unreadable or permanently deceased pilots show recoverable errors without replacing the current pilot. Opening a pilot clears transient encounters and pending reports from the previous pilot.
+
+## 0.1.104 — Separate pilot files
+
+Creating a pilot saves the current pilot first, then writes a separate uniquely named JSON file in the same save folder. Duplicate names receive a numeric suffix. A failed save or file creation keeps the current pilot active. Switching to a different pilot file also saves the previous living pilot; F9 still reloads without saving over the restore point. Normal dead pilots retain their last living save.
+
+The selected pilot file is remembered for the next app launch; explicit --save-path overrides remain isolated.
+
+## 0.1.105 — Triple forklift damage
+
+Tripled the forklift weapon’s mass and energy damage from 1,000 to 3,000 each. Its firing rate, blast radius and split-hull pass-through behavior are unchanged.
+
+## 0.1.106 — Tomcat wing silhouette
+
+Reshaped SS-Maverick with fixed wing gloves, separate moderately swept outer wing panels, clipped tips, pivot covers and flap seams. Broader distinct tailplanes leave a visible gap behind the main wings, replacing the previous delta-like silhouette.
+
+## 0.1.107 — Animated Tomcat wing sweep
+
+SS-Maverick now has independently pivoted wings that smoothly sweep back over two seconds when preparing for hyperspace. They reopen smoothly after cancellation or arrival. NPC departures use the same wing animation, while static shipyard previews remain open.
+
+## 0.1.108 — Sidewinder launch acceleration
+
+Sidewinders deploy at 230 units/second for 0.15 seconds, then smoothly boost to their normal 1,050-unit cruise speed by 0.7 seconds. Boost works with or without a guidance target; other missiles retain their existing launch behavior.
+
+## 0.1.109 — Alternating Sidewinder wing launches
+
+Sidewinders launch from visible wing pylons, alternating left, right, left per ship. Pylons follow the Tomcat’s animated wing sweep. Player and NPC launch sequences are independent, and launch positions use physics coordinates to avoid interpolation drift.
+
+## 0.1.110 — Supplied Maverick target and missile audio
+
+SS-Maverick uses the supplied target beep for Tab contact changes. Its Sidewinder and standard missile launches play the supplied missile clip in addition to the normal weapon sound, including distance attenuation for NPC Mavericks. Other ships keep their normal sounds. Both new effects honor mute and pause.
+
+## 0.1.111 — Revised Maverick missile firing cue
+
+Replaced the additional Maverick missile firing clip with the supplied missle lock 2.mp3. The original supplied Tab targeting beep remains in use.
+
+## 0.1.112 — Sidewinder smoke and speed
+
+Reduced Sidewinder cruise speed from 1,050 to 900 while keeping the slow launch and boost ramp. Boosted missiles leave soft gray smoke that expands, drifts slightly and fades over 1.6 seconds, persisting briefly after impact. Smoke uses a capped instanced batch and respects pause.
+
+## 0.1.113 — Dedicated Sidewinder launch sound
+
+Sidewinders now use the supplied Missle Fire Sound.mp3 instead of the normal missile launch sample. The additional Maverick firing cue remains layered on top; standard missiles retain their original sound.
+
+## 0.1.114 — Maverick warp music
+
+The supplied Danger Zone Warp Music.mp3 starts with the player Tomcat’s jump preparation. It plays continuously across chained system transitions, looping if needed, then fades out over three real-time seconds after the final arrival or a canceled jump. Menus pause playback and fading; mute is respected. Other hulls retain their normal warp audio.
+
+## 0.1.115 — Louder Maverick warp music
+
+Raised the Maverick warp music by 8 dB, retaining the three-second fade and continuous playback through chained warps.
+
+## 0.1.116 — Louder Maverick victory music
+
+Raised the Maverick ship-destruction victory music by 8 dB.
+
+## 0.1.117 — Doubled Maverick music levels
+
+Increased both warp and victory music by another 6.02 dB (double playback amplitude).
+
+## 0.1.118 — Supplied M61 firing loop
+
+The M61 uses the supplied Machine Gun Fire.mp3. Sustained fire repeats one audio voice without restarting the clip on every bullet; playback stops shortly after the last shot or when flight is paused.
+
+## 0.1.119 — Sidewinder damage balance
+
+Sidewinder mass and energy damage are now half the buffed forklift’s values (1,500 each), producing exactly half its effective direct shield and armor damage.
+
+## 0.1.120 — Louder warp song
+
+Raised the Maverick warp song by another 6 dB, preserving its chained-jump playback and fade.
+
+## 0.1.121 — Triple Maverick cargo space
+
+Increased SS-Maverick cargo capacity from 12 to 36 tons. Existing saves use the updated hull capacity when loaded.
+
+## 0.1.122 — Random Maverick victory music
+
+Maverick kills randomly choose between the original supplied victory clip and Great Balls of Fire.mp3 at the same playback level. Music already playing is not interrupted or restarted. Great Balls of Fire fades to silence over its final two seconds; the first track keeps its existing ending. The optional user-data Ogg override replaces the first choice.
+
+## 0.1.123 — Maverick high-output afterburner
+
+SS-Maverick includes an afterburner. It raises maximum speed to 2.5× normal and acceleration to 2.75×, compared with the standard 1.8× speed / 2× acceleration, using the normal fuel drain. Its active afterburner produces orange flames with a hot yellow core; ordinary thrust remains blue. Existing Maverick saves receive the stock afterburner once, without re-granting one that was deliberately sold afterward.
+
+## 0.1.124 — Orange Maverick hyperspace exhaust
+
+Maverick hyperspace acceleration uses the same intense orange/yellow exhaust as its afterburner, including chained flybys and NPC departures. Other ships keep their existing exhaust colors.
+
+## 0.1.125 — Subtle afterburner thrust audio
+
+Added a quiet, original low tonal rumble while an installed afterburner is actively used. The seamless loop fades in over 0.12 seconds and out over 0.22 seconds, stops for pause/mute, and is not used for normal thrust or hyperspace.
+
+## 0.1.126 — Supplied Maverick afterburner audio
+
+Maverick afterburner playback now uses the supplied Afterburner Sound.mp3 on loop, with the existing short fade-in and release fade-out. Other ships retain their current afterburner sound.
+
+## 0.1.127 — Revised, louder Maverick afterburner
+
+Replaced Maverick afterburner playback with the supplied Afterbuner 2.mp3 and raised its level by 6 dB, preserving looping and release fading.

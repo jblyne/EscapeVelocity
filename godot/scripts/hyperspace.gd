@@ -11,6 +11,7 @@ const DEPARTURE_SPEED_MULTIPLIER: float = 7.5
 const ARRIVAL_APPROACH_SECONDS: float = 4.8
 const ALIGN_TOLERANCE: float = 0.0001
 const STOP_TOLERANCE: float = 0.0001
+var burn_seconds: float = ACCELERATION_SECONDS
 var phase: String = "idle"
 var destination: int = -1
 var heading: float = 0
@@ -62,14 +63,14 @@ func step(pos: Vector2, velocity: Vector2, ship_heading: float, fields: Dictiona
 			remaining = maxf(0, remaining - dt)
 			if remaining <= 0:
 				phase = "accelerating"
-				remaining = ACCELERATION_SECONDS
+				remaining = burn_seconds
 		"accelerating":
 			# Hyperdrive thrust keeps building speed beyond the main engine's cruise cap.
 			# Integrate only the remaining burn time so the endpoint is frame-rate independent.
 			var burn_dt: float = minf(dt, remaining)
 			var direction = Vector2(sin(heading), -cos(heading))
 			var departure_speed: float = float(fields.Speed) * DEPARTURE_SPEED_MULTIPLIER
-			var next_velocity = velocity + direction * (departure_speed / ACCELERATION_SECONDS) * burn_dt
+			var next_velocity = velocity + direction * (departure_speed / burn_seconds) * burn_dt
 			remaining = maxf(0, remaining - burn_dt)
 			return {"position": pos + (velocity + next_velocity) * 0.5 * burn_dt,
 				"velocity": next_velocity, "heading": heading, "thrust": 1.0, "complete": remaining <= 0}

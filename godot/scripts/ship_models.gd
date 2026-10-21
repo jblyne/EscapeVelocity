@@ -2,6 +2,7 @@ class_name EVShipModels
 extends RefCounted
 
 const Models = preload("res://scripts/models.gd")
+const Capitals=preload("res://scripts/capital_ship_models.gd")
 const Details = preload("res://scripts/ship_detail.gd")
 const Factions = preload("res://scripts/factions.gd")
 static var templates: Dictionary = {}
@@ -10,7 +11,7 @@ static func create(catalog, ship_id: int, faction_id: int = -1) -> Node3D:
 	var key = Vector2i(ship_id, faction_id)
 	if not templates.has(key):
 		var prototype = build(ship_id, Factions.color_of(faction_id))
-		for child in prototype.get_children(): child.owner = prototype
+		set_part_owners(prototype,prototype)
 		var scene = PackedScene.new()
 		scene.pack(prototype)
 		templates[key] = scene
@@ -24,12 +25,18 @@ static func create(catalog, ship_id: int, faction_id: int = -1) -> Node3D:
 	model.set_meta("radius", size * 1.22)
 	return model
 
+static func set_part_owners(node: Node,root: Node) -> void:
+	for child in node.get_children():
+		child.owner=root
+		set_part_owners(child,root)
+
 static func outline(root: Node3D, coordinates: Array, height: float, mat: Material) -> void:
 	var points = PackedVector2Array()
 	for xy in coordinates: points.append(Vector2(xy[0],xy[1]))
 	Details.hull(root, points, height, mat)
 
 static func build(id: int, paint: Color) -> Node3D:
+	if id==900: return preload("res://scripts/maverick.gd").build()
 	var root = Node3D.new()
 	var steel = Models.material(Color("8d9da9"),0.65)
 	steel.roughness=.62
@@ -70,16 +77,9 @@ static func build(id: int, paint: Color) -> Node3D:
 			outline(root,[[0,-1.23],[.23,-.65],[.27,.63],[.65,1.0],[.12,.94],[-.12,.94],[-.65,1.0],[-.27,.63],[-.23,-.65]],.27,steel)
 			for z in [-.6,-.05,.5]: Details.panel(root,Vector3(0,.3,z),Vector3(.35,.07,.2),trim)
 			engine_x=.42;engine_z=.95
-		133,134: # Confederation's long spine and broad aft engine pods.
-			var width: float = .39 if id==133 else .25
-			outline(root,[[0,-1.23],[width,-.52],[width,.7],[-width,.7],[-width,-.52]],.29,steel)
-			outline(root,[[-.23,.15],[-.83,.48],[-.74,1.0],[.74,1.0],[.83,.48],[.23,.15]],.14,dark)
-			engine_x=.62;engine_z=.91
-			for x in [-.62,.62]:
-				Details.panel(root,Vector3(x,.14,.58),Vector3(.3,.3,.6),steel)
-				Details.panel(root,Vector3(x,.3,.6),Vector3(.2,.07,.3),trim)
-			if id==134:
-				for z in [-.58,-.05,.5]: Details.panel(root,Vector3(0,.32,z),Vector3(.35,.11,.24),dark)
+		133,134,141,142:
+			var engines: Vector2=Capitals.build(root,id)
+			engine_x=engines.x;engine_z=engines.y
 		135,147:
 			outline(root,[[0,-1.25],[.17,-.38],[.2,.85],[-.2,.85],[-.17,-.38]],.18,steel)
 			Details.panel(root,Vector3(0,.06,.55),Vector3(1.05,.12,.18),trim)
@@ -103,14 +103,6 @@ static func build(id: int, paint: Color) -> Node3D:
 			for x in [-.28,.28]:
 				for z in [-.5,-.2,.1,.4,.7]: Details.panel(root,Vector3(x,.35,z),Vector3(.09,.04,.07),glass)
 			Details.panel(root,Vector3(0,.34,.08),Vector3(.2,.06,1.4),trim)
-		141:
-			outline(root,[[0,-1.22],[.21,-.7],[.17,-.1],[.31,.45],[.59,.92],[.12,.8],[-.12,.8],[-.59,.92],[-.31,.45],[-.17,-.1],[-.21,-.7]],.27,steel)
-			engine_x=.4;engine_z=.88
-		142:
-			outline(root,[[0,-1.22],[.18,-.68],[.27,.03],[.51,.6],[.47,1.0],[-.47,1.0],[-.51,.6],[-.27,.03],[-.18,-.68]],.3,dark)
-			Details.panel(root,Vector3(0,.32,.48),Vector3(.62,.09,.36),steel)
-			engine_x=.4;engine_z=.93
-			for x in [-.33,.33]: Details.panel(root,Vector3(x,.18,.26),Vector3(.14,.25,1.0),trim)
 		143,152:
 			outline(root,[[0,-1.25],[.13,-.23],[.16,.53],[.85,.64],[.32,1.0],[0,.71],[-.32,1.0],[-.85,.64],[-.16,.53],[-.13,-.23]],.23,dark)
 			Details.panel(root,Vector3(0,.25,.01),Vector3(.12,.06,1.1),steel)
@@ -148,7 +140,7 @@ static func build(id: int, paint: Color) -> Node3D:
 			Details.panel(root,Vector3(0,.33,-.5),Vector3(.5,.04,.35),glass)
 			Details.panel(root,Vector3(0,.34,.24),Vector3(.63,.03,.4),trim)
 			engine_x=.2;engine_z=.76
-	Details.dress(root,id,engine_x,engine_z,steel,dark,trim,glass,glow)
+	if id not in [133,134,141,142]: Details.dress(root,id,engine_x,engine_z,steel,dark,trim,glass,glow)
 	for side in [-1,1]:
 		Models.add_exhaust(root,Vector3(side*engine_x,.1,engine_z+.20),side)
 	# Keep hull, canopy and nozzle culling consistent across the entire fleet.

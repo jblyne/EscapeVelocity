@@ -40,5 +40,5 @@ if __name__=='__main__':
     source=next(Path('research/extracted').rglob('EV Titles.rsrc'))
     out=Path('godot/assets/classic');out.mkdir(parents=True,exist_ok=True)
     for item in read_resources(source.read_bytes()):
-        if item['type']=='PICT' and (item['id'] in [8000,8001,8002,128] or 8300<=item['id']<=8316):
+        if item['type']=='PICT' and (item['id'] in [8000,8001,8002,128,131,8100,8200] or 8300<=item['id']<=8316):
             decode(item['data']).save(out/f"{item['id']}.png")

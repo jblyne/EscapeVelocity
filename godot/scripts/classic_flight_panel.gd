@@ -24,7 +24,7 @@ func _ready() -> void:
 	add_child(canvas)
 	canvas.draw.connect(draw_panel)
 	preview=TextureRect.new()
-	preview.position=Vector2(36,574);preview.size=Vector2(216,116)
+	preview.position=Vector2(36,592);preview.size=Vector2(216,116)
 	preview.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -35,10 +35,11 @@ func _ready() -> void:
 	hotspot(Rect2(0,0,288,288),"Local radar · click for the galaxy map",func():game.set_mode("map"))
 	hotspot(Rect2(0,288,288,84),"Shields, armor and fuel · click for ship information",func():game.set_mode("info"))
 	nav_hit=hotspot(Rect2(0,372,288,88),"Navigation · M opens the map · J jumps",func():game.set_mode("map"))
-	hotspot(Rect2(0,464,288,50),"Q / E changes weapon · click for next weapon",func():game.cycle_weapon(1))
-	info_hit=hotspot(Rect2(0,518,288,408),"Ship and target information · P",func():game.set_mode("info"))
+	hotspot(Rect2(0,510,288,40),"Q / E changes weapon · click for next weapon",func():game.cycle_weapon(1))
+	info_hit=hotspot(Rect2(0,554,288,372),"Ship and target information · P",func():game.set_mode("info"))
 	hotspot(Rect2(8,926,130,28),"Ship information · P",func():game.set_mode("info"))
 	menu_hit=hotspot(Rect2(148,926,132,28),"Settings and controls · Esc",func():game.set_mode("pause"))
+	var reputations=preload("res://scripts/reputation_hud.gd").new();reputations.name="ReputationHUD";reputations.game=game;canvas.add_child(reputations)
 	resized.connect(fit)
 	fit()
 
@@ -96,7 +97,7 @@ func meter(y: float, title: String, value: float, color: Color) -> void:
 	canvas.draw_line(rect.position+Vector2(2,2),rect.position+Vector2(2+150*clampf(value,0,1),2),color.lightened(.2),1)
 
 func draw_panel() -> void:
-	for rect in [Rect2(0,0,288,288),Rect2(0,288,288,84),Rect2(0,372,288,88),Rect2(0,464,288,50),Rect2(0,518,288,244),Rect2(0,766,288,194)]: well(rect)
+	for rect in [Rect2(0,0,288,288),Rect2(0,288,288,84),Rect2(0,372,288,88),Rect2(0,464,288,42),Rect2(0,510,288,40),Rect2(0,554,288,208),Rect2(0,766,288,194)]: well(rect)
 	draw_radar()
 	var p=game.pilot
 	meter(303,"Shield:",p.shield/maxf(1,p.max_shield()),Color("53ce24"))
@@ -112,12 +113,12 @@ func draw_panel() -> void:
 		text("Hyperspace",404)
 		text(str(game.catalog.system(game.destination).get("name","")),433)
 	else: text("Nav System Off",425,DIM)
-	text(game.arsenal.weapon_name(p.selected_weapon),484 if game.cloak.active else 495,GREEN,16 if game.cloak.active else 18)
-	if game.cloak.active: text("Cloaked · weapons ready" if p.cheat_cloak else "Cloaked · weapons offline",505,GREEN,13)
+	text(game.arsenal.weapon_name(p.selected_weapon),526 if game.cloak.active else 536,GREEN,16 if game.cloak.active else 18)
+	if game.cloak.active: text("Cloaked · weapons ready" if p.cheat_cloak else "Cloaked · weapons offline",544,GREEN,13)
 	var contact: Dictionary=game.selected_contact()
-	if contact.is_empty(): text("No Target",620,DIM)
+	if contact.is_empty(): text("No Target",648,DIM)
 	else:
-		text(str(contact.name),550,GREEN,19)
+		text(str(contact.name),578,GREEN,19)
 		text(game.Factions.name_of(game.catalog,contact.faction),716,DIM,16)
 		meter(732,"Hull:",float(contact.health)/maxf(1,contact.max_health),Color("75cb49"))
 	text("Free: %d" % (p.cargo_capacity()-p.cargo_used()),797)

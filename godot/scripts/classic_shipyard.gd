@@ -17,7 +17,7 @@ func _ready() -> void:
 	ship_list.add_theme_color_override("font_selected_color",Color.WHITE)
 	ships=game.shipyard.ships()
 	for id in ships: ship_list.add_item(game.catalog.record("ships",id).name)
-	canvas.add_child(ship_list);ship_list.item_selected.connect(select_ship)
+	canvas.add_child(ship_list);ship_list.item_selected.connect(func(index):game.sound("ui_select");select_ship(index))
 	var index=maxi(0,ships.find(game.shipyard.selected));ship_list.select(index);ship_list.ensure_current_is_visible();select_ship(index)
 	if game.pilot.secrets.get("satellite",false):
 		button_at("SatelliteSecret","Satellite of Love",Rect2(260,472,220,40),show_satellite)

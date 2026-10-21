@@ -11,7 +11,7 @@ from extract_special_effects import pcm_sound
 
 ROOT=Path(__file__).resolve().parents[1]
 SOURCES={"EV Sounds.rsrc":{600:"menu_click",601:"menu_hum",602:"menu_slam"},
-         "EV Music.rsrc":{30000:"menu_music"}}
+         "EV Music.rsrc":{30000:"menu_music",30001:"intro_drums",30002:"intro_drum_loop",30003:"intro_transition"}}
 
 def extract():
     for fork,names in SOURCES.items():

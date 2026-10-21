@@ -106,7 +106,7 @@ static func add_exhaust(root: Node3D, nozzle: Vector3, side: int) -> void:
 	flame.position = nozzle+Vector3(0,0,0.7)
 	root.add_child(flame)
 
-static func set_thrust(model: Node3D, power: float, clock: float, hyperdrive_vibration: bool = false) -> void:
+static func set_thrust(model: Node3D, power: float, clock: float, hyperdrive_vibration: bool = false,afterburner: bool=false) -> void:
 	for n in model.get_children():
 		if str(n.name).begins_with("Flame"):
 			n.visible = power > 0.02
@@ -116,6 +116,7 @@ static func set_thrust(model: Node3D, power: float, clock: float, hyperdrive_vib
 			if n.has_meta("nozzle"):
 				n.position = n.get_meta("nozzle")+Vector3(0,0,0.7*length_scale)
 			if n.material_override is ShaderMaterial:
+				n.material_override.set_shader_parameter("afterburner_heat",1.0 if (afterburner or hyperdrive_vibration) and int(model.get_meta("ship_id",-1))==900 else 0.0)
 				n.material_override.set_shader_parameter("clock",clock)
 				n.material_override.set_shader_parameter("power",power)
 

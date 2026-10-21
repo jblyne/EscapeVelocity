@@ -66,6 +66,14 @@ func run() -> void:
 	game.set_mode("outfitter")
 	check(screen().grid.columns==4 and screen().cards.size()==game.outfitter.stock().size(),"Outfitter shows compact four-column equipment grid")
 	check(game.hud.modal_root.find_child("OutfitFilterALL",true,false)==null,"Outfitter uses original grid layout without large filter tabs")
+	var presentation_ok: bool=true
+	for outfit_id in screen().cards:
+		var card=screen().cards[outfit_id]
+		var available: bool=game.outfitter.available_here(int(outfit_id))
+		var icon=card.find_child("OutfitPicture%d" % outfit_id,true,false)
+		var caption=card.find_child("OutfitName%d" % outfit_id,true,false)
+		presentation_ok=presentation_ok and (icon.material==null if available else icon.material is ShaderMaterial) and caption.get_theme_color("default_color")== (Color("dddddd") if available else Color("777777")) and not card.disabled
+	check(presentation_ok,"Unavailable equipment is gray while remaining selectable; stocked equipment keeps its normal colors")
 	click("SelectOutfit130")
 	var description=game.hud.modal_root.find_child("OutfitDescription",true,false)
 	check(description.text==game.catalog.data.descriptions["3002"],"Outfitter displays original equipment description")

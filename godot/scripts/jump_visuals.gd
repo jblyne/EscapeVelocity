@@ -24,7 +24,7 @@ func departure_strength(drive) -> float:
 
 func ship_offset(drive, clock: float) -> Vector3:
 	if drive.phase != "accelerating": return Vector3.ZERO
-	var progress=clampf(1.0-drive.remaining/drive.ACCELERATION_SECONDS,0.0,1.0)
+	var progress=clampf(1.0-drive.remaining/drive.burn_seconds,0.0,1.0)
 	# A small visual vibration builds with the departure burn, never affecting
 	# the pilot's physical position, camera, or ordinary main-engine thrust.
 	return Vector3(sin(clock*61)*1.2+sin(clock*89)*.6,0,cos(clock*73)*.4)*progress*progress

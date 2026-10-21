@@ -16,7 +16,7 @@ func _initialize() -> void:
 func prepare_jump() -> void:
 	game.pilot.position=Vector2(12000,12000)
 	game.velocity=Vector2.ZERO
-	game.pilot.fuel=1000
+	game.pilot.fuel=game.pilot.fuel_capacity()
 	game.cycle_destination()
 
 func run() -> void:
@@ -30,18 +30,32 @@ func run() -> void:
 	game.hud.set_process(false)
 	var arrival: AudioStreamPlayer=game.audio.arrival
 	check(not arrival.playing,"starting or loading a system does not play the arrival strike")
-	check(arrival.stream!=null and is_equal_approx(arrival.stream.get_length(),3.2) and arrival.pitch_scale==1 and arrival.max_polyphony==1,"arrival has its own unpitched single-voice thunderclap asset")
+	check(arrival.stream!=null and arrival.stream.get_length()>0 and arrival.pitch_scale==1 and arrival.max_polyphony==1,"arrival has its own unpitched single-voice original Warp Out asset")
 	prepare_jump()
 	var old_system: int=game.pilot.system_id
 	game.start_jump()
+	check(not game.audio.jump_start.playing,"Warp Up stays silent while the ship stops and aligns")
+	check(game.audio.ui_select.playing,"Accepted J plays original Beep3 immediately")
+	check(is_equal_approx(game.hyperdrive.burn_seconds+game.hyperdrive.SPOOL_SECONDS,game.audio.jump_start.stream.get_length()),"Spool and burn duration matches the complete native Warp Up recording")
+	while game.hyperdrive.phase!="spooling": game._physics_process(1.0/60)
+	check(game.audio.jump_start.playing and game.audio.jump_start.pitch_scale==1,"Original Warp Up begins unpitched after stopping and alignment")
+	game.set_mode("pause");check(game.audio.jump_start.stream_paused,"Pause freezes original jump initiation audio")
+	game.set_mode("flight");check(not game.audio.jump_start.stream_paused,"Resume continues original jump initiation audio")
 	var early: bool=false
+	var burn_hum: bool=false
+	var warp_elapsed: float=0
 	for frame in 1800:
 		game._physics_process(1.0/60)
+		warp_elapsed+=1.0/60
 		if game.pilot.system_id!=old_system: break
 		if arrival.playing: early=true
+		if game.hyperdrive.phase=="accelerating": burn_hum=game.audio.jump_start.playing and not game.audio.jump.playing and not game.engine_audio.playing
+	check(absf(warp_elapsed-game.audio.jump_start.stream.get_length())<=1.0/60+0.001,"System transition lands on the end of Warp Up within one physics tick")
+	check(burn_hum,"Original Warp Up continues through acceleration without synthesized or thruster audio")
 	check(not early,"the arrival sound remains silent throughout stopping, spooling and acceleration")
 	check(game.pilot.system_id!=old_system and arrival.playing,"thunder starts on the same physics tick as entry into the new system")
 	check(not game.audio.jump.playing,"departure sound stops before the arrival strike")
+	check(not game.audio.jump_start.playing,"Initiation sound is stopped before arrival")
 	var playback=arrival.get_stream_playback()
 	for frame in 10: game._physics_process(1.0/60)
 	check(arrival.get_stream_playback()==playback,"coasting after entry does not retrigger the strike")

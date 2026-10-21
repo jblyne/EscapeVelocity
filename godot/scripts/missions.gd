@@ -1,6 +1,16 @@
 extends RefCounted
 # Original 1.0.5 resources interpreted using Matt Burch's 1996 EV Bible.
 var game
+var approach: Dictionary={}
+var approach_port: int=-1
+var approached: Array[int]=[]
+var bar_port: int=-1
+var bar_rolls: Dictionary={}
+var bar_queue: Array[int]=[]
+var bar_ticks: float=0
+var bar_idle: int=0
+# Original null-event counter, represented at the remake's nominal 60 Hz.
+const BAR_EVENT_HZ: float=60.0
 var selected: Dictionary = {}
 var selected_courier: bool=false
 var return_mode: String = "dock"
@@ -155,6 +165,35 @@ func target_system(m: Dictionary) -> int:
 	if int(m.dest)>=0: return system_of(int(m.dest))
 	return -1
 
+func landing_markers() -> Dictionary:
+	# Mark the next actual landing stop, rather than every port in its system.
+	var markers: Dictionary={}
+	if not game.pilot.mission.is_empty():
+		var port: int=int(game.pilot.mission.get("object",-1))
+		if port>=0: markers[port]=1
+	for m in state().active:
+		if not ship_goal_done(m): continue
+		var port: int=int(m.dest) if not m.travel_done or int(m.back)<0 else int(m.back)
+		if port>=0: markers[port]=int(markers.get(port,0))+1
+	for port in markers.keys():
+		if system_of(int(port))!=game.pilot.system_id or game.world_killer.destroyed(int(port)):
+			markers.erase(port)
+	return markers
+
+func rush_markers() -> Dictionary:
+	var markers: Dictionary={}
+	for m in state().active:
+		if int(m.deadline)<0: continue
+		var fields: Dictionary=game.catalog.record("missions",int(m.id)).fields
+		if int(fields.Flags)&2: continue
+		var system: int=target_system(m)
+		if system<0: continue
+		var days: int=int(m.deadline)-int(state().day)
+		if not markers.has(system): markers[system]={"days":days,"count":0}
+		markers[system].days=mini(int(markers[system].days),days)
+		markers[system].count+=1
+	return markers
+
 func map_markers() -> Dictionary:
 	var markers: Dictionary={}
 	if not game.pilot.mission.is_empty():
@@ -169,7 +208,8 @@ func map_markers() -> Dictionary:
 	return markers
 
 func accept(m: Dictionary) -> bool:
-	if game.mode!="missions" or return_mode!="dock" or not eligibility(int(m.id),game.docked_id): return false
+	if game.mode not in ["missions","mission_offer"] or return_mode!="dock" or not eligibility(int(m.id),game.docked_id,game.mode!="mission_offer"): return false
+	if game.mode=="mission_offer" and (approach.is_empty() or int(m.id)!=int(approach.id) or game.docked_id!=approach_port): return false
 	if state().active.size()>=8 or game.pilot.cargo_used()+int(m.qty)>game.pilot.cargo_capacity(): return false
 	# Rebuild from trusted catalog and current offer seed, never accept UI-supplied rewards.
 	m=offer(int(m.id),game.docked_id)
@@ -178,6 +218,7 @@ func accept(m: Dictionary) -> bool:
 		var id: int=-int(f.PayVal)-30000
 		m.prepaid=game.pilot.outfit_count(id)==0
 		grant(id)
+	game.sound("ui_confirm")
 	state().active.append(m)
 	last_report=text_for(m,"BriefText")
 	if last_report.is_empty(): last_report=text_for(m,"QuickBrief")
@@ -185,6 +226,65 @@ func accept(m: Dictionary) -> bool:
 	game.save_game(false)
 	game.hud.rebuild_modal()
 	return true
+
+func reset_bar_encounters() -> void:
+	approach={};approach_port=-1;approached.clear();bar_port=-1;bar_rolls.clear();bar_queue.clear();bar_ticks=0
+
+func begin_port_visit() -> void:
+	approach={};approach_port=-1;bar_queue.clear();bar_ticks=0
+
+func begin_bar_approach() -> void:
+	# Original 0x987c checks the last bar's port before refreshing chance rolls.
+	if game.mode!="dock" or game.hud.port_page!="bar": return
+	if bar_port!=game.docked_id:
+		bar_port=game.docked_id;bar_rolls.clear();approached.clear()
+		for record in game.catalog.data.missions.values():
+			if int(record.fields.AvailLoc)==1: bar_rolls[int(record.id)]=roll(int(record.id),bar_port)
+	bar_queue.clear()
+	for record in game.catalog.data.missions.values():
+		var id: int=int(record.id)
+		if int(record.fields.AvailLoc)!=1 or id in approached: continue
+		if int(bar_rolls.get(id,100))>=int(record.fields.AvailRandom): continue
+		if eligibility(id,bar_port,false): bar_queue.append(id)
+	bar_queue.sort_custom(func(a,b):
+		var fa: int=int(game.catalog.field("missions",a,"Flags"))&4096
+		var fb: int=int(game.catalog.field("missions",b,"Flags"))&4096
+		return a<b if fa==fb else fa>fb)
+	bar_ticks=0;bar_idle=80+randi_range(0,99)
+
+func advance_bar(dt: float) -> void:
+	if game.mode!="dock" or game.hud.port_page!="bar" or game.docked_id!=bar_port or not approach.is_empty(): return
+	if bar_queue.is_empty() or state().active.size()>=8: return
+	if DisplayServer.get_name()!="headless" and is_instance_valid(game.hud.modal_tween) and game.hud.modal_tween.is_running(): return
+	bar_ticks=minf(8,bar_ticks+dt*BAR_EVENT_HZ)
+	# At most one presentation per frame; don't replay old idle events after load.
+	var ticks: int=mini(8,int(bar_ticks));bar_ticks-=ticks
+	for tick in ticks:
+		bar_idle+=1
+		if randi_range(0,149)>=bar_idle: continue
+		bar_idle=0
+		while not bar_queue.is_empty():
+			var id: int=bar_queue.pop_front()
+			if not eligibility(id,bar_port,false): continue
+			var candidate: Dictionary=offer(id,bar_port)
+			if game.pilot.cargo_used()+int(candidate.qty)>game.pilot.cargo_capacity(): continue
+			approach=candidate;approach_port=bar_port;approached.append(id)
+			return_mode="dock";channel=1;game.set_mode("mission_offer");return
+
+func bar_activity() -> void:
+	bar_idle=0;bar_ticks=0
+
+func resolve_approach(take_job: bool) -> void:
+	if game.mode!="mission_offer" or approach.is_empty(): return
+	var candidate: Dictionary=approach
+	if not take_job and int(game.catalog.field("missions",int(candidate.id),"Flags"))&4: return
+	if take_job and not accept(candidate):
+		game.notify("This offer is no longer available or there is no room for its cargo.");return
+	approach={};approach_port=-1;bar_activity()
+	game.hud.port_page="bar";game.set_mode("dock")
+	if take_job:
+		queue_landing_report(candidate,"MISSION ACCEPTED",last_report,"Mission accepted · see journal for objectives")
+		show_next_landing_report()
 
 func grant(id: int) -> void:
 	var record: Dictionary=game.catalog.record("outfits",id)
@@ -215,6 +315,7 @@ func finish(m: Dictionary, success: bool, aborted: bool = false, landing_popup: 
 	auxiliary_delays.erase(int(m.id))
 	var f: Dictionary=game.catalog.record("missions",int(m.id)).fields
 	if success:
+		game.pilot.achievements.contracts_completed+=1
 		game.pilot.credits+=maxi(0,int(f.PayVal))
 		if f.PayVal<=-20128 and f.PayVal>=-20255: grant(-int(f.PayVal)-20000)
 		if f.PayVal<=-10128 and f.PayVal>=-10255: game.pilot.reputation[str(-int(f.PayVal)-10000)]=0

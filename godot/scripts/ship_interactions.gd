@@ -53,6 +53,7 @@ func open_hail() -> void:
 	page = "channel"
 	response = "Channel open."
 	if contact.get("hector",false): response = game.Hector.REMINDER
+	elif contact.get("maverick",false): response=game.traffic.maverick.quote(game.traffic.rng)
 	elif not game.persons.quote(contact).is_empty(): response=game.persons.quote(contact)
 	elif contact.disabled: response = "Our engines are down. We're dead in space."
 	elif contact.hostile: response = "You've got our attention. Make it quick."
@@ -82,6 +83,7 @@ func connected() -> bool:
 func greetings() -> void:
 	if not connected(): return
 	if contact.get("hector",false): reply(game.Hector.REMINDER)
+	elif contact.get("maverick",false): reply(game.traffic.maverick.quote(game.traffic.rng))
 	elif not game.persons.quote(contact).is_empty(): reply(game.persons.quote(contact))
 	elif contact.disabled: reply("Engineering is offline. We cannot maneuver or fire.")
 	elif contact.hostile: reply("Keep your distance. We aren't here to trade stories.")
@@ -200,6 +202,7 @@ func board() -> bool:
 	game.missions.actor_event(npc,"board")
 	game.save_game(false)
 	response = "Boarding party aboard. Choose what to transfer."
+	game.sound("airlock")
 	game.set_mode("boarding")
 	game.persons.on_contact(contact,true)
 	return true

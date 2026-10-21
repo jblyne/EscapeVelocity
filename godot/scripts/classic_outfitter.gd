@@ -1,4 +1,5 @@
 extends "res://scripts/classic_port.gd"
+const UNAVAILABLE=preload("res://shaders/unavailable_outfit.gdshader")
 const Artwork=preload("res://scripts/outfit_art.gd")
 const LAYOUT=Vector2(1000,530)
 var grid: GridContainer
@@ -18,10 +19,15 @@ func _ready() -> void:
 	for id in stock:
 		var item: Dictionary=game.catalog.record("outfits",id)
 		var card=Button.new();card.name="SelectOutfit%d" % id;card.custom_minimum_size=Vector2(132,98);card.focus_mode=Control.FOCUS_NONE
-		card.tooltip_text=item.name;card.pressed.connect(func():select_item(id));grid.add_child(card);cards[id]=card
+		card.tooltip_text=item.name;card.pressed.connect(func():game.sound("ui_select");select_item(id));grid.add_child(card);cards[id]=card
+		var available: bool=game.outfitter.available_here(id)
+		card.set_meta("stocked",available)
+		if not available: card.tooltip_text=item.name+"\n"+game.outfitter.reason(id,true)
 		var image=Artwork.picture(card,game.catalog,id,Vector2(128,58),Color.BLACK);image.position=Vector2(2,2);image.size=Vector2(128,58)
+		if not available: gray_picture(image)
 		var title=RichTextLabel.new();title.name="OutfitName%d" % id;title.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;title.bbcode_enabled=true;title.text="[center]"+item.name+"[/center]";title.position=Vector2(2,60)
 		title.add_theme_font_override("normal_font",font);title.add_theme_font_size_override("normal_font_size",13);title.size=Vector2(128,36)
+		title.add_theme_color_override("default_color",Color("dddddd") if available else Color("777777"))
 		title.fit_content=false;title.scroll_active=false;title.mouse_filter=Control.MOUSE_FILTER_IGNORE;card.add_child(title)
 		if game.outfitter.count(id)>0:
 			var count=Label.new();count.text=str(game.outfitter.count(id));count.position=Vector2(78,2);count.size=Vector2(52,20);count.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT
@@ -53,6 +59,8 @@ func select_item(id: int) -> void:
 	label_at("OutfitBalance","You Have: %s cr" % game.hud.commas(game.pilot.credits),Rect2(576,284,408,26),18)
 	label_at("OutfitSpace","Free Space: %d t" % (int(game.catalog.field("ships",game.pilot.ship_id,"FreeMass"))-game.outfitter.space_used()),Rect2(576,312,408,26),18)
 	var image=Artwork.picture(detail,game.catalog,id,Vector2(300,104),Color.BLACK);image.position=Vector2(684,334);image.size=Vector2(300,104)
+	image.name="SelectedOutfitIcon"
+	if not game.outfitter.available_here(id): gray_picture(image)
 	var reason: String=game.outfitter.reason(id,true)
 	var notice=RichTextLabel.new();notice.name="OutfitNotice";notice.position=Vector2(576,438);notice.size=Vector2(408,36);notice.bbcode_enabled=false
 	notice.add_theme_font_size_override("normal_font_size",14);notice.text=reason;detail.add_child(notice)
@@ -62,3 +70,6 @@ func select_item(id: int) -> void:
 	if not sell.disabled: sell.tooltip_text="Sell for %s cr" % game.hud.commas(game.outfitter.price(id,false))
 	button_at("CloseOutfitter","Leave",Rect2(860,482,124,32),func():game.set_mode("dock"))
 	canvas=base
+
+func gray_picture(image: TextureRect) -> void:
+	var material=ShaderMaterial.new();material.shader=UNAVAILABLE;image.material=material

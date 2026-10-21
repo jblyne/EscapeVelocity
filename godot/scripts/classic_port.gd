@@ -1,4 +1,5 @@
 extends Control
+const Intel=preload("res://scripts/system_intel.gd")
 const Art=preload("res://scripts/landing_art.gd")
 const DESIGN=Vector2(1200,632)
 var game
@@ -10,12 +11,13 @@ var compact_service: bool=false
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
 	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
-	compact_service=game.hud.port_page in ["exchange","bar"]
+	compact_service=game.hud.port_page in ["exchange","bar","intel"]
 	canvas=Control.new();canvas.size=DESIGN;add_child(canvas)
 	panel(Rect2(Vector2.ZERO,DESIGN))
 	match game.hud.port_page:
 		"exchange": build_exchange()
 		"bar": build_bar()
+		"intel": build_intel()
 		_: build_landing()
 	resized.connect(fit);fit()
 
@@ -37,7 +39,7 @@ func button_at(id: String,value: String,rect: Rect2,action: Callable) -> Button:
 	var b=Button.new();b.name=id;b.text=value;b.position=rect.position;b.size=rect.size;b.focus_mode=Control.FOCUS_NONE
 	b.add_theme_font_override("font",font);b.add_theme_font_size_override("font_size",22)
 	style_classic_button(b)
-	b.pressed.connect(func():game.sound("menu_click");action.call());canvas.add_child(b);return b
+	b.pressed.connect(func():game.sound("menu_click");game.missions.bar_activity();action.call());canvas.add_child(b);return b
 
 static func style_classic_button(b: Button) -> void:
 	for state in ["normal","hover","pressed","disabled"]:
@@ -47,6 +49,7 @@ static func style_classic_button(b: Button) -> void:
 	b.add_theme_color_override("font_color",Color.WHITE)
 func page(value: String) -> void:
 	game.hud.port_page=value;game.hud.rebuild_modal()
+	if value=="bar": game.missions.begin_bar_approach()
 func mission_computer(channel: int) -> void:
 	game.missions.channel=channel;game.missions.open()
 
@@ -56,15 +59,19 @@ func build_landing() -> void:
 	scenery.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;scenery.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	scenery.texture=Art.texture(game.catalog,game.docked_id);scenery.tooltip_text=port.name;canvas.add_child(scenery)
 	var description: String=str(game.catalog.data.descriptions.get(str(game.docked_id),""))
-	var body=RichTextLabel.new();body.name="PortDescription";body.position=Vector2(696,20);body.size=Vector2(488,276)
+	var body=RichTextLabel.new();body.name="PortDescription";body.position=Vector2(696,20);body.size=Vector2(488,226)
 	body.bbcode_enabled=false;body.fit_content=false;body.scroll_active=true;body.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	body.add_theme_font_override("normal_font",font);body.add_theme_font_size_override("normal_font_size",20)
-	body.add_theme_color_override("default_color",Color("dddddd"));body.text=description;canvas.add_child(body)
+	body.add_theme_color_override("default_color",Color("dddddd"));body.text=description
+	var leads: Dictionary=Intel.report(game,game.pilot.system_id,game.docked_id)
+	if not leads.hints.is_empty(): body.text="LOCAL LEAD: "+str(leads.hints[0]).split(". ")[0]+". See Local Leads & Unlocks for details.\n\n"+description
+	canvas.add_child(body)
 	var actions: Array=[
 		["RefuelShip","Refuel Ship",game.refuel_ship],
 		["OpenExchange","Commodity Exchange",func():page("exchange")],
 		["OpenOutfitter","Outfit Ship",func():game.set_mode("outfitter")]]
 	if int(port.fields.Flags)&8: actions.append(["OpenShipyard","Visit Shipyard",func():game.set_mode("shipyard")])
+	actions.append(["LocalLeads","Local Leads & Unlocks",func():page("intel")])
 	actions.append(["OpenSpaceportBar","Spaceport Bar",func():page("bar")])
 	var y: float=548-actions.size()*48
 	for action in actions:
@@ -73,7 +80,8 @@ func build_landing() -> void:
 		if action[0]=="OpenOutfitter": b.disabled=not int(port.fields.Flags)&4
 		if action[0]=="RefuelShip":
 			b.tooltip_text="Refuel · %s cr for a full tank" % game.hud.commas(game.refuel_cost())
-			b.disabled=bool(int(port.fields.Flags)&32) or (game.refuel_cost()>0 and game.pilot.credits<=0)
+			b.disabled=game.pilot.fuel>=game.pilot.fuel_capacity() or bool(int(port.fields.Flags)&32) or (game.refuel_cost()>0 and game.pilot.credits<=0)
+			if game.pilot.fuel>=game.pilot.fuel_capacity(): b.tooltip_text="Fuel tank full."
 		y+=48
 	button_at("OpenMissions","Mission Computer",Rect2(186,572,320,44),func():mission_computer(0))
 	button_at("LeavePort","Leave",Rect2(752,572,396,44),game.launch).tooltip_text="Launch · L"
@@ -127,3 +135,15 @@ func build_bar() -> void:
 	button_at("OpenNews","Watch Holo-Vid",Rect2(800,332,360,44),game.world_activity.open_news)
 	button_at("HireEscorts","Hire an Escort",Rect2(800,394,360,44),game.toggle_fleet_menu)
 	button_at("LeaveBar","Leave",Rect2(800,568,360,44),func():page("landing"))
+
+func build_intel() -> void:
+	label_at("LocalIntelHeading","Local Leads & Unlocks — "+str(game.catalog.record("objects",game.docked_id).name),Rect2(24,18,1140,40),24)
+	panel(Rect2(20,72,1160,486))
+	var body=RichTextLabel.new();body.name="LocalIntelText";body.position=Vector2(36,86);body.size=Vector2(1128,456)
+	body.add_theme_font_override("normal_font",font);body.add_theme_font_size_override("normal_font_size",21)
+	body.add_theme_color_override("default_color",Color("dddddd"));body.bbcode_enabled=false;body.scroll_active=true
+	body.text=Intel.text(Intel.report(game,game.pilot.system_id,game.docked_id));canvas.add_child(body)
+	button_at("IntelBack","Back to Spaceport",Rect2(776,576,380,38),func():page("landing"))
+
+func _input(event: InputEvent) -> void:
+	if game.mode=="dock" and game.hud.port_page=="bar" and event is InputEventMouseButton and event.pressed: game.missions.bar_activity()

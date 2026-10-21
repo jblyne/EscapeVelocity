@@ -67,6 +67,23 @@ func marker(id: int,color: Color) -> void:
 	draw_line(tip-direction*36,tip-direction*10,color,3,true)
 	draw_colored_polygon(PackedVector2Array([tip,tip-direction.rotated(PI*.25)*15,tip-direction.rotated(-PI*.25)*15]),color)
 
+func rush_text(info: Dictionary) -> String:
+	var count: String=" ×%d" % int(info.count) if int(info.count)>1 else ""
+	var deadline: String="%dd" % int(info.days) if int(info.days)>0 else ("TODAY" if int(info.days)==0 else "OVERDUE")
+	return "RUSH%s · %s" % [count,deadline]
+
+func rush_label(id: int, info: Dictionary) -> void:
+	if not locations.has(id): return
+	var geometry: Dictionary=marker_geometry(id)
+	var text: String=rush_text(info)
+	var width: float=font.get_string_size(text,HORIZONTAL_ALIGNMENT_LEFT,-1,12).x
+	var at: Vector2=geometry.tip-geometry.direction*39+Vector2(0,-10)
+	at.x=clampf(at.x-width*.5,5,maxf(5,size.x-width-5))
+	at.y=clampf(at.y,16,size.y-8)
+	var color=Color("ffb447") if int(info.days)>1 else Color("ff6262")
+	draw_string_outline(font,at,text,HORIZONTAL_ALIGNMENT_LEFT,-1,12,4,Color.BLACK)
+	draw_string(font,at,text,HORIZONTAL_ALIGNMENT_LEFT,-1,12,color)
+
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO,size),Color.BLACK)
 	rebuild_locations()
@@ -96,6 +113,8 @@ func _draw() -> void:
 		if id in game.pilot.visited or id in game.pilot.surveyed or id==game.map_selected or markers.has(id) or id==game.map_preview_system:
 			draw_string(font,p+Vector2(23 if not shattered_worlds(id).is_empty() else 11,7),game.catalog.system(id).name,HORIZONTAL_ALIGNMENT_LEFT,-1,18,Color("eeeeee"))
 	for id in markers: marker(id,Color("ff2929"))
+	var rush: Dictionary=game.missions.rush_markers()
+	for id in rush: rush_label(id,rush[id])
 	if game.map_preview_system>=0: marker(game.map_preview_system,Color("22ff22"))
 
 func select_system(id: int,append_route: bool=false) -> void:

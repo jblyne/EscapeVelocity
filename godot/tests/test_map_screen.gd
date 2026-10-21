@@ -23,6 +23,14 @@ func run() -> void:
 	root.add_child(game);game.set_physics_process(false);game.set_process(false)
 	game.set_mode("flight");game.set_mode("map")
 	await process_frame
+	var market: Dictionary=screen().details().market
+	check(not market.is_empty(),"Known current system shows commodity prices")
+	var correct: bool=true
+	for i in game.catalog.data.commodities.size():
+		var good: String=game.catalog.data.commodities[i].name
+		for quote in market.get(good,[]):
+			if int(quote.price)!=int(game.world_activity.prices(int(quote.port))[i]): correct=false
+	check(correct,"Map quotes match the actual exchange prices")
 	var map=screen().chart
 	map.rebuild_locations()
 	check(game.map_selected==game.pilot.system_id,"Map opens with current system selected")
@@ -40,6 +48,7 @@ func run() -> void:
 	var down=InputEventMouseButton.new();down.button_index=MOUSE_BUTTON_LEFT;down.pressed=true;down.position=Vector2(1,1);map._gui_input(down)
 	var motion=InputEventMouseMotion.new();motion.relative=Vector2(80,-45);map._gui_input(motion)
 	check(game.map_center!=initial,"Dragging empty chart pans view")
+	down.pressed=false;map._gui_input(down)
 	event.physical_keycode=KEY_C;root.push_input(event);await process_frame
 	check(game.map_center==initial and game.mode=="map","Real C input recenters without opening cheats")
 	var neighbor: int=game.catalog.system(game.pilot.system_id).links[0]
@@ -52,9 +61,26 @@ func run() -> void:
 	map.rebuild_locations()
 	var arrow: Dictionary=map.marker_geometry(remote)
 	check(Rect2(Vector2.ZERO,map.size).has_point(arrow.tip),"Distant mission arrow stays visible at chart edge")
+	var sample: Dictionary={}
+	for record in game.catalog.data.missions.values():
+		if not int(record.fields.Flags)&2:
+			sample=game.missions.offer(int(record.id),128);break
+	sample.dest=128;sample.travel_done=false;sample.ship_system=-1
+	sample.deadline=int(game.pilot.campaign.day)+3
+	game.pilot.campaign.active=[sample]
+	var rush_system: int=game.missions.target_system(sample)
+	check(game.missions.rush_markers()[rush_system].days==3,"Timed mission arrow reports remaining game days")
+	check(map.rush_text(game.missions.rush_markers()[rush_system])=="RUSH · 3d","Rush label clearly names urgency and remaining time")
+	var second: Dictionary=sample.duplicate(true);second.deadline=int(game.pilot.campaign.day)
+	game.pilot.campaign.active.append(second)
+	check(map.rush_text(game.missions.rush_markers()[rush_system])=="RUSH ×2 · TODAY","Shared destinations show rush count and earliest deadline")
+	sample.deadline=-1;game.pilot.campaign.active=[sample]
+	check(game.missions.rush_markers().is_empty(),"Untimed missions do not receive rush labels")
+	game.pilot.campaign.active=[]
 	var navigation: int=game.destination
 	map.select_system(remote);check(game.map_selected==remote and game.destination==navigation,"Remote inspection preserves valid next jump")
 	check(not screen().details().explored,"Unexplored mission target does not reveal services")
+	check(screen().details().market.is_empty(),"Unexplored mission target does not leak commodity prices")
 	game.map_route.clear();map.select_system(neighbor,true)
 	var next: int=-1
 	for id in game.catalog.system(neighbor).links:

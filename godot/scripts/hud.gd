@@ -6,10 +6,14 @@ const ClassicFlightPanel=preload("res://scripts/classic_flight_panel.gd")
 const Instruments=preload("res://scripts/instruments.gd")
 const TargetPanel=preload("res://scripts/target_panel.gd")
 const TitleMenu=preload("res://scripts/title_menu.gd")
-const INK=Color("deebf1")
-const MUTED=Color("7f9aaa")
-const ACCENT=Color("78ddd0")
+const INK=Color("dddddd")
+const MUTED=Color("aaaaaa")
+const ACCENT=Color("dddddd")
 var game
+var autopilot_indicator: PanelContainer
+var autopilot_route: Label
+var achievement_toast: Control
+var achievement_tween: Tween
 var port_page: String="landing"
 var market_good: int=0
 var hector_banner: Label
@@ -53,7 +57,7 @@ func _ready() -> void:
 	add_child(root)
 	var theme=Theme.new()
 	var font=SystemFont.new()
-	font.font_names=PackedStringArray(["Avenir Next","Helvetica Neue","Arial"])
+	font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
 	theme.default_font=font
 	theme.default_font_size=15
 	theme.set_color("font_color","Label",INK)
@@ -83,6 +87,15 @@ func _ready() -> void:
 	landing_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	log_label=label(flight_messages,"",13,Color("b7bcb5"))
 	log_label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	autopilot_indicator=PanelContainer.new();autopilot_indicator.name="AutopilotIndicator"
+	autopilot_indicator.position=Vector2(16,16);autopilot_indicator.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	var indicator_style=StyleBoxFlat.new();indicator_style.bg_color=Color.TRANSPARENT;indicator_style.set_border_width_all(0)
+	indicator_style.set_content_margin_all(10);autopilot_indicator.add_theme_stylebox_override("panel",indicator_style)
+	add_child(autopilot_indicator)
+	var activity=VBoxContainer.new();activity.mouse_filter=Control.MOUSE_FILTER_IGNORE;activity.add_theme_constant_override("separation",4);autopilot_indicator.add_child(activity)
+	label(activity,"● AUTOPILOT ON · A cancels",13,Color("8ed47c"))
+	autopilot_route=label(activity,"",16);autopilot_route.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	autopilot_indicator.hide()
 	var instruments=Instruments.new();instruments.game=game;root.add_child(instruments)
 	target_panel=TargetPanel.new();target_panel.game=game;root.add_child(target_panel)
 	target_panel.hide()
@@ -110,12 +123,12 @@ func _ready() -> void:
 	modal_root.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	root.add_child(modal_root)
 
-func panel_style(color: Color=Color(.025,.052,.075,.98)) -> StyleBoxFlat:
+func panel_style(color: Color=Color.BLACK) -> StyleBoxFlat:
 	var s=StyleBoxFlat.new()
 	s.bg_color=color
-	s.border_color=Color("294653")
-	s.set_border_width_all(1)
-	s.set_corner_radius_all(8)
+	s.border_color=Color("888888")
+	s.set_border_width_all(2)
+	s.set_corner_radius_all(0)
 	s.content_margin_left=24;s.content_margin_right=24
 	s.content_margin_top=18;s.content_margin_bottom=18
 	return s
@@ -133,17 +146,9 @@ func button(parent: Node, text: String, action: Callable) -> Button:
 	b.text=text
 	b.focus_mode=Control.FOCUS_NONE
 	b.custom_minimum_size=Vector2(0,36)
-	var normal=panel_style(Color("112b39"))
-	normal.content_margin_top=7;normal.content_margin_bottom=7
-	normal.content_margin_left=14;normal.content_margin_right=14
-	b.add_theme_stylebox_override("normal",normal)
-	var hover=normal.duplicate()
-	hover.bg_color=Color("204959")
-	hover.border_color=ACCENT
-	b.add_theme_stylebox_override("hover",hover)
-	b.add_theme_stylebox_override("pressed",hover)
-	b.add_theme_color_override("font_color",INK)
-	b.pressed.connect(action)
+	preload("res://scripts/classic_port.gd").style_classic_button(b)
+	b.add_theme_color_override("font_disabled_color",Color("aaaaaa"))
+	b.pressed.connect(func():game.sound("menu_click");action.call())
 	parent.add_child(b)
 	return b
 
@@ -155,7 +160,7 @@ func meter(parent: Node, text: String, color: Color) -> ProgressBar:
 	var b=ProgressBar.new()
 	b.custom_minimum_size=Vector2(190,5)
 	b.show_percentage=false
-	var bg=StyleBoxFlat.new();bg.bg_color=Color("193340")
+	var bg=StyleBoxFlat.new();bg.bg_color=Color("333333")
 	var fg=StyleBoxFlat.new();fg.bg_color=color
 	b.add_theme_stylebox_override("background",bg)
 	b.add_theme_stylebox_override("fill",fg)
@@ -163,7 +168,24 @@ func meter(parent: Node, text: String, color: Color) -> ProgressBar:
 	spacer(parent,9)
 	return b
 
+func refresh_autopilot_indicator() -> void:
+	autopilot_indicator.visible=game.autopilot.active() and game.mode not in ["title","intro","dead","rescue","ejecting","autopilot"]
+	if not autopilot_indicator.visible: return
+	var job: Dictionary=game.autopilot.job
+	var caption: String=str(job.name)
+	if job.kind=="trade":
+		caption+=" · %s ↔ %s" % [game.catalog.record("objects",int(job.low)).name,game.catalog.record("objects",int(job.high)).name]
+	else:
+		var target: int=game.autopilot.mission_target(job)
+		if target>=0: caption+=" → "+str(game.catalog.record("objects",target).get("name","Unknown"))
+	var width: float=maxf(220,minf(560,root.size.x-flight_panel.panel_width()-48))
+	autopilot_indicator.size.x=width
+	autopilot_route.custom_minimum_size.x=width-20
+	autopilot_route.text=caption
+	autopilot_indicator.reset_size()
+
 func _process(_dt: float) -> void:
+	refresh_autopilot_indicator()
 	target_panel.refresh()
 	target_panel.visible=game.mode=="info"
 	flight_panel.visible=game.mode!="title"
@@ -225,7 +247,7 @@ func commas(value: int) -> String:
 
 func modal(width: int) -> VBoxContainer:
 	var shade=ColorRect.new()
-	shade.color=Color(.004,.009,.018,.84)
+	shade.color=Color(0,0,0,.65)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	modal_root.add_child(shade)
 	var center=CenterContainer.new()
@@ -310,6 +332,10 @@ func rebuild_modal() -> void:
 		else:
 			button(col,"Accept rescue",game.ejection.recover).name="AcceptRescue"
 		return
+	if game.mode=="autopilot":
+		var picker=preload("res://scripts/classic_autopilot.gd").new();picker.game=game;modal_root.add_child(picker);return
+	if game.mode=="achievements":
+		var book=preload("res://scripts/classic_achievements.gd").new();book.game=game;modal_root.add_child(book);return
 	if game.mode=="controls":
 		var preferences=preload("res://scripts/control_preferences.gd").new();preferences.game=game;modal_root.add_child(preferences);return
 	if game.mode=="news":
@@ -327,6 +353,8 @@ func rebuild_modal() -> void:
 	if game.mode in ["comms", "boarding"]:
 		build_communications()
 		return
+	if game.mode=="mission_offer":
+		var offer_view=preload("res://scripts/classic_bar_approach.gd").new();offer_view.game=game;modal_root.add_child(offer_view);return
 	if game.mode=="mission_report":
 		build_mission_report()
 		return
@@ -354,40 +382,17 @@ func rebuild_modal() -> void:
 	if game.mode=="dead":
 		# Let the initial fireball play before covering it with the recovery panel.
 		if game.death_reveal_time>0: return
-		var col=modal(550)
-		label(col,"SIGNAL LOST",12,Color("ee9479"))
-		label(col,"Your ship was destroyed",28)
-		label(col,"This strict pilot has died permanently." if game.pilot.strict_dead else "Your last living pilot save is preserved.",15,MUTED)
-		if not game.pilot.strict_dead: button(col,"Load last save",game.load_game)
-		button(col,"Start a fresh flight",game.restart)
+		var recovery=preload("res://scripts/classic_death_dialog.gd").new()
+		recovery.game=game;modal_root.add_child(recovery)
 		return
-	var frame=modal(660)
-	var scroll=ScrollContainer.new();scroll.custom_minimum_size=Vector2(610,minf(720,get_viewport().get_visible_rect().size.y-100));frame.add_child(scroll)
-	var col=VBoxContainer.new();col.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(col)
-	label(col,"FLIGHT PAUSED",12,ACCENT)
-	label(col,"Escape Velocity HD",30)
-	label(col,game.controls.summary(),15,MUTED)
-	spacer(col,10)
-	button(col,"Ship & target information",func():game.set_mode("info"))
-	button(col,"Mission journal · I",func():game.set_mode("flight");game.missions.open())
-	button(col,"Cloak · K",func():game.set_mode("flight");game.cloak.toggle())
-	button(col,"Fullscreen · F11",func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if DisplayServer.window_get_mode()==DisplayServer.WINDOW_MODE_FULLSCREEN else DisplayServer.WINDOW_MODE_FULLSCREEN))
-	button(col,"Manage fleet  F",game.toggle_fleet_menu).name="ManageFleet"
-	button(col,"Keyboard & game speed",game.open_controls)
-	button(col,"Resume flight",func():game.set_mode("flight"))
-	button(col,"Exit ship · Main menu",func():game.set_mode("title"))
-	var row=HBoxContainer.new();col.add_child(row)
-	button(row,"Save pilot",game.save_game)
-	button(row,"Load pilot",game.load_game)
-	button(row,"Sound on / off",game.toggle_audio)
-	button(row,"Quit",func():game.save_game(false);get_tree().quit())
-	button(col,"Debug: free fuel refill  G",game.debug_refuel)
-	button(col,"Cheat menu  C",game.toggle_cheat_menu)
+	var pause_menu=preload("res://scripts/classic_pause_menu.gd").new()
+	pause_menu.game=game;modal_root.add_child(pause_menu)
 
 func build_info() -> void:
 	var col=modal(820)
 	label(col,"SHIP INFORMATION",12,ACCENT)
-	label(col,str(game.catalog.record("ships",game.pilot.ship_id).name),28)
+	button(col,"Achievements & overall progress",game.open_achievements)
+	label(col,str(game.catalog.record("ships",game.pilot.ship_id).name),24)
 	label(col,system_label.text+" · "+territory.text+" · "+ship_status.text,13,MUTED)
 	label(col,weapon_status.text+" · "+jump_status.text,13,MUTED)
 	var recent=label(col,"\n".join(game.messages.slice(0,3)),12,MUTED);recent.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
@@ -396,14 +401,16 @@ func build_info() -> void:
 	label(details,stats.text,17)
 	var status=label(details,cheat_status.text,13,Color("e7c993"));status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	var mission=label(details,mission_label.text,15,ACCENT);mission.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-	button(details,"Mission journal · I",func():game.set_mode("flight");game.missions.open())
-	button(details,"Manage fleet · F",game.toggle_fleet_menu)
-	button(details,"Hail selected world · H",game.world_activity.open_contact)
-	button(details,"Galactic news & tribute",game.world_activity.open_news)
-	button(details,"Cloak · K",func():game.set_mode("flight");game.cloak.toggle())
-	button(details,"Cheats · C",game.toggle_cheat_menu)
-	if game.pilot.outfit_count(154)>0: button(details,"Abandon ship · Shift+X",game.ejection.request)
-	button(details,"Settings & controls",func():game.set_mode("pause"))
+	var actions=GridContainer.new();actions.columns=2;actions.add_theme_constant_override("h_separation",10);actions.add_theme_constant_override("v_separation",8);details.add_child(actions)
+	button(actions,"Mission journal · I",func():game.set_mode("flight");game.missions.open())
+	button(actions,"Manage fleet · F",game.toggle_fleet_menu)
+	button(actions,"Hail selected world · H",game.world_activity.open_contact)
+	button(actions,"Galactic news & tribute",game.world_activity.open_news)
+	button(actions,"Cloak · K",func():game.set_mode("flight");game.cloak.toggle())
+	button(actions,"Cheats · C",game.toggle_cheat_menu)
+	if game.pilot.outfit_count(154)>0: button(actions,"Abandon ship · Shift+X",game.ejection.request)
+	button(actions,"Settings & controls",func():game.set_mode("pause"))
+	for action in actions.get_children(): action.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	target_panel.reparent(row)
 	target_panel.custom_minimum_size.x=270
 	target_panel.show()
@@ -467,6 +474,10 @@ func build_communications() -> void:
 	var npc: Dictionary = comms.contact
 	if not comms.live(npc):
 		comms.close()
+		return
+	if game.mode=="comms":
+		var classic=preload("res://scripts/classic_ship_comms.gd").new()
+		classic.game=game;modal_root.add_child(classic)
 		return
 	var boarding: bool = game.mode == "boarding"
 	var col = modal(660)
@@ -764,3 +775,19 @@ func build_world_comms() -> void:
 		demand.tooltip_text=service.demand_reason(service.contact_id);demand.disabled=not demand.tooltip_text.is_empty()
 		if demand.disabled: label(col,demand.tooltip_text,14,MUTED)
 	style_world_comms(screen,col)
+
+func show_achievement(unlocked: Array) -> void:
+	if is_instance_valid(achievement_tween): achievement_tween.kill()
+	if is_instance_valid(achievement_toast): achievement_toast.queue_free()
+	achievement_toast=Panel.new();achievement_toast.name="AchievementToast";achievement_toast.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	achievement_toast.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	achievement_toast.offset_left=-260;achievement_toast.offset_right=260;achievement_toast.offset_top=26;achievement_toast.offset_bottom=114
+	var style=StyleBoxFlat.new();style.bg_color=Color(0,0,0,.94);style.border_color=Color("bda365");style.set_border_width_all(2)
+	achievement_toast.add_theme_stylebox_override("panel",style);root.add_child(achievement_toast)
+	var badge=preload("res://scripts/achievement_badge.gd").new();badge.position=Vector2(14,12);badge.size=Vector2(62,62);badge.unlocked=true;achievement_toast.add_child(badge)
+	var heading=Label.new();heading.text="ACHIEVEMENT UNLOCKED";heading.position=Vector2(90,13);heading.add_theme_font_size_override("font_size",14);heading.add_theme_color_override("font_color",Color("e5c276"));achievement_toast.add_child(heading)
+	var title=Label.new();title.text=str(unlocked[0].name)+( " + %d more" % (unlocked.size()-1) if unlocked.size()>1 else "");title.position=Vector2(90,39);title.size=Vector2(412,34);title.clip_text=true;title.add_theme_font_size_override("font_size",21);achievement_toast.add_child(title)
+	achievement_toast.modulate.a=0
+	achievement_tween=create_tween();achievement_tween.tween_property(achievement_toast,"modulate:a",1.0,.18)
+	achievement_tween.tween_interval(3.5);achievement_tween.tween_property(achievement_toast,"modulate:a",0.0,.35)
+	achievement_tween.tween_callback(achievement_toast.queue_free)

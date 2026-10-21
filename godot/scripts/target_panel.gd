@@ -1,8 +1,8 @@
 extends PanelContainer
 
 const Models = preload("res://scripts/models.gd")
-const INK = Color("deebf1")
-const MUTED = Color("7f9aaa")
+const INK = Color("dddddd")
+const MUTED = Color("aaaaaa")
 const FRIENDLY = Color("73c6ce")
 const HOSTILE = Color("e98c78")
 var game
@@ -29,10 +29,10 @@ func _ready() -> void:
 	offset_right = -36
 	offset_top = 166
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color("08151f")
-	style.border_color = Color("294653")
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
+	style.bg_color = Color.BLACK
+	style.border_color = Color("888888")
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(0)
 	style.content_margin_left = 14
 	style.content_margin_right = 14
 	style.content_margin_top = 14
@@ -68,7 +68,7 @@ func _ready() -> void:
 	integrity.custom_minimum_size.y = 5
 	integrity.show_percentage = false
 	integrity.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var bg = StyleBoxFlat.new(); bg.bg_color = Color("193340")
+	var bg = StyleBoxFlat.new(); bg.bg_color = Color("333333")
 	var fg = StyleBoxFlat.new(); fg.bg_color = FRIENDLY
 	integrity.add_theme_stylebox_override("background",bg)
 	integrity.add_theme_stylebox_override("fill",fg)
@@ -100,7 +100,7 @@ func setup_preview() -> void:
 	var environment = WorldEnvironment.new()
 	environment.environment = Environment.new()
 	environment.environment.background_mode = Environment.BG_COLOR
-	environment.environment.background_color = Color("08151f")
+	environment.environment.background_color = Color.BLACK
 	environment.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.environment.ambient_light_color = Color("b6d8ef")
 	environment.environment.ambient_light_energy = 0.8
