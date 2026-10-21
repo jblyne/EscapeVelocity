@@ -1,0 +1,11 @@
+# Original gameplay follow-up — 0.1.154
+
+Basis: local recovered original manual, paragraphs at decoded lines 589–597 (weapon categories/triggers/safety), 703 (fighter recovery/service), 723 (cargo jettison), 725 (ten-second self-destruct), and 790–807 (planetary bribery). Weapon primary/secondary classification uses MiscFlags bit 1 from recovered records.
+
+Implemented simultaneous primary mounts with independent per-type reloads; separate secondary trigger, cycling and safety; fighter recall/service, ammunition recovery, losses and save-safe deployed inventory; ordinary/all cargo dumping; cancelable real-time manual self-destruct; and daily-official landing-bribe refusal/negotiation. Existing remake bindings remain the default where classic keys conflict.
+
+Remaining fidelity limits: bribe acceptance (80%), negotiability (45 percentage points), discount (25%), three-minute sortie timer, fighter AI and repair/service model are reconstructed. Saved surviving fighters are docked and serviced upon reload, rather than persisting live formation positions. Exact NPC AI, original numeric engine timings and full manual campaign equivalence are not claimed by this update. Original add-ons remain outside scope.
+
+Validation: 37 new gameplay checks, plus cheats 105, controls/strict 18, outfitter 96, Maverick 69, fighter-jump 8, landing bribes 12, fleet management 35, ejection 23, combat recovery 14, pilot files 12, fleet combat 48, cargo scans 29 and mission clearance 11: 517 checks passed. Older cheat/fleet assertions were updated for the added Maverick catalog entries and animated wing hierarchy. Mac export completed successfully; ad-hoc signature verification passed.
+
+Standalone launch verification found an existing threaded scene-loading failure that source-scene tests did not expose. `startup.gd` now loads the game on the main thread after a logo frame instead of `load_threaded_request`. The 16-check original startup-sequence suite passes, bringing the selected total to 533. The exported app starts with OpenGL compatibility rendering and no script/preload failures. Godot still reports small resource/ObjectDB leaks on shutdown; this update does not claim to eliminate those.

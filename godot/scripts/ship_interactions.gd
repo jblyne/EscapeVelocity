@@ -1,7 +1,8 @@
 extends RefCounted
 
-# The manual establishes the interaction sequence. These distances, prices,
-# salvage risk are remake tuning, not recovered constants. Disabling uses Combat.
+# The manual establishes the interaction sequence. Distances, refuel prices and
+# salvage risk remain remake tuning. Bribe formulas use recovered PPC evidence.
+const Bribery=preload("res://scripts/bribery.gd")
 const BOARD_SPEED: float = 25.0
 const BOARD_ANGLE: float = PI / 6.0
 const REFUEL_AMOUNT: float = 100.0
@@ -131,8 +132,65 @@ func accept_refuel() -> bool:
 	close()
 	return true
 
+# Voluntary engine repairs: the player brings their own ship alongside.
+func offer_assistance() -> void:
+	if not connected(): return
+	if not contact.disabled:
+		reply("Our engines are operational. Thank you for offering, captain.");return
+	if contact.get("hector",false) or contact.faction in [140,150]:
+		reply("There is no response to your offer of assistance.");return
+	contact.rescue_order={"time":0.0}
+	var ship: String=contact.name
+	var distance: int=ceili(maxf(80,float(contact.radius)+30))
+	close()
+	game.notify("Assisting %s: approach within %d km and match speed for 3 seconds to repair their engines." % [ship,distance])
+
+func update_rescue(npc: Dictionary,dt: float) -> void:
+	if not npc.has("rescue_order"): return
+	var nearby: bool=game.pilot.position.distance_to(npc.position)<=maxf(80,float(npc.radius)+30)
+	var matched: bool=game.velocity.distance_to(npc.velocity)<=BOARD_SPEED
+	if not nearby or not matched:
+		npc.rescue_order.time=0.0;return
+	npc.rescue_order.time+=dt
+	if float(npc.rescue_order.time)<3.0: return
+	game.Combat.sync(npc)
+	var capacity: float=maxf(0,float(npc.max_health)-float(npc.shield_capacity))
+	npc.armor=maxf(float(npc.armor),capacity*.75)
+	npc.health=float(npc.shield)+float(npc.armor)
+	npc.disabled=false;npc.erase("rescue_order");npc.behavior="Engines repaired"
+	history("assisted",npc)
+	game.save_game(false)
+	game.notify("%s: Engines restored. Thank you for getting us moving again, captain!" % npc.name)
+
+func bribe_terms(npc: Dictionary) -> Dictionary:
+	if not npc.has("bribe_terms"):
+		var flags: int=int(game.catalog.record("governments",int(npc.faction)).get("fields",{}).get("Flags",0))
+		npc.bribe_terms={"price":Bribery.ship_quote(game.pilot.credits,flags,rng),"bargains":rng.randi_range(0,99)<=50,"negotiated":false}
+	return npc.bribe_terms
+
 func bribe_price(npc: Dictionary) -> int:
-	return maxi(250, mini(20000, int(game.catalog.field("ships", npc.id, "Cost") * .01)))
+	return int(bribe_terms(npc).price)
+
+func bribe_refusal(npc: Dictionary) -> String:
+	if npc.get("hector",false) or npc.get("invulnerable",false): return "Your credits will not buy our silence."
+	if npc.faction in [140,150]: return "There is no intelligible response to your offer."
+	if npc.has("fleet_uid") or npc.get("player_ally",false): return "This ship is already part of your fleet."
+	if npc.ai<3: return "No deal. We will not take your money."
+	return ""
+
+func negotiate_bribe() -> bool:
+	if not connected() or page!="bribe": return false
+	if contact.disabled or not contact.hostile or not bribe_refusal(contact).is_empty(): return false
+	var terms: Dictionary=bribe_terms(contact)
+	if terms.negotiated: return false
+	terms.negotiated=true
+	if terms.bargains:
+		terms.price=Bribery.discount(int(terms.price))
+		reply("All right. %s credits, and we'll leave you alone." % game.hud.commas(int(terms.price)),"bribe")
+	else:
+		terms.price=int(terms.price)+1000
+		reply("No discount. The price is now %s credits. Pay it or leave." % game.hud.commas(int(terms.price)),"bribe")
+	return bool(terms.bargains)
 
 func offer_bribe() -> void:
 	if not connected(): return
@@ -141,14 +199,14 @@ func offer_bribe() -> void:
 		reply("Our weapons are offline. There is no need for a bribe.")
 	elif not contact.hostile:
 		reply("We have no quarrel with you. Keep your credits.")
-	elif contact.faction in [140, 150]:
-		reply("There is no intelligible response to your offer.")
+	elif not bribe_refusal(contact).is_empty():
+		reply(bribe_refusal(contact))
 	else:
 		reply("%s credits buys a ceasefire with this ship for this visit. It won't change your standing with our government. Fire on us again and the deal is off." % game.hud.commas(bribe_price(contact)), "bribe")
 
 func pay_bribe() -> bool:
 	if not connected() or page != "bribe": return false
-	if contact.disabled or not contact.hostile or contact.faction in [140, 150]: return false
+	if contact.disabled or not contact.hostile or not bribe_refusal(contact).is_empty(): return false
 	var price = bribe_price(contact)
 	if game.pilot.credits < price:
 		reply("You don't have enough credits. The price is %s." % game.hud.commas(price), "bribe")
@@ -198,10 +256,10 @@ func board() -> bool:
 	if not npc.boarded:
 		game.Factions.penalize(game.catalog, game.pilot, npc.faction, "BoardPenalty")
 		npc.boarded = true
-		game.save_game(false)
 	game.missions.actor_event(npc,"board")
 	game.save_game(false)
-	response = "Boarding party aboard. Choose what to transfer."
+	var mission_report: String=game.missions.boarding_report(npc)
+	response = mission_report if not mission_report.is_empty() else "Boarding party aboard. Choose what to transfer."
 	game.sound("airlock")
 	game.set_mode("boarding")
 	game.persons.on_contact(contact,true)
@@ -362,6 +420,7 @@ func disable(npc: Dictionary, player_attack: bool) -> void:
 
 func update_special(npc: Dictionary, dt: float) -> bool:
 	if npc.disabled:
+		update_rescue(npc,dt)
 		# Disabled ships coast gently to a halt, retaining their heading.
 		npc.velocity = npc.velocity.move_toward(Vector2.ZERO, 35 * dt)
 		npc.position += npc.velocity * dt
@@ -379,7 +438,7 @@ func update_special(npc: Dictionary, dt: float) -> bool:
 	var wanted: Vector2 = (game.velocity + offset * .8).limit_length(float(fields.Speed))
 	if wanted.length() > 1:
 		npc.heading = rotate_toward(npc.heading, game.Flight.facing(wanted), dt * fields.Maneuver * game.Flight.TURN_SCALE)
-	npc.velocity = npc.velocity.move_toward(wanted, dt * fields.Accel * game.Flight.ACCEL_SCALE)
+	npc.velocity = npc.velocity.move_toward(wanted, dt * game.Flight.acceleration(fields))
 	npc.position += npc.velocity * dt
 	npc.behavior = "Refueling rendezvous"
 	pose(npc, .4)

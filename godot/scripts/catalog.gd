@@ -8,6 +8,11 @@ func _init() -> void:
 	assert(content is Dictionary, "Run tools/build_catalog.py before opening this project.")
 	data = content
 	preload("res://scripts/maverick.gd").install(self)
+	# Rebel counterpart to the original consumable Confederation papers.
+	var rebel_id: Dictionary=data.outfits["180"].duplicate(true)
+	rebel_id.id=903;rebel_id.name="Rebel Fake ID Papers";rebel_id.fields.ModVal=129
+	data.outfits["903"]=rebel_id
+	data.descriptions[str(3000+903-128)]="Forged Rebel identification clears a negative Rebellion record to neutral. Consumed immediately on purchase; later offenses still count."
 	# Requested forklift buff; retain the recovered source catalog unchanged.
 	data.weapons["191"].fields.MassDmg*=3
 	data.weapons["191"].fields.EnergyDmg*=3

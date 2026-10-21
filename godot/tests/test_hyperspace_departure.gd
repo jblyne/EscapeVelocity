@@ -41,7 +41,7 @@ func departure(target: int, fps: int, position: Vector2, label: String) -> void:
 		print("Departure stopped at %s; latest message: %s" % [game.pilot.position, game.messages[0]])
 	check(crossed_zone and game.pilot.system_id == target, label + ": crosses the gravity zone during the burn and reaches its destination")
 	var saved = JSON.parse_string(FileAccess.get_file_as_string(game.save_path)) if FileAccess.file_exists(game.save_path) else {}
-	check(game.pilot.system_id == target and game.pilot.fuel == 900 and game.velocity.length() < 275.01 and game.velocity.length() > 274.99 and game.destination == -1 and int(saved.get("system_id", -1)) == target and saved.get("fuel", -1) == 900,
+	check(game.pilot.system_id == target and game.pilot.fuel == 900 and absf(game.velocity.length()-float(game.pilot.flight_fields(game.catalog.record("ships",game.pilot.ship_id).fields).Speed))<.01 and game.destination == -1 and int(saved.get("system_id", -1)) == target and saved.get("fuel", -1) == 900,
 		label + ": arrives at cruise speed, spends fuel once, clears the route, and saves the destination")
 
 func run() -> void:

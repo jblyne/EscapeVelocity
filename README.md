@@ -1,10 +1,10 @@
 # Escape Velocity HD — First Flight
 
-A playable Godot 4 prototype built around the original Escape Velocity 1.0.5 resource data. This is the first development milestone, not the complete recreation.
+A playable Godot 4 reconstruction built around the original Escape Velocity 1.0.5 resource data, with modern 3D presentation and requested custom features. Full manual original-game parity remains under acceptance review.
 
 ## Download and install (no Godot needed)
 
-Download **Escape-Velocity-HD-0.1.132-macOS.zip** from the [latest GitHub release](https://github.com/jblyne/EscapeVelocity/releases/latest). This standalone Mac app includes both Apple Silicon and Intel builds.
+Download the **0.1.178 acceptance candidate**, `Escape-Velocity-HD-0.1.178-macOS.zip`, from [its GitHub prerelease](https://github.com/jblyne/EscapeVelocity/releases/tag/v0.1.178). The standalone universal app includes Apple Silicon and Intel code; execution on Intel still needs acceptance testing. The [previous regular release](https://github.com/jblyne/EscapeVelocity/releases/latest) remains available. Full manual campaign comparisons are pending; see [Phase 6 acceptance status](research/reports/PHASE_6_ACCEPTANCE.md).
 
 1. Unzip the download.
 2. Drag **Escape Velocity HD.app** into **Applications**.
@@ -70,7 +70,7 @@ Version **0.1.19** adds selected-ship communications: **Tab → Y** opens a port
 
 Land at a planet or station and select **Outfitter · equipment & weapons** to buy or sell installed gear. Original outfit prices, masses, mount limits, and local technology govern purchases. Supported equipment includes weapons and ammunition, cargo/mass conversions, armor, shields, engine upgrades, fuel tanks, afterburners, and ramscoops. **Q/E** selects purchased weapons; launchers consume purchased rounds. **Shift + thrust** uses an installed afterburner. Sales return 50% of cost; loadouts persist in pilot saves. Unsupported special systems are not offered.
 
-**Chain hyperjump:** enable it in **C**, open **M**, and select any system. The map highlights the shortest route in gold and draws a direct destination line. Return to flight and press **J** once: the first hop uses the full stop, align, spool, and acceleration sequence. Subsequent hops arrive with a boom, fly through the system for one second at retained hyperspace speed, stretch rapidly in the last quarter second, and jump instantly onward. While this cheat is enabled and you exceed 1.5× cruise speed, your wake destroys other ships within 300 distance units of your swept flight path, throughout flybys and continued high-speed coasting; captured escorts are spared. The final arrival returns to normal cruise speed. Fuel and gravity restrictions are bypassed. **J** cancels at the current stop; menus pause the countdown. Your fleet travels with you, and the toggle saves with your pilot.
+**Chain hyperjump:** enable it in **C**, open **M**, and select any system. The map highlights the shortest route in gold and draws a direct destination line. Return to flight and press **J** once: the first hop uses the full stop, align, spool, and acceleration sequence. Subsequent hops arrive with a boom, fly through the system for one second at retained hyperspace speed, stretch rapidly in the last quarter second, and jump instantly onward. While this cheat is enabled and you exceed 1.5× cruise speed, your wake destroys other ships within 300 distance units of your swept flight path, during hyperspace acceleration and active chained flybys; captured escorts are spared. The final arrival returns to normal cruise speed. Fuel and gravity restrictions are bypassed. **J** cancels at the current stop; menus pause the countdown. Your fleet travels with you, and the toggle saves with your pilot.
 
 Captured ships can be released with **F → Release** (also **Esc → Manage fleet**). Each released hull leaves formation as an independent friendly contact; releasing permanently removes it from the saved fleet and frees a slot. **F / Esc** closes the fleet menu.
 
@@ -89,19 +89,20 @@ Godot **4.7.2 stable**, its editor, and the Mac export template are in `.tools/`
 | Key | Action |
 | --- | --- |
 | W / Up | Thrust |
-| A / D or Left / Right | Turn |
+| Left / Right (D also turns right) | Turn |
+| A | Open autopilot / cancel active autopilot |
 | S / Down | Face opposite drift; then use W / Up thrust to slow down |
 | Space | Fire selected weapon |
-| Q / E | Previous / next weapon while the weapons cheat is on |
+| Q / E | Previous / next available weapon |
 | C | Open / close cheat menu (weapons, infinite fuel, Invincibility, Deflection) |
 | Tab | Cycle contacts → no selection → first contact; show selected ship preview / information |
-| L | Request landing clearance / land on the next press / launch |
+| L | Request clearance / land / launch; double-tap for auto-land |
 | 1–4 | Select a landing world (L requests its clearance) |
 | M | Open / close galaxy chart |
 | N | Cycle connected jump destinations |
 | J | Stop, align, spool, accelerate into hyperspace / cancel |
 | Y | Hail selected ship / close communications |
-| B | Attempt to board selected disabled ship |
+| B | Board selected disabled ship; double-tap for auto-board |
 | Shift+B | Spawn a combat-drill enemy |
 | G | Free debugging fuel refill (1,000 jumps) |
 | Mouse wheel | Zoom |
@@ -809,3 +810,235 @@ Maverick wings now sweep back over two seconds during active afterburner use and
 ## 0.1.132 — Readable firework pleas
 
 Threatened worlds reserve separate firework message positions above and below their surface. A second active plea uses the bottom position; additional simultaneous launches are skipped instead of overlapping existing text. Expired messages release their position.
+
+## 0.1.133 — Widescreen and ultrawide play
+
+The game viewport now expands to fill the window's aspect ratio, including 21:9 and 32:9 displays, instead of retaining the original 16:10 frame. Wider displays reveal more space horizontally while preserving ship proportions, vertical camera scale, and the right-aligned HUD. Press **F11** in game to toggle fullscreen. Original startup and main-menu artwork keeps its original proportions.
+
+## 0.1.134 — Keep outfitter scroll position
+
+Buying or selling equipment now restores the scroll position after the rebuilt grid finishes layout. The selected item stays selected, so repeated purchases no longer require scrolling back to the bottom.
+
+## 0.1.135 — Ammunition on the flight HUD
+
+The selected weapon display now includes its remaining ammunition in parentheses, updates immediately when firing or buying ammunition, and shows zero when empty. Unlimited weapons retain their names without a finite count; the infinite-ammunition cheat shows ∞ for ammunition-based weapons. Long weapon names shrink to keep the count visible.
+
+Maverick cargo capacity is now **72 tonnes** (doubled from 36). New purchases include **Tritanium Armor** and an **IFF Decoder** alongside the existing loadout. Existing Maverick pilot saves receive those two outfits once on loading; deliberately selling them afterward does not re-grant them.
+
+## 0.1.136 — Double Maverick fuel capacity
+
+SS-Maverick now has an 800-unit fuel tank, doubled from 400, allowing eight standard jumps before refueling. Existing Maverick pilots receive the larger capacity while keeping their current fuel; new purchases start with a full tank.
+
+## 0.1.137 — Maverick Sidewinder resupply everywhere
+
+Every port with an outfitter stocks AIM-9 Sidewinder ammunition for pilots currently flying SS-Maverick, regardless of local technology level. Other ships cannot purchase Sidewinders. Normal credit, equipment-space and launcher requirements still apply.
+
+## 0.1.138 — Triple Maverick shields
+
+SS-Maverick's base shield capacity is now 780, tripled from 260. New purchases start with full shields. Existing Maverick pilots receive the higher capacity while retaining their current shield charge, which can recharge normally.
+
+## 0.1.139 — Landing bribes and optional Death Star
+
+When a planet or station refuses landing because of your reputation, hail it with **H** and choose **Bribe for landing clearance**. The displayed price is 5,000 credits plus 1,000 per technology level. Payment grants clearance for the current system visit without changing reputation, and is recorded in interaction history. Destroyed worlds, missing facilities and active defense battles cannot be bribed into allowing landing.
+
+The **Death Star · world-killer** toggle in the cheat menu now controls access to threats and deployment. It defaults off and saves with the pilot. Existing countdowns can still be resolved when the toggle is off.
+
+## 0.1.140 — Longer-range Sidewinders
+
+Tripled AIM-9 Sidewinder flight time from about 2.92 to 8.75 seconds for three times the nominal range. Launch acceleration, cruise speed, guidance, damage, and smoke trails are unchanged.
+
+## 0.1.141 — Double Maverick outfitting space
+
+SS-Maverick now has 56 tonnes of free outfitting space beyond its stock loadout, doubled from 28. The higher capacity applies to new purchases and existing Maverick pilot saves.
+
+## 0.1.142 — Mission destination landing access
+
+Active courier, passenger, cargo and other ready-to-land mission objectives grant landing access at their exact next planet or station even with insufficient faction standing. Clearance follows a mission's delivery and return stops, ends when the mission is removed or expires, and does not change reputation. Destroyed worlds, missing facilities and active defense battles still block landing. Eligible mission landings do not require a bribe.
+
+## 0.1.143 — Rebel Fake ID Papers
+
+Privateer's Haven in NGC-1896 now sells Rebel Fake ID Papers alongside the original Confederation papers, using the same special-stock rules and 2,500,000-credit base price (normal local pricing applies). Purchasing consumes the papers and resets only a negative Rebellion record to neutral. Positive standing is preserved, and the item cannot be bought without a negative record. Later offenses can be cleared with another purchase.
+
+## 0.1.144 — Reliable bar recruitment at neutral standing
+
+Fixed a progression dead end: introductory Rebel Parcels and Confed Documents required positive standing even though their follow-up missions were locked behind completing those introductions. These two recruitment jobs now accept neutral standing and bypass their random appearance roll once otherwise eligible. They appear in Bar Offers and can trigger the normal bar approach. Negative standing, combat-rating requirements and allegiance/story restrictions remain enforced. Other bar missions keep their original chance and prerequisites. Empty bar offer lists now explain how recruitment and later unlocks work.
+
+## 0.1.145 — Sidewinders defeat Cap'n Hector
+
+A direct AIM-9 Sidewinder hit now instantly destroys Cap'n Hector, bypassing his special protection and clearing his reminder banner. Other weapons retain their existing behavior against him.
+
+## 0.1.146 — Rival-faction combat goodwill
+
+Destroying a Confederation ship grants +25 Rebellion standing; destroying a Rebel ship grants +25 Confederation standing. Player and player-fleet kills count, including faction patrol/escort variants. The attacked faction's existing penalties remain. Partial damage, unrelated factions and hyperspace-wake destruction do not grant this bonus; reputation is capped at 10,000.
+
+## 0.1.147 — Ship-scaled combat goodwill
+
+Rival-faction goodwill now scales with the destroyed hull's mass: one point per ten tonnes, rounded up. A Confed patrol ship earns 2 Rebel goodwill, a frigate 35, and a cruiser 100; a Rebel destroyer earns 24 Confederation goodwill and a cruiser 85. Escape pods earn none. Existing crime penalties and player/fleet kill-credit rules remain unchanged.
+
+## 0.1.148 — Clear assassination objective completion
+
+Assassination targets are labeled [MISSION TARGET]. Once all required targets are destroyed, a confirmation sound and persistent gold flight-HUD message name the exact return planet/station and system, explicitly stating that no more targets are required. The mission journal marks the job RETURN FOR PAYMENT and shows the return instruction above its briefing. The reminder clears when the mission completes.
+
+
+## 0.1.149 — Limit lethal wake to actual hyperspace travel
+
+Chain-jump wake damage now requires active hyperspace acceleration or an ongoing chained flyby, in addition to the existing speed threshold. Ordinary thrust, Maverick afterburner use and fast coasting no longer destroy nearby ships just because the chain-jump cheat is enabled. Rebel Defense's five required attackers now receive mission-target labels and a persistent return-for-payment message once eliminated or driven off.
+
+## 0.1.150 — Visible local bar offers and fresh reports
+
+Bar Offers now lists every mission whose port, standing and story prerequisites are met, independent of its random spontaneous-approach roll. Selecting a listed job uses the same eligibility rules, while automatic bar approaches retain their encounter chance. Opening a new offer list or beginning another landing visit clears old mission-report text, preventing a previous system's completion report from masking the local offer screen. The heading distinguishes eligible bar jobs from the mission computer.
+
+## 0.1.151 — Explicit mission cloak installation
+
+The Special Ops Insertion bar approach now distinguishes an already-installed cloak from pending installation. Its acceptance button reads Accept & install cloak when needed, and the acceptance report confirms the equipment is installed and gives the K shortcut. End-to-end checks cover the actual approach button, inventory, active mission, activation after launch and save restoration.
+
+## 0.1.152 — Cloak offer layout and explicit scan failure
+
+Widened the Special Ops acceptance button so its full label stays within the panel. The insertion offer now warns that a Confederation cargo scan fails the mission and reclaims its loaned cloak, making the offer eligible again. A scan-triggered failure produces a 25-second flight HUD notice and explanatory mission-report text, including cloak removal and retry instructions. Installation, persistence, scan failure, equipment removal and retry eligibility are checked end to end.
+
+## 0.1.153 — Current mission objective on the flight screen
+
+A persistent gold NEXT readout now names the tracked mission and its immediate action, exact destination and system. It updates for cargo/passenger pickup and delivery, combat target counts, disabling/boarding, escort rendezvous, and returning for payment. Special Ops insertion includes its K-to-cloak warning. Newly accepted jobs are tracked automatically; press I and select another journal entry to track that job. The journal also places the current next action above its original briefing, and the flight readout hides when no jobs remain.
+
+
+## 0.1.154 — Original combat controls and flight utilities
+
+Space fires every installed primary gun together, with independent reload timers and a projectile per gun mount. Q/E selects secondary weapons; Control fires the selected secondary; R toggles secondary safety. Shift remains afterburner in the remake defaults. The Classic preset uses Shift for secondary fire, W / Option+W for secondary selection, S for safety, and 2 for afterburner. All new flight actions are remappable in Settings. The weapon display shows selected secondary ammunition and SAFE status.
+
+Backspace or **Fleet → Recall fighters to bays** brings launched fighters home, returning each surviving purchased craft to bay inventory once. Relaunch services its shields, armor, and ammunition. Fighters retain damage, ammunition, recall orders, and sortie age through hyperspace; incoming projectiles can destroy them. They automatically recall when their sortie ammunition is exhausted, badly damaged, or after a reconstructed three-minute sortie. Landing recovers surviving fighters; pilot saves include deployed purchased fighters as docked inventory so reopening a pilot does not lose them. A full flight wing rejects additional launches without deleting old fighters or spending ammunition.
+
+Command+K (Control+K on other keyboards) dumps cargo; Option/Alt retains mission cargo. Dumping mission cargo fails the affected deliveries and explains why. Hold Command+D / Control+D for ten real seconds to self-destruct; releasing or opening a menu cancels it. Time acceleration does not shorten that hold.
+
+Landing officials can refuse bribes or negotiate one smaller fee. The same port/day keeps the same official, preventing repeated hails from rerolling willingness; another day can bring a different official. Refusal charges nothing. These behaviors follow the original manual, while prices, willingness probabilities, and sortie duration remain reconstructed rather than verified original formulas.
+
+Validation: `test_original_gameplay.gd` covers firing, safety, presets, fighter launch/recovery/loss/save/jump handling, cargo jettison, self-destruct cancellation and completion, and bribe refusal/negotiation. Existing combat, outfitter, Maverick, controls, fighter-jump, cargo-scan, and landing tests are also checked. The local Mac app is rebuilt; this version has not been published to GitHub.
+
+The exported app's launch check also exposed a background-thread preload failure for shader/texture dependencies. Startup now loads the game scene on the main thread after drawing the logo; the existing logo/music/loading/story order is retained. The original startup test passes (16 checks), and the standalone Mac app launch no longer reports script/resource-loading failures.
+
+
+## 0.1.155 — Combat AI and weapon-timing fidelity
+
+NPC weapon volleys now use each recovered weapon's Reload period, without speeding it up according to gun count or imposing the old 0.12-second minimum. Multiple mounts fire together, consuming ammunition per projectile. Fractional cooldown time is retained across updates; leaving range does not bank a burst of overdue fire. NPC firing range follows the same projectile speed and lifetime used by actual shots instead of a universal 950-unit cutoff. The laser's prototype 1.5-second lifetime override is removed in favor of its recovered Count field. Custom Maverick weapon data and sounds remain in use.
+
+Turrets require a valid designated target, as described by the original manual; rear turrets also require a target aft. NPC movement now uses the shared thrust/inertia integrator, so a turn cannot instantly redirect its existing velocity. Pursuit accounts for target motion and primary-weapon reach. These are combat-fidelity improvements, not a claim that every original AI decision or numeric engine conversion has been replicated. Patrol acquisition/scan cadence, encounter scheduling, and exact acceleration/turning conversions remain under comparison.
+
+Regression coverage includes frame-rate-independent volleys, simultaneous mounts, ammunition exhaustion, actual projectile ranges, target requirements, rear arcs, moving-target pursuit, momentum and pause behavior, plus fleets, missions, Maverick weapons and original audio. Local Mac build: **0.1.155**; not published to GitHub.
+
+
+## 0.1.156 — Clear reconnaissance debriefs and actual rewards
+
+Reconnaissance guidance distinguishes observing contacts from destroying ships. Once observed, it says to return and report findings; missions without a cash reward no longer promise payment. Lead Rebel Patrol's original “come up empty” narrative is a successful story outcome: it awards +10 Rebellion reputation and unlocks Rescue Rebel Spy at Sirgil III's bar. Its original completion requirements and narrative remain intact.
+
+Mission reports now visibly show completion/failure, mission name, actual credits/reputation, and an eligible bar-story handoff when one is unlocked at the return port. The original narrative remains scrollable, with outcome/status text separated above it. Checks cover the real mission 185 acceptance, reconnaissance and debrief flow, reward, unlocked follow-up, report layout, and paid-reconnaissance guidance. Local Mac build 0.1.156; not published to GitHub.
+
+
+## 0.1.157 — Restore selected-weapon firing by default
+
+The normal fire trigger (Space by default) again fires the weapon shown as selected, including Maverick Sidewinders. Q/E cycles all available weapons, so the M61 and Sidewinders remain individually selectable. The HUD no longer substitutes a secondary weapon's label while a primary gun is selected.
+
+Separate all-primary/selected-secondary firing is now opt-in through the Classic preset or the Classic firing checkbox in Settings. This preference saves independently of key bindings and defaults off for existing preferences. Restore remake defaults returns to selected-weapon firing. Weapon range, NPC volleys, targeting rules and other recent combat fixes remain. Regression coverage exercises the actual fire-trigger dispatcher, Sidewinder ammo, M61 selection, HUD captions and preference reload. Local Mac build 0.1.157; not pushed to GitHub.
+
+
+## 0.1.158 — Phase 1: mission clarity and reliability
+
+Audited guidance across all 116 original mission records. Escort objectives keep the protection requirement visible; rescue/boarding objectives recognize ships already disabled. Flight guidance includes deadline urgency and scan risks. Offers and journals explain equipment, legal-record and military-access rewards as well as credits. Map/port leads name actual unmet faction/combat requirements.
+
+Original non-abortable missions now show **Cannot Abort**, explain why, and warn before acceptance. Failure messages identify the cause, loaned-equipment loss and valid retry location. Failure reports cannot show success status, and failed repeat missions stop their autopilot correctly. Original campaign rewards and narrative text remain; the selected-weapon firing preference and Maverick additions are preserved.
+
+The [Phase 1 audit](research/reports/PHASE_1_MISSION_AUDIT.md) includes the complete catalog checklist and known boundaries. Automated coverage includes every record's guidance and nine campaign routes with save/reload; complete manual campaign playthrough remains Phase 6. Local Mac build **0.1.158**; not published to GitHub.
+
+## 0.1.159 — Phase 2: flight and combat timing
+
+Original-executable timing replaces the provisional base-ship acceleration and turning conversions. Player cruise speed includes the original 1.75 multiplier; ordinary engine upgrades add their source values. Jump arrivals now respect effective speed and installed upgrades. Maverick handling, afterburner multipliers, wing sweep, custom weapons/audio and your default selected-weapon controls are preserved.
+
+Shield/armor recovery follows shared original-clock pulses and signed-integrity rounding, rather than continuous smoothing. Held weapons retain fractional reload timing, and projectiles cannot travel past their lifetime on the final update. Tests compare 30/60/120/144 Hz updates. See the [Phase 2 evidence and limits](research/reports/PHASE_2_FLIGHT_COMBAT_TIMING.md) for the extracted constants, source addresses, coordinate scale and remaining differences. Local Mac build **0.1.159**, not published to GitHub.
+
+## 0.1.160 — Dominated systems on the map
+
+Systems containing a surviving tribute-paying world now use the original bright green map ring. Selected details show **Dominated**; hover that status to see which worlds pay tribute. The indicator follows saved conquest state and disappears when the last agreement is released or its world is destroyed. Current-location dots, mission arrows and selection brackets retain their existing roles.
+
+## 0.1.161 — Pirate reputation in the flight sidebar
+
+The existing reputation row now has four equal sections: combat, Confederation, Rebellion and Pirates. The new skull-and-crossbones icon uses the same signed reputation gauge, with exact pirate standing available on hover. All four sections retain the sidebar's shared bevel and background.
+
+## 0.1.162 — Tribute retaliation
+
+Dominated worlds hire bounty hunters that identify their employer. Defeating one raises that world's daily tribute by 5,000 credits and displays a flight alert. After five defeats, the world gives up hiring hunters, retaining its 25,000-credit daily tribute increase. The map shows current tribute, hunters sent, defeats, and give-up status, with a per-world tooltip.
+
+Hunter contracts and tribute increases persist with the pilot. Travel and reload resume an outstanding contract without counting it twice. NPC kills do not earn a tribute increase.
+
+## 0.1.163 — Offer assistance to disabled ships
+
+Ship communications now includes Offer Assistance. Offer help, then approach within the displayed range and match the disabled ship's speed for three seconds. Your crew restores its engines and enough armor to resume flight; the captain remembers your assistance. Operational ships decline unnecessary repairs.
+
+Validated with 8 rescue checks, 73 communications checks, and 35 interaction-history checks, plus native layout verification.
+
+## 0.1.164 — Phase 3: NPC behavior and encounters
+
+Civilian ships now evade pirates and attackers, armed merchants can defend themselves, and badly wounded ambient merchants/pirates withdraw into hyperspace. Patrols approach and match speed before inspecting illegal mission cargo. Ordinary NPC cruise speeds and original projectile launch drift now follow recovered executable rules; arriving traffic enters in motion. Mission actors, fleet ownership, tribute hunters and custom Maverick handling remain protected.
+
+See [Phase 3 evidence and tuning limits](research/reports/PHASE_3_NPC_BEHAVIOR.md). Phase 4 covers fighter and fleet lifecycle fidelity.
+
+## 0.1.165 — Maverick multi-target volleys and tribute celebrations
+
+With the Maverick's Sidewinders selected in the default firing mode, hold primary fire for 0.4 seconds to lock hostile ships within missile range, limited to available rounds. Release, then press primary fire again to launch one missile per locked target simultaneously. Orange brackets and a ready prompt show the locks. A quick tap still fires one missile. Switching weapons, opening a menu, or traveling cancels locks; lost targets are skipped without spending ammunition. M61, other ships and optional classic firing retain their controls.
+
+Bounty hunter defeats now produce a large animated announcement with sliding/fading entry, a counting tribute increase, moving sparks, employer, new daily tribute and a final give-up message.
+
+## 0.1.166 — Phase 4: fighters and fleets
+
+Fighters now use their full original weapon loadouts and finite ammunition. Fleet management adds fighter Defend, Attack, Formation and Hold orders alongside docking, plus shields, rounds and sortie-time status. Recall uses a physical approach and speed match; docking repairs, refuels and rearms.
+
+Launched fighters and captured carrier wings retain damage, ammo and elapsed sortie time across travel and saves. Reload no longer services them for free, surviving NPC fighters replenish their own carrier bay, and losses cannot duplicate inventory. Existing pilots remain compatible.
+
+See [Phase 4 evidence and tuning limits](research/reports/PHASE_4_FIGHTERS_AND_FLEETS.md). The three-minute endurance clock and approach/service timing remain documented remake tuning. Next is Phase 5: bribes and secrets.
+
+## 0.1.167 — Boarding mission cargo clarity
+
+Boarding mission targets are explicitly marked. Their boarding screen shows automatic mission-item recovery, explains that special cargo is separate from ordinary loot, and states the next destination. Boarding an escort instead identifies the mistake. Recorded boarding progress survives later actor synchronization, and boarding/cargo pickup save together. Astrodyne Outpost V is covered through actual boarding, saving, transport loss after recovery, and delivery to Palshife.
+
+## 0.1.168 — Auto boarding
+
+Double-tap **B** with a disabled ship selected to automatically approach, match speed and heading, and board. Press B again or use manual steering/thrust to cancel. Menus, jumps, and a lost or changed target also cancel the approach. Single B retains manual boarding; Shift+B retains the combat drill.
+
+## 0.1.169 — F-14 Tomcat ship name
+
+The purchasable ship type is now **F-14 Tomcat**. The recurring NPC pilot remains **SS-Maverick**. Existing ships retain their equipment, stats and abilities.
+
+## 0.1.171 — F-14 EMP Disruptor
+
+Every F-14 Tomcat now has a built-in **EMP Disruptor**, including existing pilots. Select it with Q/E and fire with Space (secondary fire in optional classic controls). A guided blue pulse disables the ship it hits without reducing its shields, hull or cargo. It recharges every two seconds, needs no ammunition or outfit space, and remains exclusive to the F-14 even with the all-weapons cheat. Invulnerable contacts resist it. Attacking and disabling still affect faction standing and mission objectives normally. Double-tap B afterward to auto board.
+
+## 0.1.172 — Boarding target survival
+
+Active mission ships that must be boarded are protected from incidental chain-jump wake. They receive eight seconds of protection against NPC and escort fire on arrival; afterward autonomous fire can disable them but leaves a surviving hull for boarding. This applies to the required carrier, not auxiliary escorts or assassination targets, and ends after boarding. Direct player weapons can still destroy the target and fail the mission. Existing failed attempts can be retried at their original offer location.
+
+## 0.1.173 — Click badges for next steps
+
+Click any incomplete achievement badge to see personalized next steps. Story badges show the active mission objective or the next contact, port and system, prerequisites, combat/reputation requirements and cargo-space needs. Guidance respects your faction path and explains intermittent offers. Exploration badges name the nearest unvisited system and jump count; other badges explain their remaining milestones and concrete actions. Back to badges preserves your scroll position. Reading guidance does not accept missions, change progress or trigger bar offers.
+
+## 0.1.174 — Phase 5: bribes and secrets
+
+Bribe quotes now use recovered original wallet-based formulas, government surcharges, rounding and limits. Ship hails offer negotiation; landing officials use the original willingness rule and may refuse after failed bargaining. Quotes stay fixed while considering an offer, discounts cannot stack, and payments apply once without clearing government records. Officials are isolated between pilots.
+
+On the title screen, hold Option while choosing About for original parody credits, or Command for the original additional credits. Pilot dialogs block secret shortcuts. Satellite of Love retains its original shipyard picture and description, with no invented hull statistics.
+
+See [Phase 5 evidence and comparison limits](research/reports/PHASE_5_BRIBES_AND_SECRETS.md). The remaining phase is full-game acceptance and release.
+
+## 0.1.175 — Fleet screen layout
+
+Fleet management now uses compact ship rows with separate name, command and release columns. The roster and captain offers scroll inside a bounded area; fleet orders, fighter controls, repair/rearm and Leave remain outside it. Confirmation and fighter-status blocks have their own space. The classic layout scales to smaller windows without narrow wrapped controls or clipped footer buttons.
+
+## 0.1.176 — Fleet hyperspace formation
+
+Hired and captured fleet ships now share the flagship’s stop, alignment, spool and hyperspace acceleration instead of continuing normal combat or Hold movement during a jump. They retain their relative positions and match the flagship’s velocity and heading, including chain-hop flybys, then arrive alongside it at the same speed with matching warp visuals. Carrier wings and deployed player fighters join the departure; existing staggered player-fighter arrivals remain. Canceling restores normal ship scale and fleet AI without deleting momentum. Health, ammunition, cargo, wages and fleet commands retain their existing persistence rules. This convoy movement implements the requested behavior; it does not claim an exact port of the original escort AI.
+
+## 0.1.177 — Jump from badge guidance
+
+Incomplete badge guidance now offers destination buttons linked to the actual next contact, prerequisite, active objective or exploration target. Clicking returns to flight (launching if docked), selects the shortest connected route and starts the normal J jump. Distant destinations show “Jump toward”: without chain jumping, subsequent hops remain selected for normal J input; with chain jumping enabled, the queued route runs as usual. Fuel and gravity restrictions still apply. Already-local guidance returns to flight without attempting a self-jump; alternate faction leads have separate destination buttons.
+
+## 0.1.178 — Phase 6 acceptance candidate
+
+Added a reproducible full-suite acceptance runner, a version/signature-checked Mac packaging tool, an explicit manual campaign checklist, and a release evidence ledger. New pilots now include the same default secret-unlock fields as restored pilots. Historical regression checks were updated for accepted flight speed, communications layout, delayed menu presentation, the F-14 name and isolated test saves. Gameplay customizations remain. See [Phase 6 results and remaining manual checks](research/reports/PHASE_6_ACCEPTANCE.md); this candidate does not claim a complete manual original-game playthrough.
+
+Run `python3 tools/run_acceptance.py` for all Godot regressions, or repeat `--test test_name.gd` to select scripts. Logs and `results.json` are retained beneath `builds/acceptance-0.1.178`. After exporting the matching Mac app, `python3 tools/package_macos_release.py` verifies it and creates a ZIP with install notes, credits, the acceptance ledger and a separate SHA-256 checksum.

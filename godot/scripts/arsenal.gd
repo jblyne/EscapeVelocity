@@ -71,12 +71,54 @@ var next_ship_weapon: int = 10000
 
 func available_ids() -> Array:
 	var result: Array = ids() if game.pilot.cheat_all_weapons else game.outfitter.weapon_ids()
+	result.erase(903)
+	if game.pilot.ship_id==900: result.append(903)
 	if game.pilot.secrets.forklift and 191 not in result: result.append(191)
 	for id in ship_weapons.keys():
 		if ship_weapons[id] in game.npcs: result.append(id)
 		else: ship_weapons.erase(id)
 	if game.pilot.selected_weapon not in result: game.pilot.selected_weapon = int(result[0]) if not result.is_empty() else 128
 	return result
+
+func is_secondary(id: int) -> bool:
+	if ship_weapons.has(id): return true
+	var weapon: Dictionary=game.catalog.record("weapons",id)
+	return not weapon.is_empty() and (int(weapon.fields.MiscFlags)&2)!=0
+
+func secondary_ids() -> Array:
+	return available_ids().filter(func(id): return is_secondary(int(id)))
+
+func recall_fighters() -> void:
+	game.fighter_wing.order("dock")
+	var count: int=0
+	for escort in game.escorts:
+		if not escort.get("captured",false): escort.recalling=true;count+=1
+	game.notify("Recalling %d fighters to their bays for service." % count)
+
+func damage_fighter(escort: Dictionary, energy: float, mass: float) -> void:
+	if escort not in game.escorts or escort.get("captured",false): return
+	var result: Vector2=game.Combat.hit(float(escort.shield),float(escort.armor),energy,mass)
+	escort.shield=result.x;escort.armor=result.y;escort.health=result.x+result.y
+	if result.x+result.y<=0:
+		game.ship_explosion(escort.model,escort.position,Vector2.ZERO)
+		escort.model.queue_free();game.escorts.erase(escort)
+		game.notify("Fighter lost: "+str(escort.name))
+	elif result.y<float(game.catalog.field("ships",int(escort.id),"Armor"))*.3: escort.recalling=true
+
+func recover_all_fighters() -> void:
+	for escort in game.escorts.duplicate():
+		if not escort.get("captured",false): recover_fighter(escort)
+
+func saved_outfits() -> Dictionary:
+	return game.pilot.outfits.duplicate()
+
+func recover_fighter(escort: Dictionary) -> void:
+	if escort not in game.escorts or escort.get("captured",false): return
+	var ammo: int=int(escort.get("bay_ammo",-1))
+	if ammo>=0: game.pilot.outfits[str(ammo)]=game.outfitter.count(ammo)+1
+	escort.model.queue_free();game.escorts.erase(escort)
+	game.notify("%s recovered · refueled, repaired and rearmed." % escort.name)
+	game.save_game(false)
 
 func weapon_name(id: int) -> String:
 	if ship_weapons.has(id): return "%s · ship launcher (1)" % ship_weapons[id].name
@@ -138,24 +180,39 @@ func kind(id: int) -> String:
 	if id == 150: return "flare"
 	if id in [142,147,152]: return "beam"
 	if id == 140: return "bomb"
-	if id in [131,132,148,191,901]: return "seeker"
+	if id in [131,132,148,191,901,903]: return "seeker"
 	return "bolt"
 
+func projectile_lifetime(id: int) -> float:
+	return maxf(0,float(game.catalog.field("weapons",id,"Count"))*Flight.WEAPON_TICK_SECONDS)
+
+func weapon_reach(id: int) -> float:
+	match kind(id):
+		"bay": return 1400.0
+		"tractor": return 900.0
+		"beam": return 1050.0
+	return maxf(0,float(game.catalog.field("weapons",id,"Speed")))*projectile_lifetime(id)
+
 func description(id: int) -> String:
+	return raw_description(id).replace("Space",game.controls.caption("secondary_fire" if game.controls.classic_fire and is_secondary(id) else "fire"))
+
+func raw_description(id: int) -> String:
+	if id==903: return "F-14 Tomcat only. Guided EMP pulse disables a ship without hull or cargo damage. Recharges in two seconds; no ammunition needed. Tab selects a ship, Space fires; double-tap B to auto board. Invulnerable ships resist it."
 	if ship_weapons.has(id): return "Launch this resisting ship at your selected contact. Both hulls explode on impact. One use; available in this system. Tab targets, Space launches."
 	match kind(id):
-		"bay": return "Launches an escort that attacks your selected contact or nearby hostiles. Up to 12 escorts; new launches replace the oldest."
+		"bay": return "Launches a fighter that attacks your selected contact or nearby hostiles. Recall fighters to recover and service them; up to 12 may fly at once."
 		"tractor": return "Hold Space to pull the selected contact toward your ship. Range: 900."
 		"flare": return "Drops a decoy that draws nearby incoming guided weapons away from your ship."
 		"beam": return "A rapid beam weapon. Keep your nose pointed at the target and hold Space."
 		"bomb": return "Drops a slow bomb that detonates near contacts, damaging ships around the blast."
 		"seeker": return "Tracks the selected contact, or the nearest hostile. Tab selects a contact."
-	if id in [133,134]: return "Turret aims at your selected contact, or the nearest hostile, in any direction."
-	if id == 143: return "Rear turret fires aft and tracks contacts within its rear arc."
+	if id in [133,134]: return "Requires a selected contact; turret aims at it in any direction."
+	if id == 143: return "Requires a selected contact in the rear arc; turret fires aft."
 	if id == 144: return "Swivel cannon tracks contacts within its forward arc."
 	return "Forward-firing weapon. Point your ship at the target and hold Space."
 
 func tint(id: int) -> Color:
+	if id==903: return Color("55cfff")
 	if id==900: return Color("ffe6a3")
 	if id in [129,147,152]: return Color("bb7aff")
 	if id in [130,134]: return Color("8dff9e")
@@ -203,19 +260,30 @@ func advance_gun_audio(dt: float) -> void:
 	if gun_audio_hold<=0 and game.audio.maverick_gun.playing: game.audio.maverick_gun.stop()
 
 func fire(id: int, pos: Vector2, heading: float, enemy: bool = false, source: Dictionary = {}, target_override: Dictionary = {}) -> bool:
+	if id==903 and (enemy or not source.is_empty() or game.pilot.ship_id!=900): return false
 	if ship_weapons.has(id) and not enemy and source.is_empty(): return fire_ship(id)
 	var weapon = game.catalog.record("weapons",id)
 	if weapon.is_empty(): return false
 	var fields: Dictionary = weapon.fields
 	var type: String = kind(id)
 	var npc_shot: bool = not source.is_empty()
-	var contact: Dictionary = target_override if npc_shot else ({} if enemy else target(pos))
+	var contact: Dictionary = target_override if npc_shot or not target_override.is_empty() else ({} if enemy else target(pos))
+	if id in [133,134,143]:
+		if not npc_shot and not enemy: contact=game.selected_contact()
+		if contact.is_empty() or not is_instance_valid(contact.get("model")): return false
+		if id==143 and Vector2(-sin(heading),cos(heading)).dot((Vector2(contact.position)-pos).normalized())<=0: return false
 	if type == "bay":
 		if npc_shot:
-			var launched: bool=game.traffic.launch_fighter(source,int(fields.AmmoType))
+			var launched: bool=game.traffic.launch_fighter(source,int(fields.AmmoType),id)
 			if launched: play_weapon_sound(id,pos)
 			return launched
+		var count: int=0
+		for escort in game.escorts:
+			if not escort.get("captured",false): count+=1
+		if count>=MAX_ESCORTS: return false
 		launch_escort(int(fields.AmmoType),pos,heading)
+		game.escorts.back().bay_weapon=id
+		game.escorts.back().bay_ammo=-1 if game.pilot.cheat_all_weapons else game.outfitter.ammo_id(id)
 		play_weapon_sound(id,pos)
 		return true
 	play_weapon_sound(id,pos)
@@ -244,26 +312,31 @@ func fire(id: int, pos: Vector2, heading: float, enemy: bool = false, source: Di
 	if type in ["bomb","flare"]: dimensions = Vector3(12,8,12)
 	if id == 191: dimensions = Vector3(22,12,28)
 	var node: Node3D
-	if id==191:
+	if id==903:
+		node=game.Models.sphere(game.world,game.v3(origin,6),7,game.Models.material(color,0,3))
+	elif id==191:
 		node=Forklift.create();game.world.add_child(node);node.position=game.v3(origin,6)
 	elif id in ProjectileModels.IDS or id==901:
 		node=ProjectileModels.create(id);game.world.add_child(node);node.position=game.v3(origin,6)
 	else:
 		node=game.Models.box(game.world,game.v3(origin,6),dimensions,game.Models.material(color,0,2))
 	node.rotation.y = -Flight.facing(direction)
-	var lifetime: float = clampf(float(fields.Count)/60.0,0.3,20.0)
-	if id == 128: lifetime = 1.5 # Preserve the existing normal laser's range.
+	var lifetime: float = projectile_lifetime(id)
 	var speed: float = minf(230,float(fields.Speed)) if id==901 else float(fields.Speed)
+	var launch_velocity: Vector2=direction*speed
+	if not npc_shot and id<900 and int(fields.Guidance) not in [4,7,8]:
+		launch_velocity+=game.velocity
+		if int(fields.Guidance)==5: launch_velocity*=.5
 	var target_node = contact.get("model") if npc_shot else (game.player_model if enemy else contact.get("model"))
 	game.shots.append({"node":node,"weapon":id,"kind":type,"position":origin,
-		"velocity":direction*speed,"speed":speed,"enemy":enemy,"life":lifetime,
+		"velocity":launch_velocity,"launch_drift":launch_velocity-direction*speed,"speed":speed,"enemy":enemy,"life":lifetime,
 		"damage":maxf(game.Combat.powers(fields).x,game.Combat.powers(fields).y),"shield_damage":game.Combat.powers(fields).x,"armor_damage":game.Combat.powers(fields).y,
 		"blast":float(fields.BlastRadius)*2.0,"proximity":float(fields.ProxRadius),
 		"target":target_node,"color":color,"source":source,"npc_shot":npc_shot})
 	return true
 
 func fire_beam(id: int, pos: Vector2, direction: Vector2, contact: Dictionary, source: Dictionary = {}, enemy: bool = false) -> void:
-	var reach: float = 900 if id==149 else 1050
+	var reach: float = weapon_reach(id)
 	var obstacle: Dictionary=game.environment_hazards.obstruction(pos,pos+direction*reach)
 	if not obstacle.is_empty(): reach=float(obstacle.distance)
 	var end = pos+direction*reach
@@ -276,6 +349,12 @@ func fire_beam(id: int, pos: Vector2, direction: Vector2, contact: Dictionary, s
 		var projection: float = (npc.position-pos).dot(direction)
 		if projection > 0 and projection < distance and game.segment_distance(npc.position,pos,end)<npc.radius:
 			hit=npc;distance=projection
+	if enemy:
+		for fighter in game.escorts:
+			if fighter.get("captured",false) or not fighter.model.visible: continue
+			var projection: float=(fighter.position-pos).dot(direction)
+			if projection>0 and projection<distance and game.segment_distance(fighter.position,pos,end)<18:
+				hit=fighter;distance=projection
 	if enemy or (game.pilot.cheat_deflection and not source.is_empty()):
 		var projection: float = (game.pilot.position-pos).dot(direction)
 		if projection>0 and projection<distance and game.segment_distance(game.pilot.position,pos,end)<22:
@@ -304,6 +383,11 @@ func fire_beam(id: int, pos: Vector2, direction: Vector2, contact: Dictionary, s
 					game.damage_npc(source,game.Combat.powers(fields).x,{},Vector2.ZERO,false,game.Combat.powers(fields).y)
 		else:
 			game.damage_player(game.Combat.powers(fields).x,-direction,game.Combat.powers(fields).y)
+	if not hit.is_empty() and hit.get("player_fighter",false):
+		if id!=149:
+			var fields: Dictionary=game.catalog.record("weapons",id).fields
+			game.arsenal.damage_fighter(hit,game.Combat.powers(fields).x,game.Combat.powers(fields).y)
+		hit={}
 	if not hit.is_empty():
 		if id==149:
 			# Only pull the aimed-at contact, avoiding accidental damage or hostility.
@@ -339,26 +423,27 @@ func steer(shot: Dictionary, dt: float) -> void:
 	if destination==null: return
 	var target_pos=Vector2(destination.position.x,destination.position.z)
 	var turn_rate: float=guidance_rate(shot)
-	var angle=rotate_toward(Flight.facing(shot.velocity),Flight.facing(target_pos-shot.position),dt*turn_rate)
-	shot.velocity=Vector2(sin(angle),-cos(angle))*shot.speed
+	var angle=rotate_toward(Flight.facing(shot.velocity-Vector2(shot.get("launch_drift",Vector2.ZERO))),Flight.facing(target_pos-shot.position),dt*turn_rate)
+	shot.velocity=Vector2(sin(angle),-cos(angle))*shot.speed+Vector2(shot.get("launch_drift",Vector2.ZERO))
 	shot.node.rotation.y=-angle
 
 func launch_escort(ship_id: int, pos: Vector2, heading: float) -> void:
 	var temporary_count: int = 0
 	for escort in game.escorts:
 		if not escort.get("captured",false): temporary_count += 1
-	if temporary_count>=MAX_ESCORTS:
-		for escort in game.escorts:
-			if not escort.get("captured",false):
-				escort.model.queue_free()
-				game.escorts.erase(escort)
-				break
+	if temporary_count>=MAX_ESCORTS: return
 	var model=game.ShipModels.create(game.catalog,ship_id,-1)
 	game.world.add_child(model)
+	var fighter_fields: Dictionary=game.catalog.record("ships",ship_id).fields
 	var offset=Vector2(sin(heading),-cos(heading))*65
 	model.position=game.v3(pos+offset)
 	game.escorts.append({"model":model,"position":pos+offset,"heading":heading,"cooldown":0.3,
-		"id":ship_id,"name":game.catalog.record("ships",ship_id).name,"captured":false})
+		"id":ship_id,"name":game.catalog.record("ships",ship_id).name,"captured":false,"bay_ammo":-1,"recalling":false,"sortie_seconds":0.0,"shield":game.fighter_wing.shield_capacity(game.catalog,ship_id),"armor":float(fighter_fields.Armor),"weapons":game.fighter_wing.stock(game.catalog,ship_id),"velocity":game.velocity,"health":game.fighter_wing.shield_capacity(game.catalog,ship_id)+float(fighter_fields.Armor),"max_health":game.fighter_wing.shield_capacity(game.catalog,ship_id)+float(fighter_fields.Armor),"shield_capacity":game.fighter_wing.shield_capacity(game.catalog,ship_id),"player":true,"player_fighter":true,"disabled":false,"radius":18.0,"player_ally":true,"faction":-1,"ai":3,"nemesis":null,"carrier_ship":game.pilot.ship_id,"command":"defend","bay_weapon":-1})
+
+	for weapon_id in game.catalog.data.weapons:
+		var bay: Dictionary=game.catalog.record("weapons",int(weapon_id)).fields
+		if int(bay.Guidance)==99 and int(bay.AmmoType)==ship_id:
+			game.escorts.back().bay_weapon=int(weapon_id);break
 
 func launch_captured_ship(ship_id: int, pos: Vector2, heading: float) -> void:
 	game.fleet_service.spawn_last(ship_id,pos,heading)
@@ -367,8 +452,9 @@ func restore_captured_fleet() -> void:
 	game.fleet_service.restore()
 
 func update_escorts(dt: float) -> void:
-	for escort in game.escorts:
+	for escort in game.escorts.duplicate():
 		if escort.get("captured",false): continue
+		if not escort.has("arrival_delay") and not escort.has("arrival_visual") and game.fleet_service.update_jump(escort,dt): continue
 		if escort.has("arrival_delay"):
 			escort.arrival_delay-=dt
 			if escort.arrival_delay>0: continue
@@ -393,22 +479,22 @@ func update_escorts(dt: float) -> void:
 				escort.model.scale=Vector3.ONE
 				escort.erase("arrival_visual")
 			continue
-		var contact=target(escort.position)
-		if not contact.is_empty() and (contact.disabled or contact.truce): contact = {}
+		escort.sortie_seconds=float(escort.get("sortie_seconds",0))+dt
+		if escort.sortie_seconds>=game.fighter_wing.ENDURANCE or (not escort.weapons.is_empty() and escort.weapons.all(func(w):return int(w.ammo)==0)): escort.recalling=true
+		var recalling: bool=escort.get("recalling",false)
+		if recalling and escort.position.distance_to(game.pilot.position)<45 and escort.velocity.distance_to(game.velocity)<35:
+			recover_fighter(escort);continue
+		var contact: Dictionary=game.fighter_wing.target(escort)
+		if not contact.is_empty() and (contact.disabled or contact.truce): contact={}
 		var goal: Vector2=game.pilot.position+Vector2(100,80).rotated(float(game.escorts.find(escort)))
-		if not contact.is_empty(): goal=contact.position
-		var offset: Vector2=goal-escort.position
-		escort.heading=rotate_toward(escort.heading,Flight.facing(offset),dt*3)
-		var direction=Vector2(sin(escort.heading),-cos(escort.heading))
-		var speed: float=game.catalog.field("ships",escort.id,"Speed")
-		escort.position+=direction*minf(speed,offset.length()*2)*dt
-		escort.model.position=game.v3(escort.position)
-		escort.model.rotation.y=-escort.heading
-		game.Models.set_thrust(escort.model,0.7,game.time)
-		escort.cooldown-=dt
-		if not contact.is_empty() and escort.cooldown<=0 and offset.length()<700 and direction.dot(offset.normalized())>0.9:
-			fire(128,escort.position,escort.heading)
-			escort.cooldown=0.45
+		if recalling: goal=game.pilot.position
+		elif escort.get("command","defend")=="hold": goal=escort.get("hold_position",escort.position)
+		elif not contact.is_empty(): goal=contact.position
+		game.fighter_wing.fly(escort,goal,game.velocity if contact.is_empty() and escort.get("command","defend")!="hold" else Vector2.ZERO,dt)
+		escort.health=float(escort.shield)+float(escort.armor)
+		game.Combat.regenerate(escort,game.catalog.record("ships",int(escort.id)).fields,dt,game.recovery_window)
+		escort.disabled=false
+		game.traffic.advance_weapons(escort,contact,dt)
 
 func remove_cheat_weapons() -> void:
 	for i in range(game.shots.size()-1,-1,-1):
@@ -417,7 +503,7 @@ func remove_cheat_weapons() -> void:
 			shot.node.queue_free()
 			game.shots.remove_at(i)
 	for i in range(game.escorts.size()-1,-1,-1):
-		if not game.escorts[i].get("captured",false):
+		if not game.escorts[i].get("captured",false) and int(game.escorts[i].get("bay_ammo",-1))<0:
 			game.escorts[i].model.queue_free()
 			game.escorts.remove_at(i)
 

@@ -83,3 +83,36 @@ func update(announce: bool=true) -> bool:
 			state.earned[entry.id]=int(game.pilot.campaign.day);unlocked.append(entry)
 	if announce and not unlocked.is_empty() and is_instance_valid(game.hud): game.hud.show_achievement(unlocked)
 	return not unlocked.is_empty()
+
+func next_steps(id: String) -> String:
+	var guide=preload("res://scripts/achievement_guidance.gd").new()
+	guide.game=game
+	return guide.steps(id)
+
+func guidance(id: String) -> Dictionary:
+	var guide=preload("res://scripts/achievement_guidance.gd").new()
+	guide.game=game
+	var text: String=guide.steps(id)
+	return {"text":text,"destinations":guide.destinations.duplicate()}
+
+func jump_to_guidance(system: int) -> void:
+	if game.catalog.system(system).is_empty(): return
+	if game.hyperdrive.active() or not game.chain_route.is_empty():
+		game.set_mode("flight")
+		game.notify("Finish or cancel the current jump first.")
+		return
+	var route: Array=game.autopilot.path(game.pilot.system_id,system)
+	if system!=game.pilot.system_id and route.is_empty():
+		game.notify("No hyperspace route to this system.")
+		return
+	if game.autopilot.active(): game.autopilot.cancel("Navigation selected from badge guidance.")
+	if game.achievements_return_mode=="dock":
+		game.set_mode("dock")
+		game.launch()
+	else: game.set_mode("flight")
+	if system==game.pilot.system_id:
+		game.notify("You are already in "+game.catalog.system(system).name+". Follow the badge's local instructions.")
+		return
+	game.map_route=route
+	game.select_destination(system if game.pilot.cheat_chain_jump else int(route.front()))
+	game.start_jump()

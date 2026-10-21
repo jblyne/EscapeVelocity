@@ -1,0 +1,1089 @@
+{
+  "version": "0.1.178",
+  "date": "2026-10-21",
+  "kind": "automated-headless",
+  "scripts": 108,
+  "passed": 108,
+  "results": [
+    {
+      "test": "test_achievement_guidance.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.59,
+      "timeout": false,
+      "summaries": [
+        "ACHIEVEMENT GUIDANCE: 44 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_achievements.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "ACHIEVEMENTS: 21 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_arrival_audio.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.7,
+      "timeout": false,
+      "summaries": [
+        "ARRIVAL AUDIO RESULT: 22 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_assassination_return.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "ASSASSINATION RETURN: 6 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_asteroid_motion.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "ASTEROID MOTION: 6 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_auto_boarding.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "AUTO BOARDING: 18 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_auto_landing.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "AUTO LANDING: 7 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_autopilot.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "AUTOPILOT: 38 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_bar_offer_list.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "BAR OFFER LIST: 26 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_bar_recruitment.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "BAR RECRUITMENT: 28 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_boarding_mission_cargo.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "BOARDING MISSION CARGO: 10 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_boarding_target_survival.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.61,
+      "timeout": false,
+      "summaries": [
+        "BOARDING TARGET SURVIVAL: 10 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_breakup.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 2.09,
+      "timeout": false,
+      "summaries": [
+        "BREAKUP RESULT: 55 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_campaign_routes.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 4.44,
+      "timeout": false,
+      "summaries": [
+        "CAMPAIGN ROUTES: 457 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_cargo_scans.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "CARGO SCANS: 29 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_chain_jump.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.64,
+      "timeout": false,
+      "summaries": [
+        "CHAIN RESULT: 40 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_cheats.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 2.01,
+      "timeout": false,
+      "summaries": [
+        "CHEAT RESULT: 105 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_classic_services.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "CLASSIC SERVICES: 39 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_classic_ship_comms.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "CLASSIC SHIP COMMS: 10 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_classic_ui.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "CLASSIC UI RESULT: 0 failures"
+      ]
+    },
+    {
+      "test": "test_cloak_jump.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "CLOAK JUMP RESULT: 17 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_combat_fidelity.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.71,
+      "timeout": false,
+      "summaries": [
+        "COMBAT FIDELITY: 25 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_combat_recovery.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "COMBAT RECOVERY: 14 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_controls_strict.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "CONTROLS & STRICT: 18 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_defense_wake.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "DEFENSE WAKE: 6 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_ejection.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "EJECTION: 23 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_emp_disruptor.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "EMP DISRUPTOR: 12 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_enemy_kill_reputation.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.49,
+      "timeout": false,
+      "summaries": [
+        "ENEMY KILL REPUTATION: 13 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_environment_economy_secrets.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "ENVIRONMENT / ECONOMY / SECRETS: 1298 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_exhaust.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "EXHAUST RESULT: 6 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_explosions.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "EXPLOSION RESULT: 44 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_face_target.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "FACE TARGET RESULT: 10 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_fear.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "FEAR: 11 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_fighter_jump.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "FIGHTER JUMP: 8 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_fleet_jump.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "FLEET JUMP: 150 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_fleet_layout.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "FLEET LAYOUT: 15 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_fleet_management.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "FLEET MANAGEMENT: 35 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_fleets.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 5.28,
+      "timeout": false,
+      "summaries": [
+        "FLEET RESULT: 48 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_forklift_piercing.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "FORKLIFT PIERCING: 9 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_game.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "RESULT: 115 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_hector.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "HECTOR RESULT: 16 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_hector_sidewinder.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "HECTOR SIDEWINDER: 4 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_hyperspace_departure.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.69,
+      "timeout": false,
+      "summaries": [
+        "HYPERSPACE DEPARTURE RESULT: 49 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_interaction_history.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "INTERACTION HISTORY: 35 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_interface_audio.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.39,
+      "timeout": false,
+      "summaries": [
+        "INTERFACE AUDIO: 15 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_jump_visuals.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "JUMP VISUAL RESULT: 28 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_landing_bribes.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.39,
+      "timeout": false,
+      "summaries": [
+        "LANDING BRIBES: 12 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_launch_traffic.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "LAUNCH TRAFFIC RESULT: 12 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_live_appeals.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "LIVE APPEALS: 31 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_map_domination.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "MAP DOMINATION: 10 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_map_screen.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "MAP SCREEN: 41 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_maverick.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "MAVERICK: 69 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_maverick_volley.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "MAVERICK VOLLEY: 19 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_maverick_warp.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "MAVERICK WARP: 12 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_menu_presentation.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "MENU PRESENTATION: 22 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_menu_presentation_audio.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "MENU PRESENTATION AUDIO: 7 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_mission_arrivals.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "MISSION ARRIVALS: 20 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_mission_clearance.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "MISSION CLEARANCE: 11 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_mission_cloak_install.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "MISSION CLOAK INSTALL: 13 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_mission_comparison.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "MISSION COMPARISON: 16 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_missions.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 2.72,
+      "timeout": false,
+      "summaries": [
+        "MISSIONS RESULT: 285 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_modal_motion.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 2.38,
+      "timeout": false,
+      "summaries": [
+        "MODAL MOTION: 8 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_objective_hud.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "OBJECTIVE HUD: 10 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_offer_assistance.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "OFFER ASSISTANCE: 8 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_open_pilot.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "OPEN PILOT: 9 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_original_encounters.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.59,
+      "timeout": false,
+      "summaries": [
+        "RESULT: 174 checks, 0 failures"
+      ]
+    },
+    {
+      "test": "test_original_gameplay.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "ORIGINAL GAMEPLAY: 37 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_original_service_prices.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.69,
+      "timeout": false,
+      "summaries": [
+        "ORIGINAL SERVICE PRICES: 33 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_outfitter.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 2.09,
+      "timeout": false,
+      "summaries": [
+        "OUTFITTER RESULT: 96 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_outfitter_scroll.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "OUTFITTER SCROLL: 8 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_panic_audio.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "PANIC AUDIO RESULT: 110 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_parity_stage1.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "PARITY STAGE 1: 34 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_person_roster.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.79,
+      "timeout": false,
+      "summaries": [
+        "PERSON ROSTER: 956 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_phase1_missions.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "PHASE 1 MISSIONS: 760 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_phase2_timing.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "PHASE 2 TIMING: 335 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_phase3_npc.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "PHASE 3 NPC: 64 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_phase4_fighters.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "PHASE 4 FIGHTERS: 36 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_phase5_bribes_secrets.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "PHASE 5 BRIBES / SECRETS: 582 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_pilot_files.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "PILOT FILES: 12 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_planet_debris.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "PLANET DEBRIS: 30 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_plea_fireworks.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.52,
+      "timeout": false,
+      "summaries": [
+        "FIREWORK SLOTS: 5 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_port_mission_triggers.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "PORT MISSION TRIGGERS: 17 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_port_presentation.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.61,
+      "timeout": false,
+      "summaries": [
+        "PORT PRESENTATION: 47 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_projectile_hits.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "PROJECTILE HITS: 7 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_projectile_models.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "PROJECTILE MODELS: 30 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_rebel_id.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "REBEL ID: 10 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_recon_debrief.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "RECON DEBRIEF: 15 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_release.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "RELEASE RESULT: 14 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_selected_fire.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "SELECTED FIRE: 14 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_shields.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "SHIELD RESULT: 16 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_ship_departures.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "SHIP DEPARTURES: 26 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_ship_interactions.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "COMMUNICATIONS RESULT: 73 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_shipyard.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.59,
+      "timeout": false,
+      "summaries": [
+        "SHIPYARD RESULT: 75 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_sidewinder_stock.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "SIDEWINDER STOCK: 45 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_special_effects.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "SPECIAL EFFECTS RESULT: 30 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_startup.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "STARTUP: 16 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_stellar_types.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.49,
+      "timeout": false,
+      "summaries": [
+        "STELLAR RESULT: 15 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_system_intel.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "SYSTEM INTEL: 15 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_target_panel.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.81,
+      "timeout": false,
+      "summaries": [
+        "TARGET RESULT: 22 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_title_menu.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.5,
+      "timeout": false,
+      "summaries": [
+        "TITLE MENU RESULT: 0 failures"
+      ]
+    },
+    {
+      "test": "test_tribute_hunters.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "TRIBUTE HUNTERS: 37 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_utility_outfits.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.6,
+      "timeout": false,
+      "summaries": [
+        "UTILITY OUTFITS: 45 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_weapon_audio.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.4,
+      "timeout": false,
+      "summaries": [
+        "WEAPON AUDIO: 62 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_widescreen.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "WIDESCREEN: 13 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_world_activity.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.51,
+      "timeout": false,
+      "summaries": [
+        "WORLD ACTIVITY: 38 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_world_killer.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.7,
+      "timeout": false,
+      "summaries": [
+        "DEATH STAR: 113 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_world_killer_bribes.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.69,
+      "timeout": false,
+      "summaries": [
+        "WORLD KILLER BRIBES: 62 checks; 0 failures"
+      ]
+    },
+    {
+      "test": "test_world_under_fire.gd",
+      "passed": true,
+      "exit_code": 0,
+      "seconds": 1.41,
+      "timeout": false,
+      "summaries": [
+        "WORLD UNDER FIRE: 15 checks; 0 failures"
+      ]
+    }
+  ]
+}

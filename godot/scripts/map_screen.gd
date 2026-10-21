@@ -71,7 +71,8 @@ func text(at: Vector2,value: String,color: Color=Color("dddddd"),font_size: int=
 func details() -> Dictionary:
 	var id: int=game.map_selected if game.map_selected>=0 else game.pilot.system_id
 	var s: Dictionary=game.catalog.system(id)
-	var explored: bool=id in game.pilot.visited or id in game.pilot.surveyed or id==game.pilot.system_id
+	var dominated: Array=chart.dominated_worlds(id)
+	var explored: bool=id in game.pilot.visited or id in game.pilot.surveyed or id==game.pilot.system_id or not dominated.is_empty()
 	var ports: Array=[];var flags: int=0
 	if explored:
 		for port in s.objects:
@@ -80,7 +81,7 @@ func details() -> Dictionary:
 			ports.append(obj.name);flags|=int(obj.fields.Flags)
 	var gov: int=int(s.fields.Govt)
 	var legal: String="Unknown"
-	if explored: legal="Hostile" if game.Factions.hostile_to_pilot(game.catalog,game.pilot,gov) else "Clean"
+	if explored: legal="Dominated" if not dominated.is_empty() else ("Hostile" if game.Factions.hostile_to_pilot(game.catalog,game.pilot,gov) else "Clean")
 	var services: Array=[]
 	if flags&2: services.append("Trading")
 	if flags&4: services.append("Outfitting")
@@ -97,7 +98,7 @@ func details() -> Dictionary:
 		if not quotes.is_empty():
 			var good: String=game.catalog.data.commodities[i].name
 			goods.append(good);market[good]=quotes
-	return {"id":id,"name":s.get("name","Unknown"),"explored":explored,"gov":game.catalog.government(id) if explored else "Unknown","legal":legal,"shattered":chart.shattered_worlds(id),"ports":ports,"goods":goods,"market":market,"services":services,"hazards":"Unknown" if not explored else ", ".join((["Asteroids"] if int(s.fields.Asteroids)>0 else [])+(["Scanner interference"] if int(s.fields.Interference)>0 else [])) if int(s.fields.Asteroids)>0 or int(s.fields.Interference)>0 else "None"}
+	return {"id":id,"name":s.get("name","Unknown"),"explored":explored,"gov":game.catalog.government(id) if explored else "Unknown","legal":legal,"dominated":dominated,"tribute":game.world_activity.tribute_summary(id),"shattered":chart.shattered_worlds(id),"ports":ports,"goods":goods,"market":market,"services":services,"hazards":"Unknown" if not explored else ", ".join((["Asteroids"] if int(s.fields.Asteroids)>0 else [])+(["Scanner interference"] if int(s.fields.Interference)>0 else [])) if int(s.fields.Asteroids)>0 or int(s.fields.Interference)>0 else "None"}
 
 func refresh_details() -> void:
 	for label in readouts.values(): label.hide()
@@ -111,7 +112,10 @@ func refresh_details() -> void:
 		text(Vector2(646,104),"Destroyed targets:",Color("ffad60"))
 		text(Vector2(656,130),", ".join(d.shattered),Color("ffad60"))
 	text(Vector2(646,164),"Government:");text(Vector2(656,190),d.gov)
-	text(Vector2(646,252),"Legal Status:");text(Vector2(656,278),d.legal)
+	text(Vector2(646,252),"Legal Status:");text(Vector2(656,278),d.legal,chart.DOMINATED_COLOR if not d.dominated.is_empty() else Color("dddddd"))
+	var legal_label: Label=readouts[str(Vector2(656,278))]
+	legal_label.mouse_filter=Control.MOUSE_FILTER_PASS
+	legal_label.tooltip_text="Tribute-paying worlds: "+", ".join(d.dominated) if not d.dominated.is_empty() else ""
 	text(Vector2(646,326),"Goods Traded (cr/t):")
 	var y: float=352
 	for good in d.goods:
@@ -134,6 +138,12 @@ func refresh_details() -> void:
 	var names: String=", ".join(d.ports)
 	if names.is_empty(): names="None" if d.explored else "Unknown"
 	text(Vector2(36,650),"Ports: "+names.left(92))
+	if int(d.tribute.worlds)>0:
+		var value: String="Tribute: %s cr/day · Hunters sent: %d · Defeated: %d" % [game.hud.commas(int(d.tribute.income)),int(d.tribute.sent),int(d.tribute.defeated)]
+		if int(d.tribute.gave_up)==int(d.tribute.worlds): value+=" · They gave up"
+		text(Vector2(36,674),value,Color("a7ef80"),14)
+		var info: Label=readouts[str(Vector2(36,674))]
+		info.tooltip_text="\n".join(d.tribute.lines);info.mouse_filter=Control.MOUSE_FILTER_PASS
 	text(Vector2(36,698),"Navigation Hazards: "+d.hazards)
 	text(Vector2(702,698),"Day %d" % game.pilot.campaign.day,Color("777777"),14)
 	if intel_open:

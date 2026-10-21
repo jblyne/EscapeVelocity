@@ -32,6 +32,7 @@ func space_used() -> int:
 func available_here(id: int) -> bool:
 	var port = game.catalog.record("objects",game.docked_id)
 	if port.is_empty() or not int(port.fields.Flags)&4: return false
+	if id==902: return game.pilot.ship_id==900
 	var fields: Dictionary=game.catalog.record("outfits",id).fields
 	if int(fields.MissionBit)>=0 and not game.missions.bit_matches(int(fields.MissionBit)): return false
 	if id in [166,167,173]: return false
@@ -55,11 +56,12 @@ func reason(id: int, buying: bool) -> String:
 	if game.mode != "outfitter" or id not in stock(): return "Land and visit the outfitter."
 	var f: Dictionary = game.catalog.record("outfits",id).fields
 	if buying:
+		if id==902 and game.pilot.ship_id!=900: return "Sidewinders are supplied only for the F-14 Tomcat."
 		if id in [166,167,173]: return "Granted by a special mission; not sold at ports."
 		if int(f.MissionBit)>=0 and not game.missions.bit_matches(int(f.MissionBit)): return "Requires military mission clearance."
 		if not available_here(id): return "Not stocked at this port's tech level."
 		if id==165 and map_additions().is_empty(): return "Surrounding systems are already mapped."
-		if id==180 and int(game.pilot.reputation.get("128",0))>=0: return "No Confederation criminal record to clear."
+		if int(f.ModType)==21 and int(game.pilot.reputation.get(str(int(f.ModVal)),0))>=0: return "No negative %s record to clear." % game.catalog.record("governments",int(f.ModVal)).name
 		if game.pilot.credits < price(id): return "Insufficient credits."
 		if count(id) >= (int(game.catalog.field("ships",game.pilot.ship_id,"MaxGun")) if id == 128 else int(f.Max)): return "Installation limit reached."
 		if space_used()+int(f.Mass) > int(game.catalog.field("ships",game.pilot.ship_id,"FreeMass")): return "Not enough equipment space."
@@ -95,8 +97,8 @@ func trade(id: int, buying: bool) -> bool:
 	var cost: int=price(id,buying)
 	if buying and id==165:
 		game.pilot.surveyed.append_array(map_additions())
-	elif buying and id==180:
-		game.pilot.reputation["128"]=0
+	elif buying and int(game.catalog.field("outfits",id,"ModType"))==21:
+		game.pilot.reputation[str(int(game.catalog.field("outfits",id,"ModVal")))]=0
 	elif id == 128: game.pilot.lasers += amount
 	else:
 		game.pilot.outfits[str(id)] = count(id)+amount
@@ -130,7 +132,7 @@ func description(id: int) -> String:
 		14: return "Radar colors distinguish hostile ships and worlds from friendly contacts."
 		16: return "Updates your map with systems up to two jumps away. Consumed on purchase."
 		19: return "Automatically purchases fuel when you land. Repairs remain a separate service."
-		21: return "Clears your Confederation criminal record. Consumed on purchase; later crimes still count."
+		21: return "Clears your negative %s record to neutral. Consumed on purchase; later crimes still count." % game.catalog.record("governments",int(f.ModVal)).name
 		12: return "+100 fuel capacity."
 		15: return "Hold Shift while thrusting for a fuel-burning speed boost."
 		17: return "K toggles cloaking. Conceals your ship from targeting and cargo scans, drains shields and fuel, and disables weapons unless the cloaking-device cheat is enabled."

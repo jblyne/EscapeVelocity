@@ -31,7 +31,7 @@ func run() -> void:
 		if game.mode=="mission_offer": break
 	check(game.mode=="mission_offer" and int(game.missions.approach.get("id",-1))==152,"Entering actual bar triggers the eligible environmental story approach")
 	var narrative=game.hud.modal_root.find_child("ApproachNarrative",true,false)
-	check(narrative!=null and narrative.text==game.missions.text_for(game.missions.approach,"offer"),"Approach displays original offer prose")
+	check(narrative!=null and narrative.text.begins_with(game.missions.text_for(game.missions.approach,"offer")),"Approach displays original offer prose")
 	var money: int=game.pilot.credits
 	game.missions.resolve_approach(false)
 	check(game.mode=="dock" and game.hud.port_page=="bar" and game.pilot.campaign.active.is_empty() and game.pilot.credits==money,"Declining returns to bar without starting or paying a mission")

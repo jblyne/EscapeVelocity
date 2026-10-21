@@ -1,5 +1,5 @@
 extends RefCounted
-const ACTIONS=["hail","assistance_requested","refueled","bribe_offered","bribe_paid","boarded","plundered","captured","tribute_demanded","tribute_released","threatened","appeal_denied","spared","bribe_received","bribe_demanded","fired_upon"]
+const ACTIONS=["assisted","hail","assistance_requested","refueled","bribe_offered","bribe_paid","boarded","plundered","captured","tribute_demanded","tribute_released","threatened","appeal_denied","spared","bribe_received","bribe_demanded","fired_upon"]
 static func fresh() -> Dictionary: return {"next":1,"contacts":{}}
 static func integer(value: Variant,low: int,high: int) -> bool:
  return (value is int or value is float) and is_finite(float(value)) and float(value)==floor(float(value)) and value>=low and value<=high
@@ -56,6 +56,7 @@ static func recollection(pilot,key: String) -> String:
  if c.has("threatened"): return "You have threatened us %d times. We know what you are capable of." % int(c.threatened)
  if c.has("bribe_paid"): return "You have bought peace with us %d times. Let us keep this civil." % int(c.bribe_paid)
  if c.has("refueled"): return "We have refueled you %d times already. Flying safely, captain?" % int(c.refueled)
+ if c.has("assisted"): return "Thank you again for repairing our engines, captain."
  if c.has("assistance_requested"): return "You have asked us for assistance %d times. What do you need now?" % int(c.assistance_requested)
  if c.has("bribe_offered"): return "You have offered us a bribe %d times. We remember your approach." % int(c.bribe_offered)
  if int(c.get("hail",0))>=2: return "Back again, captain? This is contact number %d." % (int(c.hail)+1)

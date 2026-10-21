@@ -37,11 +37,10 @@ static func report(game, system: int, only_port: int=-1) -> Dictionary:
 				if not game.missions.port_matches(int(f.AvailStel),int(port.id)): continue
 				var ready: bool=game.missions.eligibility(int(id),int(port.id),false)
 				var requirements: Array[String]=[]
-				if int(f.AvailRating)>int(game.pilot.campaign.rating): requirements.append("build your combat rating to %d" % int(f.AvailRating))
-				if not ready and requirements.is_empty(): requirements.append("improve your standing with the local authorities")
+				if not ready: requirements.append(game.missions.eligibility_reason(int(id),int(port.id)))
 				var place: String="spaceport bar" if int(f.AvailLoc)==1 else "mission computer" if int(f.AvailLoc)==0 else "local contacts"
 				var line: String="%s — %s %s %s %s" % [port.name,chain.hint,"Ask at the" if ready else "Work toward meeting contacts at the",place+".",chain.unlock]
-				if not requirements.is_empty(): line+=" First, "+", ".join(requirements)+"."
+				if not requirements.is_empty(): line+=" Requirements: "+" ".join(requirements)
 				elif int(f.AvailRandom)<100: line+=" Contacts are intermittent; an offer is not guaranteed on every visit."
 				result.hints.append(line);added=true;break
 			if added: break

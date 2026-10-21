@@ -12,6 +12,7 @@ func run() -> void:
  var game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev103-current.json";game.controls.path="/tmp/ev103-controls.json";game.traffic.enabled=false;game.muted=true
  root.add_child(game);game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
  game.pilot.pilot_name="First Pilot";game.pilot.credits=12345;game.pilot_ready=true;game.save_game(false)
+ var original_path: String=game.save_path
  var original: String=FileAccess.get_file_as_string(game.save_path)
  var alternate: Dictionary=game.pilot.snapshot();alternate.pilot_name="Selected Pilot";alternate.credits=98765
  var path="/tmp/ev103-other pilot.json";write_json(path,alternate)
@@ -21,7 +22,7 @@ func run() -> void:
  menu.pilot_picker.file_selected.emit(path)
  check(game.pilot.pilot_name=="Selected Pilot" and game.pilot.credits==98765 and game.save_path==path,"File selection loads the chosen pilot and activates its save path")
  check(game.mode=="title" and not menu.canvas.get_node("EnterShip").disabled and "Selected Pilot" in menu.pilot_readout.text,"Loaded pilot is shown on title screen before Enter Ship")
- game.save_game(false);check(FileAccess.get_file_as_string("/tmp/ev103-current.json")==original,"Autosave does not overwrite the previous pilot")
+ game.save_game(false);check(FileAccess.get_file_as_string(original_path)==original,"Autosave does not overwrite the previous pilot")
  write_json("/tmp/ev103-invalid.json",{"invalid":true});menu.open_pilot_path("/tmp/ev103-invalid.json")
  check(game.pilot.pilot_name=="Selected Pilot" and game.save_path==path,"Invalid pilot leaves the active pilot and save path intact")
  alternate.strict=true;alternate.strict_dead=true;write_json("/tmp/ev103-dead.json",alternate)

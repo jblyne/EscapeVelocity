@@ -47,6 +47,10 @@ var deflection_toggle: CheckBox
 var weapon_picker: OptionButton
 var compact_target: Label
 var flight_panel: Control
+var mission_failure_label: Label
+var combat_return_label: Label
+var hunter_announcement: Control
+var hunter_tribute_label: Label
 var flight_messages: VBoxContainer
 var target_panel
 
@@ -83,6 +87,12 @@ func _ready() -> void:
 	flight_messages.offset_left=16;flight_messages.offset_right=-300
 	flight_messages.offset_top=-64;flight_messages.offset_bottom=-14
 	root.add_child(flight_messages)
+	hunter_tribute_label=label(flight_messages,"",15,Color("a7ef80"));hunter_tribute_label.name="HunterTributeAlert"
+	hunter_tribute_label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	mission_failure_label=label(flight_messages,"",15,Color("ffb174"));mission_failure_label.name="MissionFailureAlert"
+	mission_failure_label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	combat_return_label=label(flight_messages,"",15,Color("e4d89a"));combat_return_label.name="CombatReturnStatus"
+	combat_return_label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	landing_status=label(flight_messages,"",13,Color("b7bcb5"))
 	landing_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	log_label=label(flight_messages,"",13,Color("b7bcb5"))
@@ -100,6 +110,8 @@ func _ready() -> void:
 	target_panel=TargetPanel.new();target_panel.game=game;root.add_child(target_panel)
 	target_panel.hide()
 	flight_panel=ClassicFlightPanel.new();flight_panel.game=game;root.add_child(flight_panel)
+	hunter_announcement=preload("res://scripts/hunter_announcement.gd").new();hunter_announcement.game=game;root.add_child(hunter_announcement)
+	var lock_overlay=preload("res://scripts/maverick_lock_overlay.gd").new();lock_overlay.game=game;root.add_child(lock_overlay)
 	hector_banner=Label.new()
 	hector_banner.name="HectorBroadcast"
 	hector_banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
@@ -209,7 +221,7 @@ func _process(_dt: float) -> void:
 	weapon_status.text=game.arsenal.weapon_name(pilot.selected_weapon)
 	var ammo_id: int = game.outfitter.ammo_id(pilot.selected_weapon)
 	if ammo_id >= 0 and not pilot.cheat_all_weapons: weapon_status.text += " · %d rounds" % game.outfitter.count(ammo_id)
-	weapon_status.tooltip_text="Q / E select weapon · Space fires"
+	weapon_status.tooltip_text=("%s fires primary guns" if game.controls.classic_fire else "%s fires selected weapon") % game.controls.caption("fire")+" · %s fires secondary · %s safety" % [game.controls.caption("secondary_fire"),game.controls.caption("weapon_safety")]
 	var active: Array=[]
 	if pilot.cheat_all_weapons: active.append("WEAPONS")
 	if pilot.cheat_infinite_fuel: active.append("FUEL")
@@ -227,6 +239,12 @@ func _process(_dt: float) -> void:
 		landing_status.tooltip_text=game.landing_guidance()
 	if game.hyperdrive.active(): landing_status.text=game.hyperdrive.status()
 	hector_banner.visible=game.mode=="flight" and game.hector.banner_time>0
+	hunter_tribute_label.text=game.world_activity.hunter_alert
+	hunter_tribute_label.visible=game.world_activity.hunter_alert_seconds>0 and not game.world_activity.hunter_alert.begins_with("HUNTER DEFEATED")
+	mission_failure_label.text=game.missions.flight_alert
+	mission_failure_label.visible=game.missions.flight_alert_seconds>0
+	combat_return_label.text=game.missions.tracked_objective()
+	combat_return_label.visible=not combat_return_label.text.is_empty()
 	log_label.text="\n".join(game.messages.slice(0,1))
 	if not game.chain_route.is_empty():
 		mission_label.text="CHAIN HYPERJUMP   /   " + game.catalog.system(game.destination).name + " · J cancels"
@@ -424,50 +442,7 @@ func classic_service():
 	return screen
 
 func build_fleet() -> void:
-	var service=game.fleet_service
-	var screen=classic_service()
-	var col=screen.content
-	label(col,"YOUR FLEET · %d / %d" % [game.pilot.fleet.size(),service.LIMIT],22)
-	label(col,"Available credits: "+commas(game.pilot.credits),14,ACCENT)
-	var orders=HBoxContainer.new();col.add_child(orders)
-	for command in service.ORDERS:
-		button(orders,command.capitalize(),service.order.bind(command)).name="FleetOrder"+command.capitalize()
-	var hint=label(col,"Defend engages nearby hostiles. Attack engages your selected contact. Hold stops at the current position; Recall returns without firing. Orders reset their target/position when jumping.",13,MUTED)
-	hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-	var scroll=ScrollContainer.new();scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;col.add_child(scroll)
-	var contents=VBoxContainer.new();contents.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(contents)
-	var candidate: Dictionary=service.takeover_candidate
-	if candidate in game.escorts and not service.record(candidate).is_empty():
-		var warning=label(contents,"Take command of %s? Your current hull and installed equipment will be abandoned. Cargo and credits transfer if they fit." % candidate.name,15,Color("e7c993"))
-		warning.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-		var confirm=button(contents,"Confirm flagship transfer",func():service.takeover(candidate);service.takeover_candidate={})
-		confirm.disabled=not service.takeover_reason(candidate).is_empty();confirm.tooltip_text=service.takeover_reason(candidate)
-		button(contents,"Cancel transfer",func():service.takeover_candidate={};rebuild_modal())
-	for escort in game.escorts:
-		var member: Dictionary=service.record(escort)
-		if member.is_empty(): continue
-		var row=HBoxContainer.new();contents.add_child(row)
-		var title=label(row,"%s · %d%% · %s" % [escort.name,roundi(100*escort.health/escort.max_health),str(member.command).capitalize()],15)
-		title.size_flags_horizontal=Control.SIZE_EXPAND_FILL
-		if member.get("hired",false): label(row,"%d cr/day" % int(member.wage),13,MUTED)
-		else:
-			var take=button(row,"Take command",func():service.takeover_candidate=escort;rebuild_modal())
-			take.disabled=not service.takeover_reason(escort).is_empty();take.tooltip_text=service.takeover_reason(escort)
-		button(row,"Release",game.release_ship.bind(escort)).name="ReleaseShip%d" % game.escorts.find(escort)
-		label(contents,"Freight: %d / %d t · Cargo leaves with this ship on release or loss." % [service.cargo_used(member),int(game.catalog.field("ships",int(member.id),"Holds"))],12,MUTED)
-	if game.pilot.fleet.is_empty(): label(contents,"No ships in your fleet.",16,MUTED)
-	if game.fleet_return_mode=="dock":
-		var repair=button(contents,"Repair & rearm fleet · %s cr" % commas(service.service_cost()),service.service)
-		repair.disabled=game.pilot.credits<service.service_cost() or game.pilot.fleet.is_empty()
-		label(contents,"CAPTAINS AVAILABLE FOR HIRE",16,ACCENT)
-		label(contents,"Contract paid now; wages charged per game day traveled.",13,MUTED)
-		for id in service.offers():
-			var hire=button(contents,"%s · %s cr contract · %s cr/day" % [game.catalog.record("ships",id).name,commas(service.hire_cost(id)),commas(service.wage(id))],service.hire.bind(id))
-			hire.disabled=game.pilot.credits<service.hire_cost(id) or game.pilot.fleet.size()>=service.LIMIT
-		if service.offers().is_empty(): label(contents,"No suitable captains available at this port.",14,MUTED)
-	else: label(contents,"Land to hire captains or repair and rearm your fleet.",14,MUTED)
-	button(col,"Done · F / Esc",game.toggle_fleet_menu)
-	screen.restyle(col)
+	var screen=preload("res://scripts/classic_fleet.gd").new();screen.game=game;modal_root.add_child(screen)
 
 func build_communications() -> void:
 	var comms = game.interactions
@@ -504,6 +479,7 @@ func build_communications() -> void:
 	message_scroll.custom_minimum_size=Vector2(600,180 if comms.page=="person_mission" else 74)
 	col.add_child(message_scroll)
 	var transmission = label(message_scroll, comms.response, 17, INK)
+	if boarding and not comms.response.is_empty() and comms.response==game.missions.boarding_report(npc): transmission.text="Boarding party aboard. See the mission transfer below."
 	transmission.name = "CommResponse"
 	transmission.custom_minimum_size = Vector2(600, 74)
 	transmission.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -513,6 +489,9 @@ func build_communications() -> void:
 	elif boarding:
 		if not game.persons.linked_offer(npc,true).is_empty(): button(col,"Investigate the vessel",game.persons.show_offer.bind(npc,true))
 		label(col, "ABOARD THE TARGET", 11, ACCENT)
+		var mission_report: String=game.missions.boarding_report(npc)
+		if not mission_report.is_empty():
+			var mission_cargo=label(col,mission_report,15,Color("b9ee9b"));mission_cargo.name="BoardingMissionCargo";mission_cargo.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 		label(col, "%s credits   ·   %d t cargo   ·   %d fuel" % [commas(npc.credits), comms.cargo_total(npc), int(npc.fuel)], 16)
 		var goods: Array = []
 		for i in npc.cargo.size():
@@ -577,6 +556,14 @@ func build_cheats() -> void:
 	label(col,"Cheat menu",30)
 	label(col,"Changes save with your pilot. The game is paused while this menu is open.",14,MUTED)
 	spacer(col,10)
+	var death_star_toggle=CheckBox.new();death_star_toggle.name="WorldKillerToggle"
+	death_star_toggle.text="Death Star · world-killer";death_star_toggle.custom_minimum_size.y=42
+	death_star_toggle.button_pressed=game.pilot.cheat_world_killer
+	death_star_toggle.toggled.connect(func(enabled):
+		game.pilot.cheat_world_killer=enabled
+		if not enabled: game.world_killer.launch_preview=false
+		game.save_game(false))
+	col.add_child(death_star_toggle)
 	weapons_toggle=CheckBox.new()
 	weapons_toggle.text="All weapons + infinite ammo"
 	weapons_toggle.name="AllWeaponsToggle"
@@ -631,7 +618,7 @@ func build_cheats() -> void:
 	var hint=label(col,game.arsenal.description(game.pilot.selected_weapon),14,MUTED)
 	hint.custom_minimum_size=Vector2(620,48)
 	hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-	label(col,"Q / E   Previous / next weapon     ·     Space   Fire     ·     Tab   Target",14,INK)
+	label(col,"%s primary · %s secondary · %s safety · Tab target" % [game.controls.caption("fire"),game.controls.caption("secondary_fire"),game.controls.caption("weapon_safety")],14,INK)
 	spacer(col,8)
 	var cloak_toggle=CheckBox.new()
 	cloak_toggle.name="CloakingDeviceToggle"
@@ -738,7 +725,15 @@ func build_world_comms() -> void:
 	button(screen.content,"Close channel",func():game.set_mode("flight")).name="CloseWorldChannel"
 	var status=label(col,service.response,17);status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	var refusal: String=service.landing_reason(service.contact_id)
-	var landing=label(col,"Landing clearance available." if refusal.is_empty() else refusal,15,MUTED);landing.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	var landing=label(col,("Mission delivery clearance available." if game.missions.grants_landing_clearance(service.contact_id) else "Landing clearance available.") if refusal.is_empty() else refusal,15,MUTED);landing.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	if service.can_bribe_landing(service.contact_id):
+		var cost: int=service.landing_bribe_price(service.contact_id)
+		var bribe=button(col,"Bribe for landing clearance · %s cr" % commas(cost),service.pay_landing_bribe)
+		bribe.name="BribeLanding";bribe.disabled=game.pilot.credits<cost or service.landing_officer(service.contact_id).refused
+		bribe.tooltip_text="Clearance lasts for this system visit. Officials may refuse a bribe."
+		var negotiate=button(col,"Negotiate a smaller fee",service.negotiate_landing_bribe)
+		negotiate.name="NegotiateLandingBribe"
+		negotiate.disabled=service.landing_officer(service.contact_id).negotiated or service.landing_officer(service.contact_id).refused
 	var fear: Dictionary=service.fear(service.contact_id)
 	if int(fear.score)>0:
 		label(col,"Fear: %d / 100 · %s" % [fear.score,"Intimidated — landing restrictions waived" if fear.compliant else "Wary — authorities still enforce landing rules"],15).autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
@@ -752,7 +747,7 @@ func build_world_comms() -> void:
 		button(col,"Reject Appeal",killer.deny).name="DenyWorldAppeal"
 		style_world_comms(screen,col)
 		return
-	if killer.launch_preview:
+	if killer.launch_preview and game.pilot.cheat_world_killer:
 		label(col,"EXPERIMENTAL WORLD-KILLER",13,Color("ffad70"))
 		label(col,"Summons a Death Star through hyperspace and starts a two-minute countdown. It approaches the planet, stops with 20 seconds left, then charges eight converging beams into a superlaser. Destruction permanently ends this world's services, tribute and contracts.",15,MUTED).autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 		var deploy=button(col,"Deploy world-killer",killer.deploy);deploy.name="DeployWorldKiller"
@@ -760,9 +755,10 @@ func build_world_comms() -> void:
 		button(col,"Stand down",func():killer.launch_preview=false;service.response=killer.greeting(service.contact_id);rebuild_modal())
 		style_world_comms(screen,col)
 		return
-	var threat=button(col,"Threaten with world-killer",killer.threaten);threat.name="ThreatenWorld"
-	threat.tooltip_text=killer.reason(service.contact_id);threat.disabled=not threat.tooltip_text.is_empty()
-	if threat.disabled: label(col,threat.tooltip_text,13,MUTED).autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	if game.pilot.cheat_world_killer:
+		var threat=button(col,"Threaten with world-killer",killer.threaten);threat.name="ThreatenWorld"
+		threat.tooltip_text=killer.reason(service.contact_id);threat.disabled=not threat.tooltip_text.is_empty()
+		if threat.disabled: label(col,threat.tooltip_text,13,MUTED).autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	label(col,"Tribute: %s credits per day" % commas(service.tribute(service.contact_id)),17,ACCENT)
 	if not service.siege.is_empty() and int(service.siege.port)==service.contact_id:
 		label(col,"Defense fleet: %d active · %d awaiting launch" % [service.siege.pending,service.siege.left],16,ACCENT)

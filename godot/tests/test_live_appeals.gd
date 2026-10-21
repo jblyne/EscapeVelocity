@@ -14,7 +14,7 @@ func deploy(id):
  game.world_activity.open_contact();k.threaten();k.deploy()
 func run():
  game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev-live-appeals.json"
- game.traffic.enabled=false;game.muted=true;root.add_child(game);k=game.world_killer
+ game.traffic.enabled=false;game.muted=true;root.add_child(game);game.pilot.cheat_world_killer=true;k=game.world_killer
  game.set_process(false);game.set_physics_process(false)
  deploy(128)
  check(k.station.counter.text.begins_with("The Reckoning of Earth\n"),"countdown uses the threatened planet's name")

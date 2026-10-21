@@ -22,20 +22,36 @@ static func apply(npc: Dictionary, energy: float, mass: float) -> void:
 	npc.shield=result.x;npc.armor=result.y;npc.health=result.x+result.y
 	npc.damage_clock=0.0
 
-static func regenerate(npc: Dictionary, fields: Dictionary, dt: float) -> void:
+# The original global update counter wraps after 1024 (0x15a34-0x15a50).
+# A window contains absolute reference ticks [start,end); sharing it keeps all
+# ships on the same recovery phase rather than restarting recovery on a hit.
+static func recovery_pulses(window: Vector2i, recharge: float) -> int:
+	var period: int=maxi(1,int(recharge))
+	var count: int=0
+	for tick in range(window.x,window.y):
+		if (tick%1025)%period==0: count+=1
+	return count
+
+static func regenerate(npc: Dictionary, fields: Dictionary, dt: float, window: Vector2i=Vector2i(-1,-1)) -> void:
 	sync(npc)
 	npc.damage_clock=float(npc.get("damage_clock",0))+dt
+	if window.x<0:
+		var before: float=float(npc.get("recovery_clock",0))
+		npc.recovery_clock=before+maxf(0,dt)*60.0
+		window=Vector2i(int(floor(before+.000001)),int(floor(float(npc.recovery_clock)+.000001)))
 	if npc.disabled: return
-	var result: Vector2=recover(npc.shield,npc.armor,float(npc.shield_capacity),maxf(0,float(npc.max_health)-float(npc.shield_capacity)),float(fields.ShieldRe),dt)
+	var result: Vector2=recover(npc.shield,npc.armor,float(npc.shield_capacity),maxf(0,float(npc.max_health)-float(npc.shield_capacity)),recovery_pulses(window,float(fields.ShieldRe)))
 	npc.shield=result.x;npc.armor=result.y
 	npc.health=npc.shield+npc.armor
 
-static func recover(shield: float,armor: float,max_shield: float,max_armor: float,recharge: float,dt: float) -> Vector2:
-	# The original's signed integrity pool recovers through armor before shields.
-	# 0x36550–0x365e4: add truncated 1% shield capacity each recharge interval.
-	var amount: float=shield_rate(max_shield,recharge)*dt
-	var repaired: float=minf(maxf(0,max_armor-armor),amount)
-	return Vector2(minf(max_shield,shield+amount-repaired),minf(max_armor,armor+repaired))
+static func recover(shield: float,armor: float,max_shield: float,max_armor: float,pulses: int) -> Vector2:
+	# 0x36570-0x365ac and 0x187c8-0x18804 truncate AFTER adding 1% to
+	# signed integrity. Negative armor damage therefore rounds toward zero.
+	var integrity: float=shield-maxf(0,max_armor-armor)
+	for pulse in pulses:
+		if integrity>=max_shield: break
+		integrity=minf(max_shield,float(int(integrity+max_shield*.01)))
+	return Vector2(maxf(0,integrity),clampf(max_armor+minf(0,integrity),0,max_armor))
 
 static func powers(fields: Dictionary) -> Vector2:
 	var mass: float=float(fields.MassDmg)

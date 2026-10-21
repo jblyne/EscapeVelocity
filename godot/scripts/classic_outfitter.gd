@@ -33,9 +33,17 @@ func _ready() -> void:
 			var count=Label.new();count.text=str(game.outfitter.count(id));count.position=Vector2(78,2);count.size=Vector2(52,20);count.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT
 			count.add_theme_font_size_override("font_size",14);count.mouse_filter=Control.MOUSE_FILTER_IGNORE;card.add_child(count)
 	select_item(game.hud.selected_outfit)
-	scroll.scroll_vertical=game.hud.outfitter_scroll
-	scroll.get_v_scroll_bar().value_changed.connect(func(value):game.hud.outfitter_scroll=int(value))
+	restore_scroll(scroll,game.hud.outfitter_scroll)
 	resized.connect(fit);fit()
+
+func restore_scroll(scroll: ScrollContainer,saved_position: int) -> void:
+	# The rebuilt grid has no scroll range until containers finish layout.
+	# Restore afterward, and only then listen for user scrolling so an initial
+	# clamp to zero cannot overwrite the saved position.
+	await get_tree().process_frame
+	if not is_inside_tree(): return
+	scroll.scroll_vertical=saved_position
+	scroll.get_v_scroll_bar().value_changed.connect(func(value):game.hud.outfitter_scroll=int(value))
 
 func fit() -> void:
 	var ratio=minf(1.0,minf((size.x-40)/LAYOUT.x,(size.y-40)/LAYOUT.y))

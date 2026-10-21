@@ -92,10 +92,15 @@ func run() -> void:
 		var contact=traffic.spawn(id,int(ship.fields.InherentGovt),int(ship.fields.InherentAI),Vector2.ZERO)
 		var clone=game.ShipModels.create(c,id,int(ship.fields.InherentGovt))
 		models_ok=models_ok and contact.model.get_meta("ship_id")==id and contact.model.get_child_count()>=7 and contact.radius>0
-		shared_ok=shared_ok and contact.model.get_child(0).mesh==clone.get_child(0).mesh
+		var hull=contact.model.get_child(0);var clone_hull=clone.get_child(0)
+		# Animated wing pivots are independent Node3Ds, while static hulls share meshes.
+		if hull is MeshInstance3D and clone_hull is MeshInstance3D:
+			shared_ok=shared_ok and hull.mesh==clone_hull.mesh
+		else:
+			shared_ok=shared_ok and hull.get_class()==clone_hull.get_class() and hull.get_child_count()==clone_hull.get_child_count()
 		stats_ok=stats_ok and contact.max_health>=1 and contact.weapons.size()<=4
 		clone.free();traffic.retire(contact)
-	check(models_ok and c.data.ship_graphics.size()==27,"all 27 ships build their own catalog-selected model and original relative sprite size")
+	check(models_ok and c.data.ship_graphics.size()==c.data.ships.size(),"all catalog ships build their own catalog-selected model and original relative sprite size")
 	check(shared_ok,"repeated models reuse packed geometry instead of rebuilding hulls")
 	check(stats_ok,"all ship health and loadouts are valid, including escape pod and alien cruiser")
 	await process_frame
@@ -105,7 +110,7 @@ func run() -> void:
 	bulk.goal=Vector2(0,-10000);bulk.heading=0
 	fighter.goal=Vector2(400,-10000);fighter.heading=0
 	for frame in 300: traffic.update(1.0/60)
-	check(absf(bulk.velocity.length()-52)<.1 and absf(fighter.velocity.length()-325)<.1,"civil traffic cruises using each hull's own Speed and Accel")
+	check(absf(bulk.velocity.length()-100)<.1 and absf(fighter.velocity.length()-625)<.1,"civil traffic cruises using each hull's own Speed and Accel")
 	clear_space()
 	check(game.Factions.enemies(c,128,129) and game.Factions.enemies(c,131,132) and game.Factions.enemies(c,138,139),"Confederate/Rebel, Cydonian/Lethean, and corporate enemy links come from original governments")
 	check(game.Factions.allied(c,128,135) and not game.Factions.enemies(c,128,135),"Astex and Confederation respect the original alliance")
@@ -152,7 +157,7 @@ func run() -> void:
 	var missile_slot: Dictionary={}
 	for weapon in pirate.weapons:
 		if weapon.id==132: missile_slot=weapon
-	check(missile_slot.ammo==3,"NPC missile firing consumes its finite original ammunition")
+	check(missile_slot.ammo==2,"Two missile mounts each consume one round from the finite original load")
 	clear_space()
 	game.pilot.system_id=129;game.pilot.position=Vector2.ZERO
 	game.set_mode("flight");traffic.enabled=true;traffic.timer=0;traffic.update(.01)
@@ -170,7 +175,7 @@ func run() -> void:
 	game.set_mode("cheats")
 	var ship_picker=game.hud.modal_root.find_child("ShipPicker",true,false)
 	var faction_picker=game.hud.modal_root.find_child("FactionPicker",true,false)
-	check(ship_picker.item_count==27 and faction_picker.item_count==27,"cheat menu lists every ship record, every government, independent, and the inherent faction choice")
+	check(ship_picker.item_count==c.data.ships.size() and faction_picker.item_count==c.data.governments.size()+2,"cheat menu lists every ship record, every government, independent, and the inherent faction choice")
 	ship_picker.select(ship_picker.get_item_index(150))
 	game.hud.modal_root.find_child("SpawnShip",true,false).pressed.emit()
 	check(game.npcs.size()==1 and game.npcs[-1].id==150 and game.npcs[-1].faction==140,"actual debug controls spawn a special ship using its original inherent faction")

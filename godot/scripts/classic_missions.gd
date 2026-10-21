@@ -19,7 +19,7 @@ func _ready() -> void:
 	journal=game.missions.channel==2 or game.missions.return_mode=="flight"
 	if journal: game.missions.channel=2;layout=Vector2(904,316)
 	canvas=Control.new();canvas.size=layout;add_child(canvas);panel(Rect2(Vector2.ZERO,layout))
-	var heading: String="Currently active missions:" if journal else "The following missions are available here:"
+	var heading: String="Currently active missions:" if journal else "Eligible jobs at this spaceport bar:" if game.missions.channel==1 else "The following missions are available here:"
 	label_at("MissionHeading",heading,Rect2(20,14,700,28),18)
 	if journal: label_at("MissionDate","Day %d" % game.pilot.campaign.day,Rect2(758,14,128,28),16,Color("999999"))
 	entries=game.pilot.campaign.active.duplicate() if journal else game.missions.offers(game.docked_id,game.missions.channel)
@@ -58,10 +58,11 @@ func fill_list() -> void:
 		var closest: bool=not journal and nearest>=0 and info.jumps==nearest
 		var row: String=name_text
 		if not journal: row=("★ " if closest else "")+Comparison.distance_text(info)+" · "+name_text
+		if journal and not entry.get("courier",false) and not game.missions.return_for_payment(entry).is_empty(): row=("RETURN FOR PAYMENT · " if int(game.catalog.field("missions",int(entry.id),"PayVal"))>0 else "RETURN TO REPORT · ")+row
 		mission_list.add_item(row)
 		mission_list.set_item_tooltip(i,name_text+"\nNext objective: "+info.location+" · "+Comparison.distance_text(info)+"\n"+Comparison.terms(info))
 		if closest: mission_list.set_item_custom_fg_color(i,Color("e4d89a"))
-		if (entry.get("courier",false) and game.missions.selected_courier) or (not entry.get("courier",false) and entry==game.missions.selected): selected_index=i
+		if (entry.get("courier",false) and game.missions.selected_courier) or (not entry.get("courier",false) and entry==game.missions.selected) or (journal and ((entry.get("courier",false) and game.missions.tracked_id==-2) or (not entry.get("courier",false) and int(entry.id)==game.missions.tracked_id))): selected_index=i
 
 func sort_nearest() -> void:
 	nearest_first=not nearest_first
@@ -90,6 +91,7 @@ func select_entry(index: int,clear_report: bool=true) -> void:
 	if index<0 or index>=entries.size(): return
 	selected_index=index
 	var entry: Dictionary=entries[index]
+	if journal: game.missions.tracked_id=-2 if entry.get("courier",false) else int(entry.id)
 	game.missions.selected_courier=entry.get("courier",false)
 	game.missions.selected={} if game.missions.selected_courier else entry
 	if clear_report: game.missions.last_report=""
@@ -109,9 +111,16 @@ func show_details() -> void:
 			title=game.missions.title(entry)
 			briefing=game.missions.text_for(entry,"QuickBrief" if journal else "offer")
 			if briefing.is_empty(): briefing=game.missions.text_for(entry,"QuickBrief")
+			briefing+="\n\n"+game.missions.reward_summary(entry)
+			var commitments: String=game.missions.commitment_notes(entry)
+			if not commitments.is_empty(): briefing+="\n"+commitments
+			if journal: briefing="NEXT: "+game.missions.next_objective(entry)+"\n\n"+briefing
 			if int(entry.deadline)>=0: briefing+="\n\nDeadline: day %d." % int(entry.deadline)
 	elif not game.missions.last_report.is_empty(): title="Mission report";briefing=game.missions.last_report
-	else: briefing="No active missions." if journal else "No missions are available here today."
+	else:
+		briefing="No active missions." if journal else "No missions are available here today."
+		if not journal and game.missions.channel==1:
+			briefing="No bar offers match your standing and story progress at this port.\n\nRecruitment starts at neutral standing: visit a Rebel port for Rebel Parcels, or a Confederation port for Confed Documents. Later jobs unlock after completing their introductions.\n\nThis list shows all eligible local jobs. Spontaneous bar approaches still vary between visits."
 	if not journal:
 		var name_label=label_at("MissionTitle",title,Rect2(420,58,598,44),28)
 		var serif=SystemFont.new();serif.font_names=PackedStringArray(["Times New Roman","Times","serif"]);name_label.add_theme_font_override("font",serif)
@@ -120,7 +129,8 @@ func show_details() -> void:
 		var nearest_note: String=" · CLOSEST" if info.jumps>=0 and info.jumps==nearest else ""
 		var distance=label_at("MissionDistance",Comparison.distance_text(info)+" to "+info.location+nearest_note,Rect2(420,110,598,28),16,Color("e4d89a"))
 		distance.clip_text=true;distance.tooltip_text="Shortest connected route to the next objective; return trips or later stages can add jumps."
-		label_at("MissionTerms",Comparison.terms(info),Rect2(420,140,598,26),15,Color("bbbbbb"))
+		var terms=label_at("MissionTerms",Comparison.terms(info),Rect2(420,140,598,26),15,Color("bbbbbb"))
+		terms.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS;terms.tooltip_text=Comparison.terms(info)
 		if info.cargo>info.free:
 			label_at("MissionCargoWarning","Needs %d t; only %d t free" % [info.cargo,info.free],Rect2(420,166,598,22),14,Color("ff9c83"))
 	var body=RichTextLabel.new();body.name="MissionBriefing";body.position=Vector2(390,52) if journal else Vector2(420,194)
@@ -132,7 +142,9 @@ func show_details() -> void:
 		action=button_at("AbortCourier" if entry.get("courier",false) else "AbortMission%d" % int(entry.get("id",-1)),"Abort Mission",Rect2(72,252,236,44),func():
 			if entry.get("courier",false): game.pilot.mission={};game.missions.selected_courier=false;game.save_game(false);game.hud.rebuild_modal()
 			else: game.missions.abort(entry))
-		action.disabled=entry.is_empty()
+		action.disabled=entry.is_empty() or (not entry.get("courier",false) and not game.missions.abort_reason(entry).is_empty())
+		if action.disabled and not entry.is_empty():
+			action.text="Cannot Abort";action.tooltip_text=game.missions.abort_reason(entry)
 	else:
 		action=button_at("AcceptCourier" if entry.get("courier",false) else "AcceptMission%d" % int(entry.get("id",-1)),"Accept Mission",Rect2(712,344,236,44),func():
 			if entry.get("courier",false): game.accept_job()
@@ -140,7 +152,7 @@ func show_details() -> void:
 		var cargo: int=5 if entry.get("courier",false) else int(entry.get("qty",0))
 		action.disabled=entry.is_empty() or game.pilot.cargo_used()+cargo>game.pilot.cargo_capacity() or (not entry.get("courier",false) and game.pilot.campaign.active.size()>=8)
 		if action.disabled and not entry.is_empty(): action.tooltip_text="Not enough cargo space or mission slots."
-	mission_list.tooltip_text="Jump counts show distance to the next objective; later stages may add travel. %s shows the destination on the map." % game.controls.caption("map")
+	mission_list.tooltip_text=("Select an active mission to track its next objective on the flight screen. " if journal else "")+"Jump counts show distance to the next objective; later stages may add travel. %s shows the destination on the map." % game.controls.caption("map")
 	canvas=base
 
 func open_map() -> void:

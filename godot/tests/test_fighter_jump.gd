@@ -9,8 +9,8 @@ func run() -> void:
 	game.traffic.enabled=false;game.muted=true;root.add_child(game)
 	game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
 	game.set_mode("flight")
-	game.arsenal.launch_escort(129,game.pilot.position,0)
-	game.arsenal.launch_escort(131,game.pilot.position,0)
+	game.arsenal.launch_escort(148,game.pilot.position,0)
+	game.arsenal.launch_escort(135,game.pilot.position,0)
 	game.load_system(0.0)
 	check(game.escorts.size()==2,"both launched fighters survive a jump")
 	check(not game.escorts[0].model.visible,"fighters arrive after flagship")
@@ -25,6 +25,6 @@ func run() -> void:
 	game.load_system(1.0,true)
 	check(game.escorts.size()==2,"chain jump retains fighters without duplicates")
 	game.load_system()
-	check(game.escorts.is_empty(),"fresh load clears transient fighters")
+	check(game.escorts.size()==2,"same-pilot system rebuild preserves surviving fighter sorties")
 	game.free();await process_frame
 	print("FIGHTER JUMP: 8 checks; %d failures" % failures);quit(1 if failures else 0)

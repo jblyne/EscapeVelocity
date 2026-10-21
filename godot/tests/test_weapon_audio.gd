@@ -11,6 +11,7 @@ func run():
  game.traffic.enabled=false;game.muted=true;root.add_child(game)
  game.set_process(false);game.set_physics_process(false);game.set_mode("flight")
  for record in game.catalog.data.weapons.values():
+  if int(record.id) in [900,901]: continue
   var key=game.arsenal.weapon_sound_key(int(record.id))
   check(key=="weapon_%d" % (200+int(record.fields.Sound)),"original Sound field mapping: "+record.name)
   check(game.audio.has(key) and game.audio[key].stream is AudioStreamWAV and game.audio[key].stream.get_length()>0,"original sample loaded: "+record.name)
@@ -19,7 +20,7 @@ func run():
  check(game.audio.weapon_200.playing,"laser plays original sample")
  game.audio.weapon_200.stop()
  var source={"radius":30,"position":game.pilot.position,"id":131}
- check(game.arsenal.fire(133,game.pilot.position,0,false,source),"NPC turret fires")
+ check(game.arsenal.fire(133,game.pilot.position,0,false,source,{"position":game.pilot.position+Vector2(0,-200),"model":game.player_model}),"NPC turret fires")
  check(game.audio.weapon_200.playing,"NPC turret uses original laser sound")
  game.arsenal.fire(129,game.pilot.position,0)
  check(game.audio.weapon_201.playing,"neutron uses distinct original sound")

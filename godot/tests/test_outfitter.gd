@@ -99,7 +99,7 @@ func run() -> void:
 	check(shop.trade(146,true),"shield regeneration booster installs at specialist port")
 	check(shop.trade(150,true) and shop.trade(151,true) and shop.trade(152,true),"engine upgrades install at specialist port")
 	var fields: Dictionary = game.pilot.flight_fields(game.catalog.record("ships",128).fields)
-	check(fields.Speed == 412.5 and fields.Accel == 652.5 and fields.Maneuver == 5,"installed engine equipment changes flight parameters")
+	check(fields.Speed == 743.75 and fields.Accel == 585 and fields.Maneuver == 5,"installed engine equipment changes flight parameters")
 	game.set_mode("flight")
 	game.pilot.shield = 190
 	game.damage_clock = 100

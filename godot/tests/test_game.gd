@@ -136,7 +136,7 @@ func run() -> void:
 	check(not game.hyperdrive.active() and game.landing_clearance==-1 and game.landing_target==-1,"arrival clears jump and landing state")
 	var incoming = Vector2(-21,24).normalized()
 	var entry_position: Vector2 = game.pilot.position
-	check(game.velocity.distance_to(incoming*275)<0.01 and absf(angle_difference(game.pilot.heading,Flight.facing(incoming)))<0.001,"Levo to Rigel arrives at cruise speed along the incoming route")
+	check(game.velocity.distance_to(incoming*481.25)<0.01 and absf(angle_difference(game.pilot.heading,Flight.facing(incoming)))<0.001,"Levo to Rigel arrives at cruise speed along the incoming route")
 	check((game.planets[0].position-entry_position).dot(incoming)>1300,"arrival starts upstream, well outside the immediate planetary view")
 	game.hud._process(0)
 	check(game.destination==-1 and game.hud.destination_label.text=="No route" and game.hud.jump_button.disabled,"single-hop arrival clears navigation and disables another jump until a route is chosen")
@@ -146,7 +146,7 @@ func run() -> void:
 	game.start_jump()
 	check(not game.hyperdrive.active(),"J after arrival cannot silently select a new route")
 	for frame in 288: game._physics_process(1.0/60)
-	check(game.pilot.position.distance_to(entry_position+incoming*1320)<0.1 and game.velocity.distance_to(incoming*275)<0.01,"hands-off arrival coasts steadily for 4.8 seconds without automatic braking")
+	check(game.pilot.position.distance_to(entry_position+incoming*2310)<0.1 and game.velocity.distance_to(incoming*481.25)<0.01,"hands-off arrival coasts steadily for 4.8 seconds without automatic braking")
 	check(game.pilot.position.distance_to(game.planets[0].position)<50,"shuttle passes close to the central planet about five seconds after entry")
 	for planet in game.planets:
 		if planet.id==object_id:game.pilot.position=planet.position
@@ -303,8 +303,7 @@ func test_return_jump(game) -> void:
 			check(game.hyperdrive.remaining==remaining,"pause freezes the aligned spool countdown")
 			game.set_mode("flight")
 		if not game.hyperdrive.active(): break
-	var recording_extension: float=game.audio.jump_start.stream.get_length()-game.hyperdrive.SPOOL_SECONDS-game.hyperdrive.ACCELERATION_SECONDS
-	check(game.pilot.system_id==128 and duration>=7+recording_extension and duration<=8+recording_extension,"return jump preserves alignment time and the complete native warp recording")
+	check(game.pilot.system_id==128 and duration>=game.audio.jump_start.stream.get_length()+PI/Flight.turn_rate(game.pilot.flight_fields(game.catalog.record("ships",128).fields)) and duration<=game.audio.jump_start.stream.get_length()+PI/Flight.turn_rate(game.pilot.flight_fields(game.catalog.record("ships",128).fields))+1.0,"return jump preserves alignment time and the complete native warp recording")
 	print("Observed-reference return maneuver in remake: %.3f s" % duration)
 	check(game.pilot.fuel==reserve-100 and game.velocity.x>0 and game.velocity.y<0 and game.pilot.position.x<0 and game.pilot.position.y>0,"Rigel to Levo arrives from the opposite side, moving northeast, spending fuel once")
 	# Select a new route after the one-hop navigation reset.

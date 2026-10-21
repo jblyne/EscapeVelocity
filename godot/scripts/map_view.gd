@@ -5,6 +5,7 @@ var locations: Dictionary={}
 var font=ThemeDB.fallback_font
 var picked: int=-1
 var dragging: bool=false
+const DOMINATED_COLOR=Color("00ff00")
 
 func _ready() -> void:
 	clip_contents=true;mouse_filter=Control.MOUSE_FILTER_STOP
@@ -25,7 +26,17 @@ func rebuild_locations() -> void:
 		var f: Dictionary=game.catalog.system(int(id)).fields
 		locations[int(id)]=size*.5+(Vector2(f.xPos,f.yPos)-game.map_center)*game.map_zoom
 
+func dominated_worlds(id: int) -> Array:
+	var names: Array=[]
+	for port in game.catalog.system(id).objects:
+		if port in game.pilot.world_state.dominated and not game.world_killer.destroyed(int(port)):
+			names.append(game.catalog.record("objects",int(port)).name)
+	return names
+
 func system_color(id: int) -> Color:
+	# Original map helper 0x63420-0x63698 overrides the usual legal color
+	# when any inhabited world in this system pays tribute to the pilot.
+	if not dominated_worlds(id).is_empty(): return DOMINATED_COLOR
 	if id not in game.pilot.visited and id not in game.pilot.surveyed and id!=game.pilot.system_id: return Color("505050")
 	var inhabited: bool=false
 	for port in game.catalog.system(id).objects:
@@ -147,7 +158,7 @@ func _gui_input(event: InputEvent) -> void:
 func known_systems() -> Array:
 	if game.pilot.cheat_chain_jump: return game.catalog.data.systems.keys().map(func(id):return int(id))
 	var known: Array=game.pilot.visited.duplicate()
-	for id in game.pilot.surveyed+game.missions.map_markers().keys()+game.world_killer.state().destroyed.map(func(port):return game.missions.system_of(int(port)))+[game.pilot.system_id,game.map_preview_system]:
+	for id in game.pilot.surveyed+game.pilot.world_state.dominated.map(func(port):return game.missions.system_of(int(port)))+game.missions.map_markers().keys()+game.world_killer.state().destroyed.map(func(port):return game.missions.system_of(int(port)))+[game.pilot.system_id,game.map_preview_system]:
 		if id>=0 and id not in known: known.append(id)
 	for visited in game.pilot.visited+[game.pilot.system_id]:
 		for id in game.catalog.system(visited).links:

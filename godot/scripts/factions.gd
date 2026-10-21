@@ -51,3 +51,18 @@ static func penalize(catalog, pilot, faction_id: int, field: String) -> void:
 	if int(catalog.system(pilot.system_id).fields.Govt)==-1:
 		var local=str(pilot.system_id)
 		pilot.local_records[local]=maxi(-10000,int(pilot.local_records.get(local,0))-maxi(0,int(faction.fields[field])))
+
+static func kill_goodwill(catalog,ship_id: int) -> int:
+	var ship: Dictionary=catalog.record("ships",ship_id)
+	if ship.is_empty() or ship_id==191: return 0
+	return maxi(1,ceili(float(ship.fields.Mass)/10.0))
+
+static func player_kill(catalog,pilot,faction_id: int,ship_id: int) -> void:
+	penalize(catalog,pilot,faction_id,"KillPenalty")
+	# Include the scenario's patrol/escort variants, but not Rebel-aligned
+	# Confederate traitors or unrelated factions that share an enemy.
+	var beneficiary: int=129 if faction_id in [128,143,145] else 128 if faction_id in [129,144,146,153] else -1
+	if beneficiary<0: return
+	var faction: Dictionary=catalog.record("governments",beneficiary)
+	var key: String=str(beneficiary)
+	pilot.reputation[key]=mini(10000,int(pilot.reputation.get(key,int(faction.fields.InitialRec)))+kill_goodwill(catalog,ship_id))

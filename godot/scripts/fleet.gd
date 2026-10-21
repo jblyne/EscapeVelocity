@@ -1,5 +1,6 @@
 extends RefCounted
 var game
+var restoring=false
 var attack_target: Node3D
 var takeover_candidate: Dictionary={}
 const LIMIT=8
@@ -25,6 +26,7 @@ func spawn(member: Dictionary, pos: Vector2, heading: float) -> void:
 	if npc.is_empty(): return
 	npc.fleet_uid=int(member.uid);npc.captured=true;npc.name=game.catalog.record("ships",int(member.id)).name
 	npc.truce=true;npc.hostile=false;npc.heading=heading;npc.model.rotation.y=-heading
+	npc.velocity=game.velocity
 	npc.health=minf(npc.max_health,float(member.get("health",npc.max_health)))
 	if member.has("shield") and member.has("armor"):
 		npc.shield=float(member.shield);npc.armor=float(member.armor)
@@ -34,15 +36,19 @@ func spawn(member: Dictionary, pos: Vector2, heading: float) -> void:
 		if npc.weapons[i].ammo>=0: npc.weapons[i].ammo=mini(int(npc.weapons[i].ammo),maxi(0,int(ammo[i])))
 	game.Combat.sync(npc)
 	game.escorts.append(npc)
+	npc.pending_wings=member.get("wings",[]).duplicate(true)
+	if not restoring: game.fighter_wing.restore_carrier(npc)
 
 func spawn_last(_ship_id: int,pos: Vector2,heading: float) -> void:
 	prepare()
 	if not game.pilot.fleet.is_empty(): spawn(game.pilot.fleet.back(),pos,heading)
 
 func restore() -> void:
-	prepare();attack_target=null;takeover_candidate={}
+	prepare();attack_target=null;takeover_candidate={};restoring=true
 	for i in game.pilot.fleet.size():
 		spawn(game.pilot.fleet[i],game.pilot.position+Vector2(100,120).rotated(i*.7),game.pilot.heading)
+	restoring=false
+	for npc in game.escorts: game.fighter_wing.restore_carrier(npc)
 
 func sync() -> void:
 	for npc in game.escorts:
@@ -51,6 +57,9 @@ func sync() -> void:
 		game.Combat.sync(npc)
 		member.health=maxf(.001,npc.health);member.shield=npc.shield;member.armor=npc.armor;member.ammo=[]
 		for weapon in npc.weapons: member.ammo.append(int(weapon.ammo))
+		member.wings=npc.get("pending_wings",[]).duplicate(true)
+		for fighter in game.npcs:
+			if fighter.get("fighter",false) and fighter.carrier==npc.model: member.wings.append(game.fighter_wing.snapshot(fighter,int(npc.id)))
 
 func destroyed(npc: Dictionary) -> void:
 	var member: Dictionary=record(npc)
@@ -98,6 +107,8 @@ func detach(npc: Dictionary) -> void:
 	if not member.is_empty(): npc.cargo=member.get("cargo",[0,0,0,0,0,0]).duplicate()
 	game.escorts.erase(npc);npc.erase("fleet_uid");npc.captured=false;npc.freed=true
 	npc.truce=true;npc.hostile=false;npc.ai=1;npc.ambient=true
+	for fighter in game.npcs:
+		if fighter.get("fighter",false) and fighter.carrier==npc.model: fighter.player_ally=false;fighter.truce=false;fighter.hostile=false
 	npc.goal=npc.position+Vector2(0,-2600)
 
 func release(npc: Dictionary) -> bool:
@@ -118,10 +129,19 @@ func order(command: String) -> void:
 		var member: Dictionary=record(npc)
 		if member.is_empty(): continue
 		member.command=command;npc.hold_position=npc.position
+		for child in game.npcs:
+			if child.get("fighter",false) and child.carrier==npc.model: child.hold_position=child.position
 	game.notify("Fleet order: "+command.capitalize());game.save_game(false);game.hud.rebuild_modal()
 
-func target(npc: Dictionary) -> Dictionary:
+func command_record(npc: Dictionary) -> Dictionary:
 	var member: Dictionary=record(npc)
+	if member.is_empty() and npc.get("fighter",false):
+		for parent in game.npcs:
+			if parent.model==npc.carrier: return record(parent)
+	return member
+
+func target(npc: Dictionary) -> Dictionary:
+	var member: Dictionary=command_record(npc)
 	var command: String=str(member.get("command","defend"))
 	if command in ["hold","recall"]: return {}
 	if command=="attack" and is_instance_valid(attack_target):
@@ -135,7 +155,7 @@ func target(npc: Dictionary) -> Dictionary:
 	return best
 
 func goal(npc: Dictionary) -> Vector2:
-	var member: Dictionary=record(npc)
+	var member: Dictionary=command_record(npc)
 	if member.get("command","defend")=="hold": return npc.get("hold_position",npc.position)
 	return game.pilot.position+Vector2(100,140).rotated(float(game.escorts.find(npc))*.7)
 
@@ -187,7 +207,9 @@ func service_cost() -> int:
 	return total
 
 func service() -> bool:
-	if game.mode!="fleet" or game.fleet_return_mode!="dock" or game.pilot.credits<service_cost(): return false
+	if game.mode!="fleet" or game.fleet_return_mode!="dock": return false
+	game.fighter_wing.dock_owned_carriers()
+	if game.pilot.credits<service_cost(): return false
 	game.pilot.credits-=service_cost()
 	for npc in game.escorts:
 		if record(npc).is_empty(): continue
@@ -245,4 +267,60 @@ func trade(index: int, buying: bool, price: int) -> bool:
 				member.cargo[index]-=1;unloaded=true;break
 		if not unloaded: game.pilot.cargo[index]-=1
 		game.pilot.credits+=price
+	return true
+
+# Fleet hyperspace is one convoy movement path. Hull speed and combat/hold
+# orders must not split the formation during the flagship's departure.
+func jump_participant(npc: Dictionary) -> bool:
+	return npc.has("fleet_uid") or npc.get("player_fighter",false) or not command_record(npc).is_empty()
+
+func begin_jump() -> void:
+	for npc in game.escorts+game.npcs:
+		if not jump_participant(npc) or not is_instance_valid(npc.model): continue
+		if not npc.has("fleet_warp_scale"): npc.fleet_warp_scale=npc.model.scale
+		if not npc.has("arrival_delay") and not npc.has("arrival_visual"): npc.fleet_warp_offset=npc.position-game.pilot.position
+		npc.erase("fleet_arrival_visual")
+
+func end_jump() -> void:
+	for npc in game.escorts+game.npcs:
+		if npc.has("fleet_warp_scale") and is_instance_valid(npc.model): npc.model.scale=npc.fleet_warp_scale
+		npc.erase("fleet_warp_scale");npc.erase("fleet_warp_offset");npc.erase("fleet_arrival_visual")
+
+func arrive() -> void:
+	for npc in game.npcs:
+		if not jump_participant(npc): continue
+		if npc.has("fleet_uid"): npc.position=goal(npc)
+		npc.velocity=game.velocity;npc.heading=game.pilot.heading
+		npc.model.position=game.v3(npc.position);npc.model.rotation.y=-npc.heading
+		npc.fleet_warp_scale=npc.model.scale
+		npc.fleet_warp_offset=npc.position-game.pilot.position
+		npc.fleet_arrival_visual=EVJumpVisuals.new();npc.fleet_arrival_visual.arrive()
+
+func update_jump(npc: Dictionary,dt: float) -> bool:
+	if not jump_participant(npc): return false
+	var warping: bool=game.hyperdrive.active() or not game.chain_route.is_empty()
+	if not warping and not npc.has("fleet_arrival_visual"): return false
+	if not npc.has("fleet_warp_scale"): npc.fleet_warp_scale=npc.model.scale
+	var before_velocity: Vector2=npc.velocity
+	if not npc.has("fleet_warp_offset"): npc.fleet_warp_offset=npc.position-game.previous_player_position
+	npc.position=game.pilot.position+Vector2(npc.fleet_warp_offset)
+	npc.velocity=game.velocity;npc.heading=game.pilot.heading
+	npc.behavior="Hyperspace · "+game.hyperdrive.phase if game.hyperdrive.active() else "Hyperspace formation"
+	var strength: float=game.chain_stretch_strength()
+	var visual_scale: Vector3=game.jump_visuals.ship_scale(game.hyperdrive)
+	if strength>0:
+		var length: float=lerpf(1,EVJumpVisuals.MAX_LENGTH,strength)
+		visual_scale=Vector3(pow(length,-.32),1,length)
+	if not warping:
+		var visual=npc.fleet_arrival_visual
+		visual_scale=visual.ship_scale(game.hyperdrive);visual.advance(dt)
+		if visual.arrival_age<0:
+			npc.erase("fleet_arrival_visual");visual_scale=Vector3.ONE
+	npc.model.position=game.v3(npc.position);npc.model.rotation.y=-npc.heading
+	npc.model.scale=Vector3(npc.fleet_warp_scale)*visual_scale
+	var burning: bool=game.hyperdrive.phase=="accelerating" or (not game.hyperdrive.active() and not game.chain_route.is_empty())
+	game.Models.set_thrust(npc.model,1.2 if burning else .8 if npc.velocity.distance_to(before_velocity)>.01 else 0,game.time,burning)
+	if npc.id==900: game.traffic.maverick.advance_wings(npc.model,warping,dt)
+	if not warping and not npc.has("fleet_arrival_visual"):
+		npc.erase("fleet_warp_scale");npc.erase("fleet_warp_offset")
 	return true

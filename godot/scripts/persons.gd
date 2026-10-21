@@ -213,7 +213,7 @@ func fly_away(npc: Dictionary,dt: float,afterburner: bool) -> void:
 	var speed: float=maxf(150,float(f.Speed))*(1.8 if thrust else 1.0)
 	npc.heading=rotate_toward(npc.heading,game.Flight.facing(away),dt*maxf(1,float(f.Maneuver)*game.Flight.TURN_SCALE))
 	var forward=Vector2(sin(npc.heading),-cos(npc.heading))
-	npc.velocity=npc.velocity.move_toward(forward*speed,dt*maxf(100,float(f.Accel)*game.Flight.ACCEL_SCALE))
+	npc.velocity=npc.velocity.move_toward(forward*speed,dt*maxf(100,game.Flight.acceleration(f)))
 	npc.position+=npc.velocity*dt
 	npc.behavior="Departing" if npc.get("person_departing",false) else "Retreating · afterburner" if thrust else "Retreating"
 	game.interactions.pose(npc,1.0 if thrust else .7)

@@ -11,10 +11,10 @@ func run():
  game.traffic.enabled=false;game.muted=true;root.add_child(game);game.set_process(false);game.set_physics_process(false);game.set_mode("flight")
  var missions=game.missions
  var fields: Dictionary=game.catalog.record("missions",132).fields
- var scanner={"ai":3,"faction":128,"health":100,"disabled":false,"position":game.pilot.position+Vector2(180,180)}
+ var scanner={"ai":3,"faction":128,"health":100,"disabled":false,"position":game.pilot.position+Vector2(300,300)}
  check(missions.can_scan(scanner,fields),"original per-axis range includes diagonal boundary")
- scanner.position=game.pilot.position+Vector2(180.1,0)
- check(not missions.can_scan(scanner,fields),"scanner outside original 180-unit axis range cannot detect cargo")
+ scanner.position=game.pilot.position+Vector2(300.1,0)
+ check(not missions.can_scan(scanner,fields),"scanner outside original 300-unit axis range cannot detect cargo")
  scanner.position=game.pilot.position
  scanner.faction=129;check(not missions.can_scan(scanner,fields),"enemy government cannot enforce another government's illegal cargo")
  scanner.faction=145;check(not missions.can_scan(scanner,fields),"related government is not substituted for mission's exact scanner government")

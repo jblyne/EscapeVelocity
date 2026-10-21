@@ -65,5 +65,5 @@ func show_satellite() -> void:
 		satellite=true
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and Input.is_physical_key_pressed(KEY_S) and Input.is_physical_key_pressed(KEY_O) and Input.is_physical_key_pressed(KEY_L):
+	if event is InputEventKey and event.pressed and not event.echo and Input.is_physical_key_pressed(KEY_S) and Input.is_physical_key_pressed(KEY_O) and Input.is_physical_key_pressed(KEY_L):
 		game.pilot.secrets.satellite=true;game.save_game(false);show_satellite();get_viewport().set_input_as_handled()

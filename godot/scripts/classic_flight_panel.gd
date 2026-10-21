@@ -96,6 +96,17 @@ func meter(y: float, title: String, value: float, color: Color) -> void:
 	canvas.draw_rect(Rect2(rect.position+Vector2(2,2),Vector2(150*clampf(value,0,1),10)),color)
 	canvas.draw_line(rect.position+Vector2(2,2),rect.position+Vector2(2+150*clampf(value,0,1),2),color.lightened(.2),1)
 
+func weapon_caption() -> String:
+	var id: int=game.pilot.selected_weapon
+	var secondaries: Array=game.arsenal.secondary_ids()
+	if game.controls.classic_fire and not secondaries.is_empty() and id not in secondaries: id=int(secondaries[0])
+	var caption: String=game.arsenal.weapon_name(id)
+	var ammo: int=game.outfitter.ammo_id(id)
+	if ammo>=0:
+		caption+=" (%s)" % ("∞" if game.pilot.cheat_all_weapons else str(game.outfitter.count(ammo)))
+	if game.secondary_safe and game.arsenal.is_secondary(id): caption="SAFE · "+caption
+	return caption
+
 func draw_panel() -> void:
 	for rect in [Rect2(0,0,288,288),Rect2(0,288,288,84),Rect2(0,372,288,88),Rect2(0,464,288,42),Rect2(0,510,288,40),Rect2(0,554,288,208),Rect2(0,766,288,194)]: well(rect)
 	draw_radar()
@@ -113,7 +124,10 @@ func draw_panel() -> void:
 		text("Hyperspace",404)
 		text(str(game.catalog.system(game.destination).get("name","")),433)
 	else: text("Nav System Off",425,DIM)
-	text(game.arsenal.weapon_name(p.selected_weapon),526 if game.cloak.active else 536,GREEN,16 if game.cloak.active else 18)
+	var weapon_text: String=weapon_caption()
+	var weapon_size: int=16 if game.cloak.active else 18
+	while weapon_size>10 and font.get_string_size(weapon_text,HORIZONTAL_ALIGNMENT_LEFT,-1,weapon_size).x>260: weapon_size-=1
+	text(weapon_text,526 if game.cloak.active else 536,GREEN,weapon_size)
 	if game.cloak.active: text("Cloaked · weapons ready" if p.cheat_cloak else "Cloaked · weapons offline",544,GREEN,13)
 	var contact: Dictionary=game.selected_contact()
 	if contact.is_empty(): text("No Target",648,DIM)

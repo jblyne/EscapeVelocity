@@ -7,7 +7,7 @@ boot_splash/bg_color=Color(0, 0, 0, 1)
 boot_splash/fullsize=false
 boot_splash/use_filter=true
 config/name="Escape Velocity HD — First Flight"
-config/version="0.1.132"
+config/version="0.1.178"
 run/main_scene="res://startup.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 config/description="A first playable reconstruction of Escape Velocity's original universe."
@@ -20,6 +20,7 @@ window/size/window_height_override=900
 window/size/min_width=1100
 window/size/min_height=740
 window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [rendering]
 textures/vram_compression/import_etc2_astc=true

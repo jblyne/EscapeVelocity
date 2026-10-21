@@ -89,7 +89,7 @@ func run() -> void:
 		game._physics_process(1.0/60)
 		if game.pilot.system_id==destination: break
 		game._process(1.0/60)
-	check(game.pilot.system_id==destination and game.pilot.fuel==departure_fuel-100 and absf(game.velocity.length()-275)<.01,"visuals preserve successful transition, cruise-speed arrival, and one fuel charge")
+	check(game.pilot.system_id==destination and game.pilot.fuel==departure_fuel-100 and absf(game.velocity.length()-float(game.pilot.flight_fields(game.catalog.record("ships",game.pilot.ship_id).fields).Speed))<.01,"visuals preserve successful transition, cruise-speed arrival, and one fuel charge")
 	check(game.jump_visuals.arrival_age==0.0 and game.player_model.scale.is_equal_approx(stretched) and game.space_material.get_shader_parameter("warp_stretch")==0.0,"new-system arrival retains the stretched ship and immediately returns stars to normal")
 	var saved=game.pilot.snapshot()
 	game.update_jump_visuals(.15)

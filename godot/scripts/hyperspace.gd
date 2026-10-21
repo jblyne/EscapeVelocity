@@ -54,7 +54,7 @@ func step(pos: Vector2, velocity: Vector2, ship_heading: float, fields: Dictiona
 				turn = Flight.steering(ship_heading, target, fields, dt)
 				if absf(angle_difference(ship_heading, target)) <= ALIGN_TOLERANCE:
 					# Throttle the final engine impulse so it cannot reverse our drift.
-					throttle = minf(1, velocity.length() / (float(fields.Accel) * Flight.ACCEL_SCALE * dt))
+					throttle = minf(1, velocity.length() / (Flight.acceleration(fields) * dt))
 		"aligning":
 			turn = Flight.steering(ship_heading, heading, fields, dt)
 			if absf(angle_difference(ship_heading, heading)) <= ALIGN_TOLERANCE:

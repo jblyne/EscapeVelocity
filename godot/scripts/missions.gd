@@ -13,6 +13,7 @@ var bar_idle: int=0
 const BAR_EVENT_HZ: float=60.0
 var selected: Dictionary = {}
 var selected_courier: bool=false
+var tracked_id: int=-1 # -2 is the introductory courier contract.
 var return_mode: String = "dock"
 var channel: int = 0
 var arrival_delays: Dictionary={}
@@ -22,9 +23,11 @@ var auxiliary_delays: Dictionary={}
 const ENCOUNTER_TICKS_PER_SECOND: float=60.0
 const ARRIVAL_DELAY: float=3.0
 const SCAN_INTERVAL: float=5.0 # Remake cadence; original AI scan-acquisition timing remains under comparison.
-const SCAN_AXIS_RANGE: float=180.0 # Original PPC 0x2f4–0x340.
+const SCAN_AXIS_RANGE: float=300.0 # Original PPC 0x2f4–0x340.
 var scan_clock: float = 0
 var last_report: String = ""
+var flight_alert: String=""
+var flight_alert_seconds: float=0
 var landing_reports: Array[Dictionary] = []
 var active_landing_report: Dictionary = {}
 
@@ -79,10 +82,38 @@ func eligibility(id: int, port: int, use_chance: bool = true, encounter_system: 
 	var gov: Dictionary=game.catalog.record("governments",govt)
 	var rep: int=int(game.pilot.reputation.get(str(govt),gov.get("fields",{}).get("InitialRec",0)))
 	if govt==-1: rep=int(game.pilot.local_records.get(str(encounter_system if encounter_system>=0 else system_of(port)),0))
-	if f.AvailRecord>0 and rep<f.AvailRecord: return false
+	var required_record: int=0 if id in [171,172] else int(f.AvailRecord)
+	if f.AvailRecord>0 and rep<required_record: return false
 	if f.AvailRecord<0 and rep>f.AvailRecord: return false
 	if int(state().rating)<int(f.AvailRating): return false
-	return not use_chance or roll(id,port)<int(f.AvailRandom)
+	return not use_chance or id in [171,172] or roll(id,port)<int(f.AvailRandom)
+
+func eligibility_reason(id: int, port: int) -> String:
+	var record: Dictionary=game.catalog.record("missions",id)
+	if record.is_empty(): return "Unknown assignment."
+	var f: Dictionary=record.fields
+	if not port_matches(int(f.AvailStel),port): return "Find this contact at the appropriate port."
+	if state().active.any(func(m):return int(m.id)==id): return "Already accepted; see your mission journal."
+	if int(f.AvailBitClr)>=0 and int(f.AvailBitClr) in state().bits: return "This story step is already completed or closed."
+	if not bit_matches(int(f.AvailBitSet)):
+		var predecessors: Array[String]=[]
+		if int(f.AvailBitSet)<1000:
+			for previous in game.catalog.data.missions.values():
+				if int(f.AvailBitSet) in [int(previous.fields.CompBitSet),int(previous.fields.CompBitSet2)]: predecessors.append(title(offer(int(previous.id),port)))
+		return "Complete earlier story work: "+", ".join(predecessors)+"." if not predecessors.is_empty() else "Further story progress is required."
+	var gov: int=int(game.catalog.field("objects",port,"Govt"))
+	var government: Dictionary=game.catalog.record("governments",gov)
+	var standing: int=int(game.pilot.local_records.get(str(system_of(port)),0)) if gov<0 else int(game.pilot.reputation.get(str(gov),government.get("fields",{}).get("InitialRec",0)))
+	var required: int=0 if id in [171,172] else int(f.AvailRecord)
+	var faction: String=str(government.get("name","local"))
+	var requirements: PackedStringArray=[]
+	if int(f.AvailRecord)>0 and standing<required: requirements.append("Improve %s standing to %d (currently %d)." % [faction,required,standing])
+	if int(f.AvailRecord)<0 and standing>int(f.AvailRecord): requirements.append("%s standing must be %d or lower (currently %d)." % [faction,int(f.AvailRecord),standing])
+	if int(state().rating)<int(f.AvailRating): requirements.append("Build combat rating to %d (currently %d)." % [int(f.AvailRating),int(state().rating)])
+	if not requirements.is_empty(): return " ".join(requirements)
+	for code in [int(f.TravelStel),int(f.ReturnStel)]:
+		if game.world_killer.destroyed(choose_port(code,port,id)): return "A required mission destination has been destroyed."
+	return ""
 
 func choose_port(code: int, origin: int, id: int) -> int:
 	if code==-4: return origin
@@ -125,7 +156,7 @@ func offers(port: int, location: int) -> Array:
 	var result: Array=[]
 	for record in game.catalog.data.missions.values():
 		if int(record.fields.AvailLoc) != location: continue
-		if eligibility(int(record.id),port): result.append(offer(int(record.id),port))
+		if eligibility(int(record.id),port,location!=1): result.append(offer(int(record.id),port))
 	result.sort_custom(func(a,b):
 		var fa: Dictionary=game.catalog.record("missions",int(a.id)).fields
 		var fb: Dictionary=game.catalog.record("missions",int(b.id)).fields
@@ -156,6 +187,91 @@ func ship_name(m: Dictionary, index: int=0) -> String:
 func title(m: Dictionary) -> String:
 	return expand(game.catalog.record("missions",int(m.id)).name,m)
 
+func return_for_payment(m: Dictionary) -> String:
+	var f: Dictionary=game.catalog.record("missions",int(m.id)).fields
+	if int(f.ShipCount)<=0 or int(f.ShipGoal) not in [0,6] or not m.travel_done or not ship_goal_done(m) or int(m.back)<0: return ""
+	var port: Dictionary=game.catalog.record("objects",int(m.back))
+	var objective: String="Defense objective complete" if int(f.ShipGoal)==6 else "Target destroyed"
+	return "%s — return to %s (%s) %s. No more targets required." % [objective,port.name,game.catalog.system(system_of(int(m.back))).name,"for payment" if int(f.PayVal)>0 else "to report in"]
+
+func combat_return_status() -> String:
+	var lines: PackedStringArray=[]
+	for m in state().active:
+		var instruction: String=return_for_payment(m)
+		if not instruction.is_empty(): lines.append(title(m)+": "+instruction)
+	return "\n".join(lines)
+
+func objective_port(port: int) -> String:
+	var record: Dictionary=game.catalog.record("objects",port)
+	if record.is_empty(): return "the mission destination"
+	return "%s (%s system)" % [record.name,game.catalog.system(system_of(port)).get("name","unknown")]
+
+func next_objective(m: Dictionary) -> String:
+	var result: String=objective_action(m)
+	var f: Dictionary=game.catalog.record("missions",int(m.id)).fields
+	if int(m.deadline)>=int(state().day):
+		var days: int=int(m.deadline)-int(state().day)
+		result+=" · Due today" if days==0 else " · %d %s left" % [days,"day" if days==1 else "days"]
+	if m.picked and not m.delivered and int(f.CargoType)>=0 and int(f.ScanGovt)>=0 and int(f.FailIfScan)!=0:
+		result+=" Avoid %s cargo scans." % game.catalog.record("governments",int(f.ScanGovt)).get("name","patrol")
+	return result
+
+func objective_action(m: Dictionary) -> String:
+	var fields: Dictionary=game.catalog.record("missions",int(m.id)).fields
+	if int(m.deadline)>=0 and int(state().day)>int(m.deadline): return "Deadline passed — check your mission journal."
+	if not ship_goal_done(m):
+		var goal: int=int(fields.ShipGoal)
+		var remaining: int=maxi(0,int(fields.ShipCount))
+		for actor in m.actors:
+			if (goal in [0,6] and actor.dead) or (goal==1 and actor.disabled and not actor.dead) or (goal in [2,5] and actor.boarded) or (goal==4 and actor.observed): remaining-=1
+		var action: String="Locate the mission ships"
+		match goal:
+			0: action="Destroy %d remaining mission target%s" % [remaining,"" if remaining==1 else "s"]
+			6: action="Destroy or drive off %d remaining attacker%s" % [remaining,"" if remaining==1 else "s"]
+			1: action="Disable %d remaining mission ship%s; do not destroy them" % [remaining,"" if remaining==1 else "s"]
+			2,5:
+				var disabled: bool=goal==5 or (m.actors.size()==int(fields.ShipCount) and m.actors.all(func(actor):return actor.boarded or actor.disabled))
+				action=("Board %d remaining disabled mission ship%s with B" if disabled else "Disable and board %d remaining mission ship%s with B") % [remaining,"" if remaining==1 else "s"]
+			3: action="Rendezvous with the ships you must escort"
+			4: action="Scout for mission contacts; destroying them is not required"
+		var system: String=game.catalog.system(int(m.ship_system)).get("name","the objective")
+		return ("In %s: " if int(m.ship_system)==game.pilot.system_id else "Travel to %s, then ") % system+action+"."
+	if int(fields.ShipGoal)==4 and m.travel_done and int(m.back)>=0:
+		return "Reconnaissance complete — return to %s to report your findings%s. No kills required." % [objective_port(int(m.back))," and collect %d credits" % int(fields.PayVal) if int(fields.PayVal)>0 else ""]
+	if int(fields.ShipGoal)==3 and m.met:
+		return "Escort the surviving ships to %s. Keep them alive until you land." % objective_port(int(m.dest) if not m.travel_done else int(m.back))
+	var return_note: String=return_for_payment(m)
+	if not return_note.is_empty(): return return_note
+	var cargo_name: String="passengers" if int(fields.CargoType)==6 else "mission cargo"
+	var port: int=int(m.dest) if not m.travel_done else int(m.back if int(m.back)>=0 else m.dest)
+	var action: String="Land at %s to complete the next mission step." % objective_port(port)
+	if not m.travel_done:
+		if int(m.id)==164: action="Land on %s to insert the Rebel commandos. Cloak with K before approaching Confed patrols." % objective_port(port)
+		elif int(fields.PickupMode)==1 and not m.picked: action="Land at %s to pick up %s." % [objective_port(port),cargo_name]
+		elif int(fields.CargoType)>=0 and m.picked: action="Land at %s to deliver %s." % [objective_port(port),cargo_name]
+	elif int(m.back)>=0:
+		action="Return to %s to deliver %s." % [objective_port(port),cargo_name] if int(fields.CargoType)>=0 and int(fields.DropoffMode)>=0 and not m.delivered else ("Return to %s to report in and collect your reward." if int(fields.PayVal)>0 else "Return to %s to report in.") % objective_port(port)
+	return action
+
+func tracked_objective() -> String:
+	var current: Dictionary={}
+	for m in state().active:
+		if int(m.id)==tracked_id: current=m;break
+	if current.is_empty() and tracked_id!=-2:
+		# Prefer a job that has an objective in the current system.
+		for m in state().active:
+			if target_system(m)==game.pilot.system_id: current=m;break
+		if current.is_empty() and not state().active.is_empty(): current=state().active[0]
+	if not current.is_empty():
+		var extra: int=state().active.size()-1+(0 if game.pilot.mission.is_empty() else 1)
+		return "NEXT · %s · I to choose mission%s\n%s" % [title(current)," · +%d other job(s)" % extra if extra>0 else "",next_objective(current)]
+	if not game.pilot.mission.is_empty():
+		return "NEXT · Courier delivery · I for journal\nLand at %s to deliver your parcels." % objective_port(int(game.pilot.mission.object))
+	# A courier may have just completed while other campaign work remains.
+	if tracked_id==-2 and not state().active.is_empty():
+		tracked_id=-1;return tracked_objective()
+	return ""
+
 func target_system(m: Dictionary) -> int:
 	# Combat and boarding objectives take priority. Once they are secure, point
 	# through the travel stop and finally to the return port.
@@ -164,6 +280,16 @@ func target_system(m: Dictionary) -> int:
 	if int(m.back)>=0: return system_of(int(m.back))
 	if int(m.dest)>=0: return system_of(int(m.dest))
 	return -1
+
+func grants_landing_clearance(port: int) -> bool:
+	if not game.pilot.mission.is_empty() and int(game.pilot.mission.get("object",-1))==port:
+		return true
+	for m in state().active:
+		if int(m.deadline)>=0 and int(state().day)>int(m.deadline): continue
+		if not ship_goal_done(m): continue
+		var stop: int=int(m.dest) if not m.travel_done or int(m.back)<0 else int(m.back)
+		if stop==port: return true
+	return false
 
 func landing_markers() -> Dictionary:
 	# Mark the next actual landing stop, rather than every port in its system.
@@ -208,7 +334,7 @@ func map_markers() -> Dictionary:
 	return markers
 
 func accept(m: Dictionary) -> bool:
-	if game.mode not in ["missions","mission_offer"] or return_mode!="dock" or not eligibility(int(m.id),game.docked_id,game.mode!="mission_offer"): return false
+	if game.mode not in ["missions","mission_offer"] or return_mode!="dock" or not eligibility(int(m.id),game.docked_id,game.mode!="mission_offer" and channel!=1): return false
 	if game.mode=="mission_offer" and (approach.is_empty() or int(m.id)!=int(approach.id) or game.docked_id!=approach_port): return false
 	if state().active.size()>=8 or game.pilot.cargo_used()+int(m.qty)>game.pilot.cargo_capacity(): return false
 	# Rebuild from trusted catalog and current offer seed, never accept UI-supplied rewards.
@@ -220,6 +346,7 @@ func accept(m: Dictionary) -> bool:
 		grant(id)
 	game.sound("ui_confirm")
 	state().active.append(m)
+	tracked_id=int(m.id)
 	last_report=text_for(m,"BriefText")
 	if last_report.is_empty(): last_report=text_for(m,"QuickBrief")
 	selected={}
@@ -228,9 +355,11 @@ func accept(m: Dictionary) -> bool:
 	return true
 
 func reset_bar_encounters() -> void:
+	tracked_id=-1
 	approach={};approach_port=-1;approached.clear();bar_port=-1;bar_rolls.clear();bar_queue.clear();bar_ticks=0
 
 func begin_port_visit() -> void:
+	last_report=""
 	approach={};approach_port=-1;bar_queue.clear();bar_ticks=0
 
 func begin_bar_approach() -> void:
@@ -244,7 +373,7 @@ func begin_bar_approach() -> void:
 	for record in game.catalog.data.missions.values():
 		var id: int=int(record.id)
 		if int(record.fields.AvailLoc)!=1 or id in approached: continue
-		if int(bar_rolls.get(id,100))>=int(record.fields.AvailRandom): continue
+		if id not in [171,172] and int(bar_rolls.get(id,100))>=int(record.fields.AvailRandom): continue
 		if eligibility(id,bar_port,false): bar_queue.append(id)
 	bar_queue.sort_custom(func(a,b):
 		var fa: int=int(game.catalog.field("missions",a,"Flags"))&4096
@@ -283,7 +412,7 @@ func resolve_approach(take_job: bool) -> void:
 	approach={};approach_port=-1;bar_activity()
 	game.hud.port_page="bar";game.set_mode("dock")
 	if take_job:
-		queue_landing_report(candidate,"MISSION ACCEPTED",last_report,"Mission accepted · see journal for objectives")
+		queue_landing_report(candidate,"MISSION ACCEPTED",last_report,"Cloaking Device installed · launch and press K to cloak" if int(candidate.id)==164 and game.pilot.outfit_count(167)>0 else "Mission accepted · see journal for objectives")
 		show_next_landing_report()
 
 func grant(id: int) -> void:
@@ -309,7 +438,61 @@ func dismiss_landing_report() -> void:
 		game.hud.rebuild_modal()
 	else: game.set_mode("dock")
 
-func finish(m: Dictionary, success: bool, aborted: bool = false, landing_popup: bool = false) -> void:
+func reward_summary(m: Dictionary, completed: bool=false) -> String:
+	var f: Dictionary=game.catalog.record("missions",int(m.id)).fields
+	var pay: int=int(f.PayVal)
+	var result: String=("%d credits received" if completed else "%d credits") % pay if pay>0 else "No credit payment"
+	if pay<=-20128 and pay>=-20255:
+		var outfit: Dictionary=game.catalog.record("outfits",-pay-20000)
+		result=("Installed: " if completed else "Reward: ")+str(outfit.get("name","mission equipment"))
+	elif pay<=-30128 and pay>=-30255:
+		result=str(game.catalog.record("outfits",-pay-30000).get("name","mission equipment"))+(" retained" if completed else " provided on acceptance")
+	elif pay<=-10128 and pay>=-10255:
+		result=str(game.catalog.record("governments",-pay-10000).get("name","Faction"))+(" record cleared" if completed else " record cleared on completion")
+	var govt: int=int(f.CompGovt)
+	if govt>=0 and govt<128: govt+=128
+	var government: Dictionary=game.catalog.record("governments",govt)
+	if int(f.CompReward)>0 and not government.is_empty(): result+=" · +%d %s reputation" % [int(f.CompReward),government.name]
+	for clearance in [61,66]:
+		if clearance in [int(f.CompBitSet),int(f.CompBitSet2)]: result+=" · "+("Rebel" if clearance==61 else "Confederation")+" military clearance "+("unlocked" if completed else "on completion")
+	return result
+
+func completion_status(m: Dictionary) -> String:
+	var f: Dictionary=game.catalog.record("missions",int(m.id)).fields
+	var result: String=reward_summary(m,true)
+	if int(m.back)>=0:
+		for record in game.catalog.data.missions.values():
+			if int(record.fields.AvailLoc)!=1 or int(record.fields.AvailBitSet)<0: continue
+			if int(record.fields.AvailBitSet) not in [int(f.CompBitSet),int(f.CompBitSet2)]: continue
+			if eligibility(int(record.id),int(m.back),false):
+				result+="\nNext: visit the spaceport bar at "+game.catalog.record("objects",int(m.back)).name
+				break
+	return result
+
+func commitment_notes(m: Dictionary) -> String:
+	var f: Dictionary=game.catalog.record("missions",int(m.id)).fields
+	var notes: PackedStringArray=[]
+	if int(f.CanAbort)==0: notes.append("This assignment cannot be voluntarily aborted.")
+	if int(f.Flags)&4: notes.append("This original offer cannot be declined.")
+	if int(f.ShipGoal)==3: notes.append("Keep every escorted ship alive until arrival.")
+	if int(f.ShipGoal) in [2,5]: notes.append("Required ships must survive until you board them.")
+	if int(f.ScanGovt)>=0 and int(f.CargoType)>=0 and int(f.FailIfScan)!=0:
+		notes.append("%s cargo scans fail this assignment." % game.catalog.record("governments",int(f.ScanGovt)).get("name","Patrol"))
+	if int(f.PayVal)<=-30128 and int(f.PayVal)>=-30255 and int(f.Flags)&32:
+		notes.append("If loaned, the %s is removed on failure." % game.catalog.record("outfits",-int(f.PayVal)-30000).get("name","mission equipment"))
+	return "\n".join(notes)
+
+func abort_reason(m: Dictionary) -> String:
+	if m not in state().active: return "This assignment is no longer active."
+	return "This assignment cannot be voluntarily aborted." if int(game.catalog.field("missions",int(m.id),"CanAbort"))==0 else ""
+
+func retry_hint(m: Dictionary) -> String:
+	if not eligibility(int(m.id),int(m.origin),false): return ""
+	var location: int=int(game.catalog.field("missions",int(m.id),"AvailLoc"))
+	if location not in [0,1]: return "Retry: find the mission contact again."
+	return "Retry: ask at the %s at %s." % ["spaceport bar" if location==1 else "mission computer",objective_port(int(m.origin))]
+
+func finish(m: Dictionary, success: bool, aborted: bool = false, landing_popup: bool = false, failure_reason: String="") -> void:
 	if m not in state().active: return
 	arrival_delays.erase(int(m.id))
 	auxiliary_delays.erase(int(m.id))
@@ -331,23 +514,37 @@ func finish(m: Dictionary, success: bool, aborted: bool = false, landing_popup: 
 		var reward: int=int(f.CompReward) if success else -absi(int(f.CompReward))/2
 		if aborted and int(f.Flags)&64: reward=-absi(int(f.CompReward))*5
 		game.pilot.reputation[str(gov)]=clampi(int(game.pilot.reputation.get(str(gov),record.fields.InitialRec))+reward,-10000,10000)
+	state().active.erase(m)
+	if not success:
+		if failure_reason.is_empty(): failure_reason="Assignment aborted." if aborted else "The mission requirements were not met."
+		if m.prepaid and int(f.Flags)&32:
+			var equipment: String=str(game.catalog.record("outfits",-int(f.PayVal)-30000).get("name","mission equipment"))
+			if not equipment.to_lower() in failure_reason.to_lower(): failure_reason+=" Loaned %s removed." % equipment
+		var retry: String=retry_hint(m)
+		if not retry.is_empty(): failure_reason+=" "+retry
+	if not success and game.autopilot.active() and game.autopilot.job.get("kind","")=="mission" and int(game.autopilot.job.get("id",-1))==int(m.id):
+		game.autopilot.cancel("Mission failed: "+failure_reason)
 	var report_text: String=text_for(m,"CompText" if success else "FailText")
+	if not success and not failure_reason.is_empty():
+		report_text=failure_reason+("\n\n"+report_text if not report_text.is_empty() else "")
+		flight_alert="MISSION FAILED · "+title(m)+" · "+failure_reason
+		flight_alert_seconds=25
 	last_report=("Mission complete: " if success else "Mission failed: ")+title(m)+"\n\n"+report_text
 	if landing_popup:
-		var reward: String="Mission complete"
-		if success and int(f.PayVal)>0: reward+=" · %d credits received" % int(f.PayVal)
+		var reward: String="No rewards awarded"
+		if success: reward=completion_status(m)
 		queue_landing_report(m,"MISSION COMPLETE" if success else "MISSION FAILED",report_text,reward)
 	game.notify(("Mission complete: " if success else "Mission failed: ")+title(m))
-	state().active.erase(m)
 	for npc in game.npcs.duplicate():
 		if int(npc.get("mission_id",-1))==int(m.id): game.traffic.retire(npc)
 	selected={}
 	game.save_game(false)
 
 func abort(m: Dictionary) -> void:
-	if m in state().active:
-		finish(m,false,true)
-		game.hud.rebuild_modal()
+	var reason: String=abort_reason(m)
+	if not reason.is_empty(): game.notify(reason);game.sound("ui_error");return
+	finish(m,false,true)
+	game.hud.rebuild_modal()
 
 func ship_goal_done(m: Dictionary) -> bool:
 	var f: Dictionary=game.catalog.record("missions",int(m.id)).fields
@@ -400,7 +597,7 @@ func jumped() -> void:
 	game.fleet_service.sync();game.fleet_service.payroll()
 	game.world_activity.sync()
 	for m in state().active.duplicate():
-		if int(m.deadline)>=0 and int(state().day)>int(m.deadline): finish(m,false)
+		if int(m.deadline)>=0 and int(state().day)>int(m.deadline): finish(m,false,false,false,"Deadline missed: assignment was due on day %d." % int(m.deadline))
 
 func actor_event(npc: Dictionary, event: String) -> void:
 	for m in state().active.duplicate():
@@ -408,16 +605,52 @@ func actor_event(npc: Dictionary, event: String) -> void:
 		if npc.get("mission_aux",false):
 			if event=="kill" and not int(game.catalog.record("missions",int(m.id)).fields.Flags)&16: m.aux[int(npc.mission_slot)].dead=true
 			continue
+		var was_done: bool=ship_goal_done(m)
 		var a: Dictionary=m.actors[int(npc.mission_slot)]
 		var f: Dictionary=game.catalog.record("missions",int(m.id)).fields
 		if event=="board":
+			npc.boarded=true
 			a.boarded=true
 			if int(f.PickupMode)==2: m.picked=true
 			game.notify("Mission boarding objective secured.")
 		if event=="disable": a.disabled=true
 		if event in ["kill","escape"]:
 			a.dead=true
-			if (event=="escape" and int(f.ShipGoal)==0) or int(f.ShipGoal) in [1,3] or (int(f.ShipGoal) in [2,5] and not a.boarded): finish(m,false)
+			if (event=="escape" and int(f.ShipGoal)==0) or int(f.ShipGoal) in [1,3] or (int(f.ShipGoal) in [2,5] and not a.boarded):
+				var reason: String="The assassination target escaped." if event=="escape" else "A required mission ship was destroyed."
+				if int(f.ShipGoal)==3: reason="An escorted ship was destroyed." if event=="kill" else "An escorted ship left before reaching its destination."
+				elif int(f.ShipGoal) in [2,5]: reason="The mission ship was destroyed before boarding." if event=="kill" else "The mission ship escaped before boarding."
+				finish(m,false,false,false,reason)
+		if m in state().active and not was_done:
+			var instruction: String=return_for_payment(m)
+			if not instruction.is_empty(): game.notify(instruction);game.sound("ui_confirm")
+
+# Only the active, unboarded item carrier needs capture protection; auxiliaries
+# and assassination targets retain their normal combat rules.
+func needs_boarding(npc: Dictionary) -> bool:
+	if npc.get("mission_aux",false) or npc.get("boarded",false): return false
+	for m in state().active:
+		if int(m.id)!=int(npc.get("mission_id",-1)): continue
+		var f: Dictionary=game.catalog.record("missions",int(m.id)).fields
+		if int(f.ShipGoal) not in [2,5] and int(f.PickupMode)!=2: return false
+		var slot: int=int(npc.get("mission_slot",-1))
+		return slot>=0 and slot<m.actors.size() and not m.actors[slot].boarded and not m.actors[slot].dead
+	return false
+
+func boarding_report(npc: Dictionary) -> String:
+	var id: int=int(npc.get("mission_id",-1))
+	if id<0: return ""
+	for m in state().active:
+		if int(m.id)!=id: continue
+		var f: Dictionary=game.catalog.record("missions",id).fields
+		if npc.get("mission_aux",false) and int(f.PickupMode)==2:
+			return "This is an escort, not the ship carrying the mission item. Board the [MISSION TARGET] ship for %s." % title(m)
+		if not npc.get("mission_aux",false) and int(f.PickupMode)==2 and m.picked:
+			var recovered: String=text_for(m,"LoadCargText")
+			return (recovered+"\n" if not recovered.is_empty() else "Mission item recovered.\n")+"Transferred automatically to your mission cargo; there is nothing to take from ordinary cargo.\nNext: "+objective_action(m)
+		if not npc.get("mission_aux",false) and int(f.ShipGoal) in [2,5] and npc.boarded:
+			return "Mission boarding recorded. Next: "+objective_action(m)
+	return "This ship's mission is no longer active. Check your mission journal for the result and retry instructions."
 
 func actors(m: Dictionary, aux: bool) -> Array:
 	return m.aux if aux else m.actors
@@ -461,6 +694,7 @@ func spawn_group(m: Dictionary, aux: bool) -> void:
 		if a.has("person_id"):
 			game.persons.configure(npc,int(a.person_id));npc.ambient=false
 		npc.name=npc.name if a.has("person_id") else ship_name(m,i) if int(f.ShipNameID)>=0 else "%s · %s" % [npc.name,title(m)]
+		if not aux and int(f.ShipGoal) in [0,2,5,6]: npc.name="[MISSION TARGET] "+str(npc.name)
 		if a.health>=0: npc.health=float(a.health)
 		if a.has("shield") and a.has("armor"): npc.shield=float(a.shield);npc.armor=float(a.armor)
 		npc.disabled=a.disabled;npc.boarded=a.boarded
@@ -493,7 +727,7 @@ func sync_actors() -> void:
 			if int(m.id)==int(npc.mission_id):
 				var a: Dictionary=actors(m,npc.mission_aux)[int(npc.mission_slot)]
 				game.Combat.sync(npc)
-				a.health=npc.health;a.shield=npc.shield;a.armor=npc.armor;a.disabled=npc.disabled;a.boarded=npc.boarded
+				a.health=npc.health;a.shield=npc.shield;a.armor=npc.armor;a.disabled=npc.disabled;a.boarded=a.boarded or npc.boarded
 
 func advance(dt: float) -> void:
 	for id in arrival_delays: arrival_delays[id]=maxf(0,float(arrival_delays[id])-dt)
@@ -505,23 +739,30 @@ func advance(dt: float) -> void:
 	scan_clock=fmod(scan_clock,SCAN_INTERVAL)
 	scan_missions()
 
-func can_scan(npc: Dictionary,fields: Dictionary) -> bool:
+func scanner_eligible(npc: Dictionary,fields: Dictionary) -> bool:
 	if int(fields.ScanGovt)<0 or int(fields.CargoType)<0: return false
 	if npc.disabled or int(npc.ai) not in [3,4] or npc.get("health",0)<=0: return false
 	if npc.has("fleet_uid") or npc.get("player_ally",false) or npc.get("mission_escort",false) or npc.has("departure"): return false
 	if int(npc.faction)!=int(fields.ScanGovt): return false
 	var government: Dictionary=game.catalog.record("governments",int(npc.faction))
-	if government.is_empty() or int(government.fields.SmugPenalty)<=0: return false
-	var offset: Vector2=npc.position-game.pilot.position
-	return absf(offset.x)<=SCAN_AXIS_RANGE and absf(offset.y)<=SCAN_AXIS_RANGE
+	return not government.is_empty() and int(government.fields.SmugPenalty)>0
 
-func scan_missions() -> void:
+func can_scan(npc: Dictionary,fields: Dictionary) -> bool:
+	if not scanner_eligible(npc,fields): return false
+	var offset: Vector2=npc.position-game.pilot.position
+	var motion: Vector2=Vector2(npc.get("velocity",Vector2.ZERO))-game.velocity
+	# PPC 0x31a0-0x325c: 180-coordinate inclusive square, then strict
+	# 0.35-coordinate/tick per-axis motion gate. Convert both at 5/3 and 60 Hz.
+	return absf(offset.x)<=SCAN_AXIS_RANGE and absf(offset.y)<=SCAN_AXIS_RANGE and absf(motion.x)<35.0 and absf(motion.y)<35.0
+
+func scan_missions(scanner: Dictionary={}) -> void:
 	if game.mode!="flight" or game.cloak.active: return
 	var scanned_contacts: Array=[]
 	for m in state().active.duplicate():
 		var f: Dictionary=game.catalog.record("missions",int(m.id)).fields
 		if f.ScanGovt<0 or not m.picked or m.delivered: continue
 		for npc in game.npcs:
+			if not scanner.is_empty() and npc!=scanner: continue
 			if npc in scanned_contacts: continue
 			if not can_scan(npc,f): continue
 			if npc.get("scanned_mission_%d" % m.id,false): continue
@@ -529,10 +770,13 @@ func scan_missions() -> void:
 			scanned_contacts.append(npc) # Original scan routine returns after its first matching cargo.
 			game.Factions.penalize(game.catalog,game.pilot,int(npc.faction),"SmugPenalty")
 			game.notify("Cargo scan detected illegal mission cargo.")
-			if f.FailIfScan!=0: finish(m,false)
+			if f.FailIfScan!=0:
+				var reason: String="Confederation patrol detected the mission cargo." if int(f.ScanGovt)==128 else "A patrol detected the mission cargo."
+				if int(m.id)==164 and m.prepaid: reason+=" Loaned Cloaking Device removed. Return to Palshife to retry; cloak before approaching patrols."
+				finish(m,false,false,false,reason)
 			break
 
 func open() -> void:
 	if game.mode not in ["flight","dock"]: return
-	return_mode=game.mode;selected={};selected_courier=false
+	return_mode=game.mode;selected={};selected_courier=false;last_report=""
 	game.set_mode("missions")

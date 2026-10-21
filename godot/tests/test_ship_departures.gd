@@ -17,9 +17,9 @@ func screen(name: String) -> void:
 func run() -> void:
 	game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev-ship-departure-test.json"
 	if FileAccess.file_exists(game.save_path): DirAccess.remove_absolute(game.save_path)
-	game.traffic.enabled=false;game.muted=true;root.add_child(game)
+	game.traffic.enabled=false;game.muted=true;root.add_child(game);game.pilot.cheat_world_killer=true
 	game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
-	game.restart()
+	game.restart();game.pilot.cheat_world_killer=true
 	for rate in [30,60,120]:
 		var node=game.ShipModels.create(game.catalog,128,-1);game.world.add_child(node)
 		node.position=game.v3(Vector2(4000,4000))
@@ -73,7 +73,7 @@ func run() -> void:
 	game.pilot.fleet=[{"id":128}];game.fleet_service.restore()
 	check(not game.traffic.request_departure(game.escorts[0]),"Fleet escorts never autonomously disappear")
 	# Death Star: exercise actual controller, not just an isolated scale callback.
-	game.restart();game.landing_target=int(game.planets[0].id);game.world_activity.open_contact();game.world_killer.threaten();game.world_killer.deploy()
+	game.restart();game.pilot.cheat_world_killer=true;game.landing_target=int(game.planets[0].id);game.world_activity.open_contact();game.world_killer.threaten();game.world_killer.deploy()
 	var station=game.world_killer.station;game.world_killer.open_active();game.world_killer.spare();game.set_mode("flight")
 	for i in 850: game.world_killer.advance(1.0/60)
 	check(station.departure_started,"Death Star hands withdrawal to shared player hyperdrive")

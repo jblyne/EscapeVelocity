@@ -8,7 +8,7 @@ func _initialize(): call_deferred("run")
 func run():
  var game=load("res://main.tscn").instantiate()
  game.save_path="/tmp/ev-firework-slots.json";game.controls.path="/tmp/ev-firework-controls.json"
- game.traffic.enabled=false;game.muted=true;root.add_child(game)
+ game.traffic.enabled=false;game.muted=true;root.add_child(game);game.pilot.cheat_world_killer=true
  game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
  var k=game.world_killer
  game.pilot.system_id=game.missions.system_of(128);game.load_system();game.set_mode("flight")

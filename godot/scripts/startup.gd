@@ -65,8 +65,15 @@ func _ready() -> void:
 	add_child(music)
 	music.stream=load("res://audio/menu_music.wav");music.play()
 	show_phase("logo")
-	var result=ResourceLoader.load_threaded_request(GAME)
-	loading_error=result!=OK
+	call_deferred("load_game_scene")
+
+func load_game_scene() -> void:
+	# Script shader/texture preloads must resolve on the main thread in exports.
+	# Let the logo render first; loading does not instantiate or animate the menu.
+	await get_tree().process_frame
+	scene=load(GAME)
+	loading_error=scene==null
+	if not loading_error: progress.value=100
 
 func fit() -> void:
 	var factor=minf(size.x/832.0,size.y/624.0)
@@ -101,12 +108,6 @@ func next_drum() -> void:
 func _process(dt: float) -> void:
 	if not is_instance_valid(canvas): return
 	elapsed+=dt
-	if not story_only and scene==null and not loading_error:
-		var values: Array=[]
-		var status=ResourceLoader.load_threaded_get_status(GAME,values)
-		if not values.is_empty(): progress.value=float(values[0])*100
-		if status==ResourceLoader.THREAD_LOAD_LOADED: scene=ResourceLoader.load_threaded_get(GAME)
-		elif status in [ResourceLoader.THREAD_LOAD_FAILED,ResourceLoader.THREAD_LOAD_INVALID_RESOURCE]: loading_error=true
 	if loading_error:
 		hint.text="Unable to load the game. Press Esc to quit.";return
 	art.modulate.a=clampf(elapsed/FADE_SECONDS,0,1)

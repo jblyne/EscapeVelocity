@@ -8,10 +8,10 @@ func check(ok: bool,message: String) -> void:
 func _initialize(): call_deferred("run")
 func run():
  check(is_equal_approx(Combat.shield_rate(180,36),60.0/36),"shuttle restores one integrity unit per thirty-six original ticks")
- check(Combat.recover(0,99,180,100,36,.6)==Vector2(0,100),"recovery reaches armor maximum before shields")
- var crossing=Combat.recover(0,99.5,180,100,36,.6)
- check(is_equal_approx(crossing.x,.5) and crossing.y==100,"recovery crossing armor boundary conserves integrity")
- check(Combat.recover(179,100,180,100,36,6)==Vector2(180,100),"recovery clamps full integrity")
+ check(Combat.recover(0,99,180,100,1)==Vector2(0,100),"recovery reaches armor maximum before shields")
+ var crossing=Combat.recover(0,99.5,180,100,1)
+ check(is_equal_approx(crossing.x,1) and crossing.y==100,"signed recovery truncates toward zero at armor boundary")
+ check(Combat.recover(179,100,180,100,10)==Vector2(180,100),"recovery clamps full integrity")
  var capital={"health":667.0,"shield":0.0,"armor":667.0,"max_health":9000.0,"shield_capacity":8000.0}
  check(not Combat.is_disabled(capital),"capital remains operational before one third of armor is lost")
  capital.armor=666;capital.health=666

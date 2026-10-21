@@ -1,14 +1,24 @@
 extends RefCounted
+const Bribery=preload("res://scripts/bribery.gd")
 const State=preload("res://scripts/campaign_state.gd")
+const HUNTER_TRIBUTE_STEP=5000
+const HUNTER_DEFEAT_LIMIT=5
+const HUNTER_DELAY_DAYS=2
+var hunter_celebration: Dictionary={}
+var hunter_alert: String=""
+var hunter_alert_seconds: float=0.0
 var game
 var siege: Dictionary={}
 var return_mode="flight"
 var contact_id=-1
 var response=""
+var landing_bribes: Dictionary={}
+var landing_officers: Dictionary={}
+var landing_officer_owner: RefCounted
 var rng=RandomNumberGenerator.new()
 
 static func fresh(day: int=0) -> Dictionary:
-	return {"day":day,"events":[],"seen":[],"dominated":[]}
+	return {"day":day,"events":[],"seen":[],"dominated":[],"hunters":{}}
 static func valid(value: Variant,catalog,day: int) -> bool:
 	if not value is Dictionary: return false
 	if not State.integer(value.get("day"),maxi(0,day-3650),day): return false
@@ -28,6 +38,16 @@ static func valid(value: Variant,catalog,day: int) -> bool:
 		var f: Dictionary=catalog.record("objects",int(id)).fields
 		if not int(f.Flags)&1 or int(f.Flags)&32: return false
 		ids.append(int(id))
+	var hunters=value.get("hunters",{})
+	if not hunters is Dictionary or hunters.size()>catalog.data.objects.size(): return false
+	for key in hunters:
+		if not key is String or key!=str(int(key)) or catalog.record("objects",int(key)).is_empty(): return false
+		var h=hunters[key]
+		if not h is Dictionary: return false
+		if not State.integer(h.get("sent"),0,1000000) or not State.integer(h.get("defeated"),0,HUNTER_DEFEAT_LIMIT): return false
+		if not State.integer(h.get("active"),0,int(h.sent)) or not State.integer(h.get("next_day"),0,1000000000): return false
+		if int(h.defeated)>int(h.sent) or (int(h.active)>0 and int(h.active)!=int(h.sent)): return false
+		if int(h.defeated)>=HUNTER_DEFEAT_LIMIT and int(h.active)>0: return false
 	return true
 static func normalized(value: Dictionary) -> Dictionary:
 	var result=fresh(int(value.day))
@@ -35,9 +55,91 @@ static func normalized(value: Dictionary) -> Dictionary:
 	for key in ["seen","dominated"]:
 		for id in value[key]:
 			if int(id) not in result[key]: result[key].append(int(id))
+	for key in value.get("hunters",{}):
+		var h: Dictionary=value.hunters[key]
+		result.hunters[key]={"sent":int(h.sent),"defeated":int(h.defeated),"active":int(h.active),"next_day":int(h.next_day)}
 	return result
 func state() -> Dictionary: return game.pilot.world_state
-func tribute(port: int) -> int: return maxi(1,int(game.catalog.field("objects",port,"TechLevel")))*1000
+func tribute(port: int) -> int:
+	var defeated: int=int(state().get("hunters",{}).get(str(port),{}).get("defeated",0))
+	return maxi(1,int(game.catalog.field("objects",port,"TechLevel")))*1000+defeated*HUNTER_TRIBUTE_STEP
+
+func hunter_record(port: int) -> Dictionary:
+	if not state().has("hunters"): state().hunters={}
+	if not state().hunters.has(str(port)):
+		state().hunters[str(port)]={"sent":0,"defeated":0,"active":0,"next_day":int(game.pilot.campaign.day)+1}
+	return state().hunters[str(port)]
+
+func sponsor(port: int) -> String:
+	return "%s (%s system)" % [game.catalog.record("objects",port).name,game.catalog.system(game.missions.system_of(port)).name]
+
+func hunter_notice(text: String) -> void:
+	hunter_alert=text;hunter_alert_seconds=16.0
+	game.notify(text)
+
+func tribute_summary(system: int) -> Dictionary:
+	var result={"income":0,"sent":0,"defeated":0,"gave_up":0,"worlds":0,"lines":[]}
+	for port in game.catalog.system(system).objects:
+		if port not in state().dominated or game.world_killer.destroyed(int(port)): continue
+		var h: Dictionary=state().get("hunters",{}).get(str(port),{})
+		var sent: int=int(h.get("sent",0));var defeated: int=int(h.get("defeated",0))
+		result.income+=tribute(int(port));result.sent+=sent;result.defeated+=defeated;result.worlds+=1
+		if defeated>=HUNTER_DEFEAT_LIMIT: result.gave_up+=1
+		result.lines.append("%s: %s cr/day · Hunters sent: %d · Defeated: %d%s" % [game.catalog.record("objects",int(port)).name,game.hud.commas(tribute(int(port))),sent,defeated," · Gave up" if defeated>=HUNTER_DEFEAT_LIMIT else ""])
+	return result
+
+func advance_hunters() -> void:
+	if game.mode!="flight" or not game.traffic.enabled or game.hyperdrive.active() or not game.chain_route.is_empty(): return
+	var changed: bool=false
+	if not state().has("hunters"): state().hunters={}
+	for port in state().dominated:
+		if game.world_killer.destroyed(int(port)): continue
+		if not state().hunters.has(str(port)): hunter_record(int(port));changed=true
+	if changed: game.save_game(false)
+	# One mercenary on screen at a time; contracts follow the pilot between visits.
+	for npc in game.npcs.duplicate():
+		if not npc.has("bounty_port"): continue
+		var port: int=int(npc.bounty_port)
+		if port not in state().dominated or game.world_killer.destroyed(port):
+			game.traffic.retire(npc);continue
+		if npc.has("fleet_uid") or npc.get("player_ally",false):
+			var h: Dictionary=hunter_record(port)
+			h.active=0;h.next_day=int(game.pilot.campaign.day)+HUNTER_DELAY_DAYS
+			npc.erase("bounty_port");npc.erase("bounty_contract");game.save_game(false)
+			continue
+		if not game.cloak.active: npc.goal=game.pilot.position
+		return
+	if game.npcs.size()>=game.traffic.MAX_CONTACTS: return
+	for port in state().dominated:
+		if game.world_killer.destroyed(int(port)): continue
+		var h: Dictionary=hunter_record(int(port))
+		if int(h.defeated)>=HUNTER_DEFEAT_LIMIT: continue
+		if int(h.active)==0 and int(game.pilot.campaign.day)<int(h.next_day): continue
+		var npc: Dictionary=game.traffic.spawn(148,136,4,game.pilot.position+Vector2.from_angle(rng.randf()*TAU)*1000)
+		if npc.is_empty(): return
+		var resumed: bool=int(h.active)>0
+		if not resumed: h.sent+=1;h.active=int(h.sent)
+		npc.bounty_port=int(port);npc.bounty_contract=int(h.active)
+		npc.name="Bounty hunter · "+sponsor(int(port));npc.provoked=true;npc.hostile=true;npc.ambient=false
+		npc.goal=game.pilot.position
+		hunter_notice("BOUNTY HUNTER · Hired by %s · Contract #%d%s" % [sponsor(int(port)),int(h.active)," · Still pursuing you" if resumed else ""])
+		game.save_game(false);return
+
+func hunter_destroyed(npc: Dictionary, player_credit: bool) -> void:
+	var port: int=int(npc.get("bounty_port",-1))
+	if port<0: return
+	var h: Dictionary=state().get("hunters",{}).get(str(port),{})
+	if h.is_empty() or int(h.active)==0 or int(h.active)!=int(npc.get("bounty_contract",-1)): return
+	# Clear the serial before rewarding: repeated callbacks cannot raise tribute twice.
+	h.active=0;h.next_day=int(game.pilot.campaign.day)+HUNTER_DELAY_DAYS
+	if player_credit and port in state().dominated and not game.world_killer.destroyed(port):
+		sync() # Settle earlier days at the old tribute rate before raising it.
+		h.defeated=mini(HUNTER_DEFEAT_LIMIT,int(h.defeated)+1)
+		var message: String="HUNTER DEFEATED · Hired by %s · Tribute +5,000 → %s cr/day" % [sponsor(port),game.hud.commas(tribute(port))]
+		if int(h.defeated)>=HUNTER_DEFEAT_LIMIT: message+=" · They give up: further bounty hunters are too expensive."
+		hunter_celebration={"generation":int(hunter_celebration.get("generation",0))+1,"sponsor":sponsor(port),"income":tribute(port),"gave_up":int(h.defeated)>=HUNTER_DEFEAT_LIMIT}
+		hunter_notice(message)
+	game.save_game(false)
 func daily_income() -> int:
 	var total=0
 	for id in state().dominated:
@@ -120,6 +222,8 @@ func landing_reason(port: int) -> String:
 	var f: Dictionary=game.catalog.record("objects",port).fields
 	if not int(f.Flags)&1: return "No landing facilities."
 	if not siege.is_empty() and int(siege.port)==port: return "Landing refused while the defense fleet is deployed."
+	if game.missions.grants_landing_clearance(port): return ""
+	if landing_bribes.has(port): return ""
 	if int(f.Flags)&32 or port in state().dominated or game.cloak.active: return ""
 	if fear(port).compliant: return ""
 	var gov: Dictionary=game.catalog.record("governments",int(f.Govt))
@@ -128,6 +232,64 @@ func landing_reason(port: int) -> String:
 		return "Landing refused: your local legal record is below this port's required standing." if record<int(f.MinCoolness) else ""
 	var score: int=int(game.pilot.reputation.get(str(int(f.Govt)),int(gov.fields.InitialRec)))
 	return "Landing refused: your reputation with %s is below this port's required standing (%d)." % [gov.name,int(f.MinCoolness)] if score<int(f.MinCoolness) else ""
+# Stable for one port/day, so reopening the channel cannot reroll an official.
+# Original formulas and government-bit willingness: see PHASE_5_BRIBES_AND_SECRETS.md.
+# Keeping each official/quote stable for a port/day is remake anti-reroll behavior.
+func landing_officer(port: int) -> Dictionary:
+	if landing_officer_owner!=game.pilot:
+		landing_officers.clear();landing_officer_owner=game.pilot
+	var key: String="%d:%d" % [port,int(game.pilot.campaign.day)]
+	if not landing_officers.has(key):
+		var roll: int=absi(hash(key))%100
+		var govt: int=int(game.catalog.field("objects",port,"Govt"))
+		var flags: int=int(game.catalog.record("governments",govt).get("fields",{}).get("Flags",0))
+		var quote_rng=RandomNumberGenerator.new();quote_rng.seed=absi(hash("landing_quote:"+key))
+		landing_officers[key]={"willing":Bribery.landing_willing(roll,flags,govt),"bargains":absi(hash("bargain:"+key))%100<=50,"negotiated":false,"refused":false,"discount":false,"price":Bribery.landing_quote(game.pilot.credits,flags,quote_rng)}
+	return landing_officers[key]
+
+func landing_bribe_price(port: int) -> int:
+	var officer: Dictionary=landing_officer(port)
+	return Bribery.discount(int(officer.price)) if officer.discount else int(officer.price)
+
+func negotiate_landing_bribe() -> bool:
+	if game.mode!="world_comms" or not can_bribe_landing(contact_id): return false
+	var officer: Dictionary=landing_officer(contact_id)
+	if officer.negotiated or officer.refused: return false
+	officer.negotiated=true;remember("negotiate_bribe")
+	if not officer.willing:
+		officer.refused=true;response="Bribing a traffic-control officer? Leave now. Try another day if you must."
+	elif officer.bargains:
+		officer.discount=true;response="Perhaps we can reduce the fee. %d credits, and you have clearance." % landing_bribe_price(contact_id)
+	else:
+		officer.refused=true;officer.willing=false;officer.price=int(officer.price)+1000
+		response="No deal. This officer will no longer accept a bribe today. Leave and try another day."
+	game.hud.rebuild_modal()
+	return officer.discount
+
+func can_bribe_landing(port: int) -> bool:
+	if game.catalog.record("objects",port).is_empty() or game.world_killer.destroyed(port): return false
+	if not int(game.catalog.field("objects",port,"Flags"))&1: return false
+	if not siege.is_empty() and int(siege.port)==port: return false
+	return not landing_reason(port).is_empty()
+
+func pay_landing_bribe() -> bool:
+	if game.mode!="world_comms" or not can_bribe_landing(contact_id): return false
+	var cost: int=landing_bribe_price(contact_id)
+	var officer: Dictionary=landing_officer(contact_id)
+	if not officer.willing or officer.refused:
+		officer.refused=true;remember("bribe_refused")
+		response="Your money will not buy clearance from this officer. Leave, and try another day."
+		game.sound("ui_error");game.hud.rebuild_modal();return false
+	if game.pilot.credits<cost:
+		response="Insufficient credits for landing clearance.";game.sound("ui_error");game.hud.rebuild_modal();return false
+	game.pilot.credits-=cost
+	landing_bribes[contact_id]=true
+	game.landing_target=contact_id;game.landing_clearance=contact_id
+	remember("bribe");remember("landing_bribe")
+	response="Payment received. Landing clearance granted for this system visit. Approach slowly and press L to land."
+	game.sound("ui_confirm");game.save_game(false);game.hud.rebuild_modal()
+	return true
+
 func remember(action: String,port: int=-1) -> void:
 	game.pilot.History.record(game.pilot,"world:%d" % (contact_id if port<0 else port),action)
 
@@ -172,6 +334,7 @@ func resolved(npc: Dictionary) -> void:
 	npc.defense_resolved=true
 	siege.pending=maxi(0,int(siege.pending)-1)
 func advance(dt: float) -> void:
+	advance_hunters()
 	if siege.is_empty(): return
 	for npc in game.npcs:
 		if npc.disabled: resolved(npc)
@@ -179,6 +342,7 @@ func advance(dt: float) -> void:
 	if int(siege.left)==0:
 		var port: int=int(siege.port)
 		if port not in state().dominated: state().dominated.append(port)
+		hunter_record(port)
 		siege={}
 		game.notify("%s agrees to pay %d credits per day in tribute." % [game.catalog.record("objects",port).name,tribute(port)])
 		game.save_game(false);return
@@ -213,5 +377,7 @@ func abort() -> void: siege={}
 func release() -> void:
 	if game.mode!="world_comms" or contact_id not in state().dominated: return
 	remember("tribute_released")
-	state().dominated.erase(contact_id);response="You release this world from its tribute obligation."
+	state().dominated.erase(contact_id)
+	if state().hunters.has(str(contact_id)): state().hunters[str(contact_id)].active=0
+	response="You release this world from its tribute obligation."
 	game.save_game(false);game.hud.rebuild_modal()

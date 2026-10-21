@@ -70,7 +70,9 @@ func run() -> void:
 	npc.provoked=true;npc.hostile=true
 	check(not game.traffic.opponent(npc).get("player",false),"cloaked player cannot be targeted")
 	service.abort(m)
-	check(game.pilot.outfit_count(167)==0 and not game.cloak.active and 36 not in game.pilot.campaign.bits,"abort removes loaned cloak without awarding progress")
+	check(m in service.state().active,"Original non-abortable flag protects the insertion assignment")
+	service.finish(m,false,false,false,"Mission cargo was discovered.")
+	check(game.pilot.outfit_count(167)==0 and not game.cloak.active and 36 not in game.pilot.campaign.bits,"Failure removes loaned cloak without awarding progress")
 	m=accept(164,161)
 	service.landed(130)
 	check(36 not in game.pilot.campaign.bits,"cannot skip insertion destination")

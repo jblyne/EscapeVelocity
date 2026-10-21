@@ -164,7 +164,7 @@ func approach_port(port: int) -> void:
 	cancel("Destination is no longer present in this system.")
 func helm(fields: Dictionary,dt: float) -> Dictionary:
 	var offset: Vector2=waypoint-game.pilot.position
-	var acceleration: float=maxf(1,float(fields.Accel)*Flight.ACCEL_SCALE)
+	var acceleration: float=maxf(1,Flight.acceleration(fields))
 	var speed: float=minf(float(fields.Speed)*.65,sqrt(2*acceleration*offset.length())*.45)
 	var correction: Vector2=offset.normalized()*speed-game.velocity
 	var heading: float=Flight.facing(correction) if correction.length()>1 else game.pilot.heading

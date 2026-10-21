@@ -8,7 +8,7 @@ func check(ok: bool,message: String):
 func _initialize(): call_deferred("run")
 func run():
  var game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev-history-tests.json"
- game.traffic.enabled=false;game.muted=true;root.add_child(game);game.set_process(false);game.set_physics_process(false)
+ game.traffic.enabled=false;game.muted=true;root.add_child(game);game.pilot.cheat_world_killer=true;game.set_process(false);game.set_physics_process(false)
  game.pilot.interaction_history=History.fresh()
  var pilot=game.pilot
  var a={"id":128};var b={"id":128}

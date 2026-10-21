@@ -10,7 +10,7 @@ func check(ok: bool,message: String) -> void:
 	else: failures+=1;push_error(message)
 func _initialize() -> void: call_deferred("run")
 func deploy() -> void:
-	game.restart();game.pilot.system_id=129;game.load_system();game.set_mode("flight")
+	game.restart();game.pilot.cheat_world_killer=true;game.pilot.system_id=129;game.load_system();game.set_mode("flight")
 	game.landing_target=128;game.pilot.position=killer.target_position(128)+Vector2(0,600)
 	game.world_activity.open_contact();killer.threaten();check(killer.deploy(),"Deploy station for negotiation")
 func capture() -> void:
@@ -21,7 +21,7 @@ func capture() -> void:
 func run() -> void:
 	game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev-bribe-test.json"
 	if FileAccess.file_exists(game.save_path): DirAccess.remove_absolute(game.save_path)
-	game.traffic.enabled=false;game.muted=true;root.add_child(game)
+	game.traffic.enabled=false;game.muted=true;root.add_child(game);game.pilot.cheat_world_killer=true
 	game.set_process(false);game.set_physics_process(false);game.hud.set_process(false);killer=game.world_killer
 	killer.negotiation_rng.seed=8675309
 	deploy();killer.open_active()

@@ -27,7 +27,7 @@ static func info(game,entry: Dictionary,journal: bool=false) -> Dictionary:
 	var location: String=game.catalog.system(target).get("name","Unknown objective")
 	return {"jumps":distance,"target":target,"location":location,"cargo":cargo,"pay":pay,
 		"days":deadline-int(game.pilot.campaign.day) if deadline>=0 else -1,"has_deadline":deadline>=0,
-		"free":game.pilot.cargo_capacity()-game.pilot.cargo_used()}
+		"free":game.pilot.cargo_capacity()-game.pilot.cargo_used(),"reward":"1200 credits" if courier else game.missions.reward_summary(entry)}
 
 static func distance_text(info: Dictionary) -> String:
 	if info.target<0: return "Objective location unknown"
@@ -36,6 +36,6 @@ static func distance_text(info: Dictionary) -> String:
 	return "%d jump%s" % [info.jumps,"" if info.jumps==1 else "s"]
 
 static func terms(info: Dictionary) -> String:
-	var pay: String="%s cr" % str(info.pay) if info.pay>0 else "Reward: see briefing"
+	var pay: String=info.get("reward","%s cr" % str(info.pay) if info.pay>0 else "Reward: see briefing")
 	var deadline: String=("Deadline passed" if info.days<0 else "%d day%s left" % [info.days,"" if info.days==1 else "s"]) if info.has_deadline else "No deadline"
 	return "%s · %d t cargo · %s" % [pay,info.cargo,deadline]

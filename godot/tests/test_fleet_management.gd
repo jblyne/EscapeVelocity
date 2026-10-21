@@ -78,10 +78,10 @@ func run() -> void:
 	check(result==Vector2(0,90),"Damage crosses shield boundary without disappearing")
 	game.set_mode("flight");game.pilot.shield=5;game.pilot.armor=100;game.damage_player(10,Vector2.UP,20)
 	check(game.pilot.shield==0 and game.pilot.armor==90,"Player uses same shield/armor damage rule")
-	var layers: Dictionary={"health":15.0,"shield":5.0,"armor":10.0,"max_health":280.0,"shield_capacity":180.0,"disabled":false,"damage_clock":5.0}
+	var layers: Dictionary={"health":15.0,"shield":0.0,"armor":15.0,"max_health":280.0,"shield_capacity":180.0,"disabled":false,"damage_clock":5.0}
 	game.Combat.regenerate(layers,game.catalog.record("ships",128).fields,1)
 	game.Combat.sync(layers)
-	check(layers.shield==5 and layers.armor>10,"Original integrity recovery repairs armor before replenishing shields")
+	check(layers.shield==0 and layers.armor>15,"Original integrity recovery repairs armor before replenishing shields")
 	game.restart();game.pilot.fleet=[{"id":146}];game.load_system();npc=game.escorts[0]
 	game.pilot.cheat_chain_jump=true;game.velocity=Vector2(0,-10000)
 	game.apply_hyperspace_wake(npc.position,npc.position+Vector2(1,0))

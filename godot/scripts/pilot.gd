@@ -9,7 +9,7 @@ var world_killer: Dictionary=WorldKiller.fresh()
 const WorldState=preload("res://scripts/world_activity.gd")
 var world_state: Dictionary=WorldState.fresh()
 var persons: Dictionary={"gone":[],"grudges":[]}
-var secrets: Dictionary={"forklift":false}
+var secrets: Dictionary={"forklift":false,"satellite":false}
 var campaign: Dictionary = CampaignState.fresh()
 const AchievementState=preload("res://scripts/achievements.gd")
 var achievements: Dictionary=AchievementState.fresh()
@@ -32,6 +32,7 @@ var visited: Array = [128]
 var surveyed: Array = []
 var position: Vector2 = Vector2(0, 330)
 var heading: float = 0.0
+var cheat_world_killer: bool = false
 var cheat_cloak: bool = false
 var cheat_all_weapons: bool = false
 var cheat_infinite_fuel: bool = false
@@ -43,9 +44,11 @@ var reputation: Dictionary = {}
 const History=preload("res://scripts/interaction_history.gd")
 var interaction_history: Dictionary=History.fresh()
 var local_records: Dictionary = {}
+var fighter_sorties: Array=[]
 var fleet: Array = []
 var outfits: Dictionary = {}
 var maverick_afterburner_granted: bool=false
+var maverick_equipment_granted: bool=false
 
 func outfit_count(id: int) -> int:
 	return int(outfits.get(str(id),0))
@@ -69,9 +72,15 @@ func fuel_capacity() -> float:
 
 func flight_fields(base: Dictionary) -> Dictionary:
 	var result = base.duplicate()
-	if outfit_count(150): result.Accel *= 1.5
-	if outfit_count(151): result.Speed *= 1.5
-	if outfit_count(152): result.Maneuver += 1
+	if base.get("custom_flight",false):
+		# Preserve the requested Maverick handling and upgrade behavior.
+		if outfit_count(150): result.Accel *= 1.5
+		if outfit_count(151): result.Speed *= 1.5
+	else:
+		# Original ModType 7/8 are additive, before the player's speed multiplier.
+		result.Accel += 150*outfit_count(150)
+		result.Speed = (float(result.Speed)+150*outfit_count(151))*preload("res://scripts/flight.gd").PLAYER_SPEED_MULTIPLIER
+	result.Maneuver += outfit_count(152)
 	return result
 
 
@@ -126,11 +135,11 @@ func deliver(object_id: int) -> int:
 
 func snapshot() -> Dictionary:
 	return {"version": SAVE_VERSION, "fuel_rules":2, "system_id": system_id, "ship_id": ship_id,
-		"maverick_afterburner_granted":maverick_afterburner_granted,"pilot_name":pilot_name,"strict":strict,"strict_dead":strict_dead,"credits": credits, "fuel": fuel, "shield": shield, "armor": armor,
+		"maverick_equipment_granted":maverick_equipment_granted,"maverick_afterburner_granted":maverick_afterburner_granted,"pilot_name":pilot_name,"strict":strict,"strict_dead":strict_dead,"credits": credits, "fuel": fuel, "shield": shield, "armor": armor,
 		"lasers": lasers, "cargo": cargo.duplicate(), "mission": mission.duplicate(),
 		"visited": visited.duplicate(), "position": [position.x, position.y], "heading": heading,
-		"cheats": {"cloak": cheat_cloak, "chain_jump": cheat_chain_jump, "all_weapons": cheat_all_weapons, "infinite_fuel": cheat_infinite_fuel, "invincibility": cheat_invincibility, "deflection": cheat_deflection, "weapon": selected_weapon if selected_weapon < 10000 else 128},
-		"achievements":achievements.duplicate(true), "interaction_history":interaction_history.duplicate(true), "world_killer":world_killer.duplicate(true), "local_records":local_records.duplicate(), "world":world_state.duplicate(true), "surveyed":surveyed.duplicate(), "persons":persons.duplicate(true), "secrets":secrets.duplicate(), "campaign": campaign.duplicate(true), "reputation": reputation.duplicate(), "fleet": fleet.duplicate(true), "outfits": outfits.duplicate()}
+		"cheats": {"world_killer":cheat_world_killer,"cloak": cheat_cloak, "chain_jump": cheat_chain_jump, "all_weapons": cheat_all_weapons, "infinite_fuel": cheat_infinite_fuel, "invincibility": cheat_invincibility, "deflection": cheat_deflection, "weapon": selected_weapon if selected_weapon < 10000 else 128},
+		"achievements":achievements.duplicate(true), "interaction_history":interaction_history.duplicate(true), "world_killer":world_killer.duplicate(true), "local_records":local_records.duplicate(), "world":world_state.duplicate(true), "surveyed":surveyed.duplicate(), "persons":persons.duplicate(true), "secrets":secrets.duplicate(), "campaign": campaign.duplicate(true), "reputation": reputation.duplicate(), "fighter_sorties":fighter_sorties.duplicate(true), "fleet": fleet.duplicate(true), "outfits": outfits.duplicate()}
 
 func restore(value: Variant, catalog: EVCatalog) -> bool:
 	if not value is Dictionary:
@@ -194,6 +203,11 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 	candidate.maverick_afterburner_granted=value.get("maverick_afterburner_granted",false)
 	if candidate.ship_id==900 and not candidate.maverick_afterburner_granted:
 		candidate.outfits["157"]=1;candidate.maverick_afterburner_granted=true
+	if not value.get("maverick_equipment_granted",false) is bool: return false
+	candidate.maverick_equipment_granted=value.get("maverick_equipment_granted",false)
+	if candidate.ship_id==900 and not candidate.maverick_equipment_granted:
+		candidate.outfits["149"]=1;candidate.outfits["156"]=1
+		candidate.maverick_equipment_granted=true
 	var mass: int = int(value.lasers)*5-Shipyard.stock_mass(catalog,candidate.ship_id)
 	var guns: int = int(value.lasers)
 	var turrets: int = 0
@@ -210,6 +224,7 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 	# Optional extension keeps existing version-1 pilots compatible; validate atomically.
 	var cheats = value.get("cheats", {})
 	if not cheats is Dictionary: return false
+	if not cheats.get("world_killer",false) is bool: return false
 	if not cheats.get("cloak",false) is bool: return false
 	if not cheats.get("chain_jump",false) is bool: return false
 	if not cheats.get("deflection",false) is bool: return false
@@ -224,12 +239,14 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 		if not id is String or not id.is_valid_int() or catalog.record("governments",int(id)).is_empty(): return false
 		var score = records[id]
 		if not (score is int or score is float) or not is_finite(float(score)) or score != int(score) or absf(score)>10000: return false
+	var saved_sorties=value.get("fighter_sorties",[])
+	if not preload("res://scripts/fighter_wing.gd").valid(saved_sorties,catalog,int(value.ship_id)): return false
 	var saved_fleet = value.get("fleet", [])
 	if not saved_fleet is Array or saved_fleet.size() > 8: return false
 	for member in saved_fleet:
 		if not member is Dictionary or not member.has("id"): return false
 		for key in member:
-			if key not in ["id","uid","hired","wage","paid_day","command","health","shield","armor","ammo","cargo"]: return false
+			if key not in ["id","uid","hired","wage","paid_day","command","health","shield","armor","ammo","cargo","wings"]: return false
 		if not member.get("hired",false) is bool or member.get("command","defend") not in ["defend","attack","hold","recall"]: return false
 		for key in ["uid","wage","paid_day"]:
 			if not CampaignState.integer(member.get(key,0),0,1000000000): return false
@@ -243,6 +260,7 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 			if not CampaignState.integer(ammo,-1,32767): return false
 		if not (member.id is int or member.id is float) or member.id != int(member.id): return false
 		if catalog.record("ships", int(member.id)).is_empty() or int(member.id) == 191: return false
+		if not preload("res://scripts/fighter_wing.gd").valid(member.get("wings",[]),catalog,int(member.id),4): return false
 		var freight = member.get("cargo",[0,0,0,0,0,0])
 		if not freight is Array or freight.size()!=6: return false
 		var freight_total: int=0
@@ -303,6 +321,7 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 		visited.append(int(id))
 	position = Vector2(value.position[0], value.position[1])
 	heading = float(value.heading)
+	cheat_world_killer = cheats.get("world_killer",false)
 	cheat_cloak = cheats.get("cloak",false)
 	cheat_chain_jump = cheats.get("chain_jump",false)
 	cheat_all_weapons = cheats.get("all_weapons",false)
@@ -311,9 +330,11 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 	cheat_deflection = cheats.get("deflection",false)
 	outfits = candidate.outfits.duplicate()
 	maverick_afterburner_granted=candidate.maverick_afterburner_granted
+	maverick_equipment_granted=candidate.maverick_equipment_granted
 	selected_weapon = int(weapon)
 	reputation = {}
 	for id in records: reputation[id] = int(records[id])
+	fighter_sorties=saved_sorties.duplicate(true)
 	fleet = []
 	for member in saved_fleet:
 		var copy: Dictionary=member.duplicate(true);copy.id=int(copy.id);fleet.append(copy)

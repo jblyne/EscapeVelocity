@@ -51,6 +51,8 @@ var planets: Array = []
 var npcs: Array = []
 var escorts: Array = []
 var autopilot=preload("res://scripts/autopilot.gd").new()
+var maverick_volley=preload("res://scripts/maverick_volley.gd").new()
+var fighter_wing=preload("res://scripts/fighter_wing.gd").new()
 var arsenal = Arsenal.new()
 var shipyard = Shipyard.new()
 var missions = Missions.new()
@@ -73,6 +75,9 @@ const MAX_EXPLOSIONS = 8
 var hud: CanvasLayer
 var space_material: ShaderMaterial
 var time: float = 0
+var primary_cooldowns: Dictionary={}
+var secondary_safe: bool=false
+var self_destruct_seconds: float=0
 var cooldown: float = 0
 var target_index: int = -1
 var destination: int = -1
@@ -90,6 +95,8 @@ var physics_step_dt: float = 0
 var rendered_player_position = Vector3.ZERO
 var rendered_player_velocity = Vector2.ZERO
 var rendered_clock: float = 0
+var auto_boarding: Dictionary={}
+var last_board_tap: int=-1000
 var auto_landing: bool=false
 var last_land_tap: int=-1000
 var landing_target: int = -1
@@ -103,6 +110,8 @@ var engine_audio: AudioStreamPlayer
 var afterburner_audio_gain: float=0.0
 var zoom: float = 900
 var autosave_clock: float = 0
+var recovery_clock: float=0.0
+var recovery_window: Vector2i=Vector2i.ZERO
 var damage_clock: float = 0
 var death_reveal_time: float = 0
 var screenshot_timer: float = -1
@@ -136,6 +145,8 @@ func _ready() -> void:
 	catalog = Catalog.new()
 	environment_hazards.game=self
 	arsenal.game = self
+	fighter_wing.game=self
+	maverick_volley.game=self
 	autopilot.game=self
 	outfitter.game = self
 	cloak.game = self
@@ -263,6 +274,8 @@ func setup_environment() -> void:
 	add_child(sun)
 	camera = Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	# Wider windows reveal more space horizontally without stretching ships.
+	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	camera.size = zoom
 	camera.near = 1
 	camera.far = 5000
@@ -365,13 +378,14 @@ func v3(pos: Vector2, height: float = 0) -> Vector3:
 	return Vector3(pos.x, height, pos.y)
 
 func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) -> void:
+	fleet_service.end_jump()
+	maverick_volley.reset()
+	primary_cooldowns.clear();cooldown=0;self_destruct_seconds=0
 	missions.approach={};missions.approach_port=-1
-	auto_landing=false;last_land_tap=-1000
-	var traveling_fighters: Array=[]
-	if arrival_heading!=null:
-		for escort in escorts:
-			if not escort.get("captured",false) and is_instance_valid(escort.model):
-				traveling_fighters.append(int(escort.id))
+	auto_boarding={};last_board_tap=-1000;auto_landing=false;last_land_tap=-1000
+	var traveling_fighters: Array=fighter_wing.saved() if fighter_wing.pilot_owner==pilot else pilot.fighter_sorties.duplicate(true)
+	traveling_fighters=traveling_fighters.filter(func(f):return int(f.carrier_ship)==pilot.ship_id)
+	fighter_wing.pilot_owner=pilot
 	world_killer.reset_visuals()
 	ejection.reset()
 	missions.arrival_delays.clear()
@@ -400,6 +414,7 @@ func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) 
 	for key in ["sidewinder_launch","maverick_target","maverick_missile","maverick_gun","forklift","cloak_on","cloak_off"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS:
 		if key in ["cloak_on","cloak_off"] and arrival_heading!=null: continue
 		if audio.has(key): audio[key].stop()
+	world_activity.landing_bribes.clear()
 	landing_target = -1
 	landing_clearance = -1
 	docked_id = -1
@@ -430,7 +445,7 @@ func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) 
 	world_killer.restore_visuals()
 	velocity = Vector2.ZERO
 	if arrival_heading != null:
-		var entry = Hyperspace.arrival(float(arrival_heading), catalog.record("ships",pilot.ship_id).fields, planets)
+		var entry = Hyperspace.arrival(float(arrival_heading), pilot.flight_fields(catalog.record("ships",pilot.ship_id).fields), planets)
 		pilot.position = entry.position
 		pilot.heading = entry.heading
 		velocity = entry.velocity
@@ -454,10 +469,14 @@ func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) 
 	cloak.rebind_model()
 	arsenal.restore_captured_fleet()
 	for i in traveling_fighters.size():
-		arsenal.launch_escort(traveling_fighters[i],pilot.position,pilot.heading)
+		arsenal.launch_escort(int(traveling_fighters[i].id),pilot.position,pilot.heading)
 		var fighter: Dictionary=escorts.back()
-		fighter.arrival_delay=.35+i*.12
-		fighter.model.hide()
+		fighter_wing.apply(fighter,traveling_fighters[i])
+		if arrival_heading!=null:
+			fighter.arrival_delay=.35+i*.12;fighter.model.hide()
+			if fighter.command=="hold": fighter.command="formation"
+	if arrival_heading!=null: fleet_service.arrive()
+	pilot.fighter_sorties=traveling_fighters.duplicate(true)
 	if arrival_heading != null: jump_visuals.arrive()
 	update_jump_visuals(0)
 	camera.position = v3(pilot.position + velocity * 0.2, 1200)
@@ -520,6 +539,9 @@ func finish_map_hop() -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
+	if mode=="flight" and (event.meta_pressed or event.ctrl_pressed) and event.physical_keycode==KEY_K:
+		jettison_cargo(event.alt_pressed);return
+	if mode=="flight" and (event.meta_pressed or event.ctrl_pressed) and event.physical_keycode==KEY_D: return
 	if event.physical_keycode==KEY_A and mode not in ["title","intro"]:
 		autopilot.toggle();return
 	if mode=="controls":
@@ -585,14 +607,19 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_Y: interactions.open_hail()
 		KEY_B:
 			if event.shift_pressed: combat_drill()
-			else: interactions.board()
+			else: board_pressed()
 		KEY_C:
 			if mode!="map": toggle_cheat_menu()
 		KEY_F: toggle_fleet_menu()
+		KEY_R:
+			if mode=="flight":
+				secondary_safe=not secondary_safe;notify("Secondary weapons SAFE" if secondary_safe else "Secondary weapons ARMED")
+		KEY_BACKSPACE:
+			if mode=="flight": arsenal.recall_fighters()
 		KEY_Q:
 			if mode == "flight": cycle_weapon(-1)
 		KEY_E:
-			if mode == "flight": cycle_weapon(1)
+			if mode == "flight": cycle_weapon(-1 if event.alt_pressed else 1)
 		KEY_H:
 			if mode=="flight": world_activity.open_contact()
 		KEY_G: debug_refuel()
@@ -623,8 +650,9 @@ func toggle_audio() -> void:
 	notify("Sound off" if muted else "Sound on")
 
 func set_mode(value: String) -> void:
+	if value!="flight": maverick_volley.reset()
 	if value in ["dead","title","ejecting","rescue"]: autopilot.cancel("Flight ended.",false)
-	if value!="flight": auto_landing=false;last_land_tap=-1000
+	if value!="flight": auto_boarding={};last_board_tap=-1000;auto_landing=false;last_land_tap=-1000;self_destruct_seconds=0
 	if value=="flight" and pilot.strict_dead: value="dead"
 	if value=="outfitter" and mode!="outfitter": outfitter.begin_visit()
 	if value!="title": stop_title_audio()
@@ -651,6 +679,7 @@ func set_mode(value: String) -> void:
 	if is_instance_valid(hud): hud.rebuild_modal()
 
 func _physics_process(dt: float) -> void:
+	if advance_self_destruct(dt, (Input.is_physical_key_pressed(KEY_META) or Input.is_physical_key_pressed(KEY_CTRL)) and Input.is_physical_key_pressed(KEY_D)): return
 	dt*=controls.speed*(2.0 if fast_time else 1.0)
 	ejection.advance(dt)
 	if mode=="flight" and autopilot.active() and (controls.pressed("left") or controls.pressed("right") or controls.pressed("thrust") or controls.pressed("retrograde")):
@@ -668,6 +697,9 @@ func _physics_process(dt: float) -> void:
 	environment_hazards.advance(dt)
 	world_killer.advance(dt)
 	if mode!="flight": return
+	var recovery_before: int=int(floor(recovery_clock+.000001))
+	recovery_clock+=dt*Flight.REFERENCE_HZ
+	recovery_window=Vector2i(recovery_before,int(floor(recovery_clock+.000001)))
 	cloak.advance(dt)
 	missions.advance(dt)
 	world_activity.advance(dt)
@@ -696,7 +728,8 @@ func _physics_process(dt: float) -> void:
 	previous_player_heading = pilot.heading
 	physics_step_dt = dt
 	time += dt
-	cooldown = maxf(0, cooldown-dt)
+	cooldown = Flight.reload_remaining(cooldown,dt,controls.pressed("fire") or controls.pressed("secondary_fire"))
+	for weapon in primary_cooldowns: primary_cooldowns[weapon]=Flight.reload_remaining(float(primary_cooldowns[weapon]),dt,controls.pressed("fire"))
 	damage_clock += dt
 	var turn: float = float(controls.pressed("right"))-float(controls.pressed("left"))
 	var thrust: bool = controls.pressed("thrust")
@@ -710,12 +743,17 @@ func _physics_process(dt: float) -> void:
 	if pilot.outfit_count(168) > 0: pilot.fuel = minf(pilot.fuel_capacity(),pilot.fuel+dt)
 	if auto_landing and (not is_zero_approx(turn) or thrust or retrograde):
 		auto_landing=false;notify("Auto landing canceled: manual controls.")
+	if not auto_boarding.is_empty() and (not is_zero_approx(turn) or thrust or retrograde):
+		auto_boarding={};notify("Auto boarding canceled: manual controls.")
 	var previous_phase: String = hyperdrive.phase
 	var step: Dictionary
 	var engine_throttle: float = (1.6 if afterburning else 1.0) if thrust else 0.0
 	if hyperdrive.active():
 		step = hyperdrive.step(pilot.position, velocity, pilot.heading, fields, dt)
 		engine_throttle = step.thrust
+	elif not auto_boarding.is_empty():
+		step=auto_boarding_step(fields,dt)
+		engine_throttle=1.0 if (step.velocity-velocity).length()>0.01 else 0.0
 	elif auto_landing:
 		step=auto_landing_step(fields,dt)
 		engine_throttle=1.0 if (step.velocity-velocity).length()>0.01 else 0.0
@@ -760,14 +798,26 @@ func _physics_process(dt: float) -> void:
 				else:
 					cancel_jump()
 				return
+	if not auto_boarding.is_empty() and interactions.boarding_reason(auto_boarding).is_empty():
+		target_index=npcs.find(auto_boarding);auto_boarding={}
+		interactions.board();return
 	if auto_landing:
 		var port: Dictionary=selected_planet()
 		if not port.is_empty() and pilot.position.distance_to(port.position)<=port.radius and velocity.length()<=Travel.MAX_LANDING_SPEED:
 			auto_landing=false;land();return
 	Models.set_thrust(player_model, engine_throttle*cloak.visibility_factor(), time, hyperdrive.phase == "accelerating",afterburning)
-	if controls.pressed("fire"): fire_player()
+	var volley_input: bool=maverick_volley.update(controls.pressed("fire"),dt)
+	if controls.pressed("fire") and not volley_input:
+		for volley in 8:
+			if shots.size()>=160 or not fire_trigger(): break
+	if controls.pressed("secondary_fire") and not secondary_safe and self_destruct_seconds==0 and not Input.is_physical_key_pressed(KEY_META) and not ((Input.is_physical_key_pressed(KEY_CTRL)) and (Input.is_physical_key_pressed(KEY_K) or Input.is_physical_key_pressed(KEY_D))):
+		var secondary: Array=arsenal.secondary_ids()
+		if not secondary.is_empty():
+			if pilot.selected_weapon not in secondary: pilot.selected_weapon=int(secondary[0])
+			for volley in 8:
+				if shots.size()>=160 or not fire_player(): break
 	if not cloak.active:
-		var recovered: Vector2=Combat.recover(pilot.shield,pilot.armor,pilot.max_shield(),pilot.max_armor(),pilot.shield_recharge(),dt)
+		var recovered: Vector2=Combat.recover(pilot.shield,pilot.armor,pilot.max_shield(),pilot.max_armor(),Combat.recovery_pulses(recovery_window,pilot.shield_recharge()))
 		pilot.shield=recovered.x;pilot.armor=recovered.y
 	update_npcs(dt)
 	arsenal.update_escorts(dt)
@@ -782,6 +832,9 @@ func _process(dt: float) -> void:
 	traffic.maverick.advance_warp(self,dt)
 	traffic.maverick.advance_victory_fade()
 	arsenal.advance_gun_audio(dt)
+	if mode=="flight":
+		missions.flight_alert_seconds=maxf(0,missions.flight_alert_seconds-dt)
+		world_activity.hunter_alert_seconds=maxf(0,world_activity.hunter_alert_seconds-dt)
 	missions.advance_bar(dt)
 	if mode in ["flight","dock","missions","mission_report"]:
 		achievement_clock+=dt
@@ -829,6 +882,7 @@ func chain_stretch_strength() -> float:
 func apply_hyperspace_wake(start: Vector2, end: Vector2) -> void:
 	var cruise: float = pilot.flight_fields(catalog.record("ships",pilot.ship_id).fields).Speed
 	if not pilot.cheat_chain_jump or velocity.length() <= cruise*1.5: return
+	if hyperdrive.phase!="accelerating" and chain_route.is_empty(): return
 	for npc in npcs.duplicate():
 		if npc.has("fleet_uid") or npc.get("player_ally",false): continue
 		if segment_distance(npc.position,start,end) <= CHAIN_BLAST_RADIUS+npc.radius:
@@ -859,26 +913,83 @@ func target_facing_turn(fields: Dictionary, dt: float) -> float:
 func update_npcs(dt: float) -> void:
 	traffic.update(dt)
 
+func fire_trigger() -> bool:
+	return fire_primary() if controls.classic_fire else fire_player()
+
+func fire_primary() -> bool:
+	if mode!="flight" or hyperdrive.active() or not chain_route.is_empty() or (cloak.active and not pilot.cheat_cloak): return false
+	var fired: bool=false
+	for id in arsenal.available_ids():
+		if arsenal.is_secondary(id) or float(primary_cooldowns.get(id,0))>0: continue
+		var mounts: int=pilot.lasers if id==128 else 0
+		for outfit_id in pilot.outfits:
+			var f: Dictionary=catalog.record("outfits",int(outfit_id)).fields
+			if int(f.ModType)==1 and int(f.ModVal)==id: mounts+=int(pilot.outfits[outfit_id])
+		mounts=maxi(1,mounts)
+		var emitted: bool=false
+		for mount in mounts:
+			var lateral: Vector2=Vector2(cos(pilot.heading),sin(pilot.heading))*((mount-(mounts-1)*.5)*8)
+			if arsenal.fire(id,pilot.position+lateral,pilot.heading): emitted=true
+		if emitted:
+			primary_cooldowns[id]=float(primary_cooldowns.get(id,0))+maxf(Flight.WEAPON_TICK_SECONDS,float(catalog.field("weapons",id,"Reload"))*Flight.WEAPON_TICK_SECONDS)
+			fired=true
+	return fired
+
+func jettison_cargo(ordinary_only: bool=false) -> void:
+	if mode!="flight" or hyperdrive.active() or not chain_route.is_empty(): return
+	autopilot.cancel("Cargo jettisoned.",false)
+	var dropped: int=0
+	for i in pilot.cargo.size(): dropped+=int(pilot.cargo[i]);pilot.cargo[i]=0
+	if not ordinary_only:
+		if not pilot.mission.is_empty(): dropped+=5;pilot.mission={}
+		for m in pilot.campaign.active.duplicate():
+			if int(m.qty)>0 and m.picked and not m.delivered:
+				dropped+=int(m.qty)
+				missions.finish(m,false,true,false,"Mission cargo was jettisoned.")
+	if dropped>0: burst(pilot.position,Color("a9b3bc"),mini(40,dropped+4))
+	notify("Jettisoned %d t%s." % [dropped," of ordinary cargo; mission cargo retained" if ordinary_only else " of cargo"])
+	save_game(false)
+
+func advance_self_destruct(real_dt: float, held: bool) -> bool:
+	if mode!="flight" or not held:
+		if self_destruct_seconds>0: notify("Self-destruct canceled.")
+		self_destruct_seconds=0;return false
+	var previous: int=ceili(self_destruct_seconds)
+	self_destruct_seconds+=real_dt
+	if previous==0 or ceili(self_destruct_seconds)!=previous: notify("SELF-DESTRUCT · %d seconds · release Cmd+D to cancel" % maxi(0,ceili(10-self_destruct_seconds)))
+	if self_destruct_seconds<10: return false
+	self_destruct_seconds=0
+	pilot.shield=0;pilot.armor=0
+	if pilot.strict: pilot.strict_dead=true;save_game(false)
+	ship_explosion(player_model,pilot.position,velocity)
+	player_model.hide();set_mode("dead")
+	return true
+
 func fire_player() -> bool:
 	if cloak.active and not pilot.cheat_cloak: return false
 	if arsenal.available_ids().is_empty(): return false
 	if mode != "flight" or not chain_route.is_empty() or hyperdrive.active() or cooldown > 0: return false
 	var weapon: int = pilot.selected_weapon if pilot.selected_weapon in arsenal.available_ids() else int(arsenal.available_ids()[0])
+	if secondary_safe and arsenal.is_secondary(weapon): return false
 	var ammo: int = outfitter.ammo_id(weapon) if weapon < 10000 else -1
 	if not pilot.cheat_all_weapons and ammo >= 0 and outfitter.count(ammo) == 0:
 		notify("Out of ammunition. Visit an outfitter to reload.")
 		return false
+	var fuel_cost: int=maxi(0,-int(catalog.field("weapons",weapon,"AmmoType"))-1000) if weapon<10000 else 0
+	if not pilot.cheat_infinite_fuel and pilot.fuel<fuel_cost: return false
 	if not arsenal.fire(weapon,pilot.position,pilot.heading): return false
+	if not pilot.cheat_infinite_fuel: pilot.fuel-=fuel_cost
 	if not pilot.cheat_all_weapons and ammo >= 0:
 		pilot.outfits[str(ammo)] = outfitter.count(ammo)-1
 		if pilot.outfits[str(ammo)] == 0: pilot.outfits.erase(str(ammo))
-	cooldown = 0.5 if weapon >= 10000 else float(catalog.field("weapons",weapon,"Reload")) * Flight.WEAPON_TICK_SECONDS
-	if weapon==128: cooldown /= 1.0 + 0.35*(pilot.lasers-1)
+	var period: float = 0.5 if weapon >= 10000 else maxf(Flight.WEAPON_TICK_SECONDS,float(catalog.field("weapons",weapon,"Reload")) * Flight.WEAPON_TICK_SECONDS)
+	if weapon==128: period /= 1.0 + 0.35*(pilot.lasers-1)
 	elif weapon < 10000:
 		for id in pilot.outfits:
 			var outfit: Dictionary = catalog.record("outfits",int(id)).fields
 			if int(outfit.ModType) == 1 and int(outfit.ModVal) == weapon:
-				cooldown /= 1.0+0.35*(int(pilot.outfits[id])-1)
+				period /= 1.0+0.35*(int(pilot.outfits[id])-1)
+	cooldown+=period
 	return true
 
 func fire(pos: Vector2, heading: float, enemy: bool, weapon: int = 128) -> void:
@@ -906,16 +1017,31 @@ static func shot_entry_distance(center: Vector2, start: Vector2, end: Vector2, r
 	var entry: float=projection-sqrt(maxf(0,radius*radius-perpendicular*perpendicular))
 	return entry if entry<=length else INF
 
-func damage_npc(npc: Dictionary, amount: float, attacker: Dictionary = {}, impact_direction: Vector2 = Vector2.ZERO, hyperspace_wake: bool = false, armor_damage: float = -1) -> Node3D:
-	if npc not in npcs or (amount <= 0 and armor_damage<=0): return null
-	if npc.get("hector",false) or npc.get("invulnerable",false):
+func damage_npc(npc: Dictionary, amount: float, attacker: Dictionary = {}, impact_direction: Vector2 = Vector2.ZERO, hyperspace_wake: bool = false, armor_damage: float = -1, weapon_id: int = -1) -> Node3D:
+	if npc not in npcs or (amount <= 0 and armor_damage<=0 and weapon_id!=903): return null
+	var boarding_required: bool=missions.needs_boarding(npc)
+	# Warp wake is incidental, and autonomous weapons must leave a boardable
+	# hull. Direct player fire remains capable of failing the objective.
+	if boarding_required and hyperspace_wake: return null
+	if boarding_required and not attacker.is_empty() and float(npc.get("age",0))<8.0: return null
+	var hector_sidewinder: bool=npc.get("hector",false) and weapon_id==901
+	if (npc.get("hector",false) or npc.get("invulnerable",false)) and not hector_sidewinder:
 		show_shield(npc.model,impact_direction)
 		return null
 	if npc.health > npc.max_health - npc.shield_capacity:
 		var direction: Vector2 = impact_direction
 		if direction == Vector2.ZERO: direction = (pilot.position if attacker.is_empty() else attacker.position)-npc.position
 		show_shield(npc.model,direction)
-	Combat.apply(npc,amount,amount if armor_damage<0 else armor_damage)
+	if hector_sidewinder:
+		amount=maxf(amount,float(npc.health)+1);armor_damage=amount
+		hector.banner_time=0
+	if weapon_id!=903:
+		Combat.apply(npc,amount,amount if armor_damage<0 else armor_damage)
+		if boarding_required and not attacker.is_empty():
+			var armor_capacity: float=maxf(0,float(npc.max_health)-float(npc.shield_capacity))
+			if npc.health<=0 or (npc.shield<=0 and npc.armor<=armor_capacity*.1):
+				npc.armor=maxf(1,armor_capacity*.1);npc.health=float(npc.shield)+float(npc.armor)
+				interactions.disable(npc,attacker.has("fleet_uid") or attacker.get("player_ally",false))
 	if (attacker.is_empty() or attacker.has("fleet_uid") or attacker.get("player_ally",false)) and not hyperspace_wake:
 		persons.attacked(npc)
 		npc.truce=false
@@ -930,11 +1056,15 @@ func damage_npc(npc: Dictionary, amount: float, attacker: Dictionary = {}, impac
 				ally.provoked=true;ally.hostile=true
 	elif not attacker.is_empty():
 		npc.nemesis=attacker.model
+	if weapon_id==903:
+		burst(npc.position,Color("55cfff"),28)
+		interactions.disable(npc,attacker.is_empty())
+		return null
 	burst(npc.position,Color("ffb174"),7)
 	if npc.health > 0 and Combat.is_disabled(npc):
 		interactions.disable(npc, attacker.is_empty() and not hyperspace_wake)
 	if npc.health <= 0:
-		if (attacker.is_empty() or attacker.has("fleet_uid") or attacker.get("player_ally",false)) and not hyperspace_wake: Factions.penalize(catalog,pilot,npc.faction,"KillPenalty")
+		if (attacker.is_empty() or attacker.has("fleet_uid") or attacker.get("player_ally",false)) and not hyperspace_wake: Factions.player_kill(catalog,pilot,npc.faction,int(npc.id))
 		var selected: Dictionary = npcs[target_index] if target_index >= 0 and target_index < npcs.size() else {}
 		var wreck: Node3D=ship_explosion(npc.model,npc.position,npc.velocity)
 		npc.model.queue_free()
@@ -946,6 +1076,7 @@ func damage_npc(npc: Dictionary, amount: float, attacker: Dictionary = {}, impac
 		world_activity.resolved(npc)
 		if (attacker.is_empty() or attacker.has("fleet_uid") or attacker.get("player_ally",false)) and not hyperspace_wake: pilot.campaign.rating+=maxi(1,int(catalog.field("ships",int(npc.id),"Crew")))
 		if pilot.ship_id==900 and attacker.is_empty() and not hyperspace_wake: traffic.maverick.celebrate(self)
+		world_activity.hunter_destroyed(npc,attacker.is_empty() or attacker.has("fleet_uid") or attacker.get("player_ally",false))
 		notify("Contact destroyed.")
 		return wreck
 	return null
@@ -977,16 +1108,17 @@ func update_shots(dt: float) -> void:
 		if shot.kind == "ship_ram":
 			if arsenal.update_ship_ram(shot,dt): shots.remove_at(i)
 			continue
-		arsenal.steer(shot,dt)
-		shot.visual_age=float(shot.get("visual_age",0))+dt
+		var travel_dt: float=minf(maxf(0,dt),maxf(0,shot.life))
+		arsenal.steer(shot,travel_dt)
+		shot.visual_age=float(shot.get("visual_age",0))+travel_dt
 		arsenal.ProjectileModels.advance(shot.node,shot.visual_age)
 		arsenal.warn_lethal_impact(shot)
 		var previous: Vector2 = shot.position
-		shot.position += shot.velocity*dt
+		shot.position += shot.velocity*travel_dt
 		if int(shot.get("weapon",-1))==901: missile_smoke.emit_segment(shot,previous,shot.position)
 		var end_position: Vector2=shot.position
 		if shot.kind != "beam_visual": shot.node.position = v3(shot.position,6)
-		shot.life -= dt
+		shot.life = Flight.reload_remaining(shot.life,dt)
 		var hit: bool = false
 		var contact: Dictionary = {}
 		var rock: Dictionary={}
@@ -1001,6 +1133,16 @@ func update_shots(dt: float) -> void:
 						continue
 					hit = true
 					damage_player(shot.get("shield_damage",shot.damage),-shot.velocity.normalized(),shot.get("armor_damage",shot.damage))
+			if shot.enemy and not hit:
+				var nearest_fighter: Dictionary={}
+				var fighter_distance: float=INF
+				for fighter in escorts:
+					if fighter.get("captured",false) or not fighter.model.visible: continue
+					var entry: float=shot_entry_distance(fighter.position,previous,shot.position,18+shot.proximity)
+					if entry<fighter_distance: fighter_distance=entry;nearest_fighter=fighter
+				if not nearest_fighter.is_empty():
+					hit=true;shot.position=previous+(shot.position-previous).normalized()*fighter_distance
+					arsenal.damage_fighter(nearest_fighter,shot.get("shield_damage",shot.damage),shot.get("armor_damage",shot.damage))
 			if not hit and (not shot.enemy or shot.get("npc_shot",false)):
 				var closest: float=INF
 				for npc in npcs:
@@ -1014,11 +1156,11 @@ func update_shots(dt: float) -> void:
 		var world_hit: Dictionary=world_killer.shot_intersection(previous,shot.position,shot)
 		if not world_hit.is_empty() and (contact.is_empty() or float(world_hit.distance)<previous.distance_to(shot.position)):
 			shot.position=world_hit.position;contact={};hit=true
-			world_killer.hit_target(shot.position)
+			if int(shot.weapon)!=903: world_killer.hit_target(shot.position)
 		hit=hit or not rock.is_empty()
 		if hit or shot.life <= 0:
 			if not contact.is_empty():
-				var wreck: Node3D=damage_npc(contact,shot.get("shield_damage",shot.damage),shot.get("source",{}),-shot.velocity.normalized(),false,shot.get("armor_damage",shot.damage))
+				var wreck: Node3D=damage_npc(contact,shot.get("shield_damage",shot.damage),shot.get("source",{}),-shot.velocity.normalized(),false,shot.get("armor_damage",shot.damage),int(shot.weapon))
 				if int(shot.weapon)==191 and wreck is Breakup and shot.life>0:
 					# The forklift tore the hull apart: carry its momentum through it.
 					shot.position=end_position;shot.node.position=v3(end_position,6)
@@ -1105,6 +1247,7 @@ func select_landing_target(index: int) -> void:
 	if mode != "flight" or not chain_route.is_empty() or hyperdrive.active() or index < 0 or index >= planets.size(): return
 	var planet: Dictionary = planets[index]
 	if landing_target != planet.id:
+		auto_boarding={}
 		auto_landing=false
 		landing_target = planet.id
 		landing_clearance = -1
@@ -1113,6 +1256,7 @@ func select_landing_target(index: int) -> void:
 
 func landing_guidance() -> String:
 	if autopilot.active(): return "Autopilot · "+autopilot.status+" · A cancels"
+	if not auto_boarding.is_empty(): return "Auto boarding · %s · B or steering cancels" % auto_boarding.get("name","ship")
 	if auto_landing: return "Auto landing · %s · L or steering cancels" % selected_planet().get("name", "destination")
 	var planet = selected_planet()
 	if planet.is_empty():
@@ -1127,10 +1271,46 @@ func landing_guidance() -> String:
 		return "Cleared for %s · S / Down turns against drift; W / Up slows you · speed ≤ %d" % [planet.name, Travel.MAX_LANDING_SPEED]
 	return "Cleared for %s · L again to land" % planet.name
 
+func board_pressed() -> void:
+	if not auto_boarding.is_empty():
+		auto_boarding={};last_board_tap=-1000;notify("Auto boarding canceled.");return
+	if mode!="flight":
+		interactions.board();return
+	var now: int=Time.get_ticks_msec()
+	var double_tap: bool=now-last_board_tap<=350
+	last_board_tap=now
+	if not double_tap:
+		interactions.board();return
+	last_board_tap=-1000
+	var target: Dictionary=selected_contact()
+	if not target.is_empty() and interactions.boarding_reason(target).is_empty():
+		interactions.board();return
+	if target.is_empty() or not target.get("disabled",false) or target.get("player_ally",false) or target.has("fleet_uid") or hyperdrive.active() or not chain_route.is_empty():
+		notify("Auto boarding requires a selected disabled ship.");return
+	autopilot.cancel("Auto boarding",false)
+	auto_landing=false;auto_boarding=target
+	notify("Auto boarding %s · B or steering cancels." % target.name)
+
+func auto_boarding_step(fields: Dictionary, dt: float) -> Dictionary:
+	var target: Dictionary=auto_boarding
+	if not target in npcs or not is_instance_valid(target.get("model")) or target.health<=0 or not target.get("disabled",false) or selected_contact()!=target:
+		auto_boarding={};notify("Auto boarding canceled: target unavailable.")
+		return Flight.step(pilot.position,velocity,pilot.heading,0,false,false,fields,dt)
+	var offset: Vector2=target.position-pilot.position
+	var acceleration: float=maxf(1,Flight.acceleration(fields))
+	var desired_speed: float=minf(float(fields.Speed)*.6,minf(offset.length()*.6,sqrt(2*acceleration*offset.length())*.4))
+	var correction: Vector2=target.velocity+offset.normalized()*desired_speed-velocity
+	var settling: bool=offset.length()<maxf(25,target.radius)*.65 and velocity.distance_to(target.velocity)<3
+	var heading: float=target.heading if settling else (Flight.facing(correction) if correction.length()>1 else pilot.heading)
+	var turn: float=Flight.steering(pilot.heading,heading,fields,dt)
+	var aligned: bool=absf(angle_difference(pilot.heading,heading))<.12
+	return Flight.step(pilot.position,velocity,pilot.heading,turn,not settling and aligned and correction.length()>1,false,fields,dt,minf(1,correction.length()/(acceleration*dt)))
+
 func land_pressed() -> void:
+	auto_boarding={}
 	var now: int=Time.get_ticks_msec()
 	if auto_landing:
-		auto_landing=false;last_land_tap=-1000;notify("Auto landing canceled.");return
+		auto_boarding={};last_board_tap=-1000;auto_landing=false;last_land_tap=-1000;notify("Auto landing canceled.");return
 	var double_tap: bool=now-last_land_tap<=350
 	last_land_tap=now
 	if not double_tap:
@@ -1151,7 +1331,7 @@ func auto_landing_step(fields: Dictionary, dt: float) -> Dictionary:
 		auto_landing=false;notify("Auto landing canceled: destination unavailable.")
 		return Flight.step(pilot.position,velocity,pilot.heading,0,false,false,fields,dt)
 	var offset: Vector2=port.position-pilot.position
-	var acceleration: float=maxf(1,float(fields.Accel)*Flight.ACCEL_SCALE)
+	var acceleration: float=maxf(1,Flight.acceleration(fields))
 	# Slow well before the surface, allowing time to turn the main engine retrograde.
 	var desired_speed: float=minf(float(fields.Speed)*0.65,sqrt(2*acceleration*maxf(0,offset.length()-port.radius*.45))*.45)
 	var correction: Vector2=offset.normalized()*desired_speed-velocity
@@ -1171,17 +1351,19 @@ func land() -> void:
 		landing_target = p.id
 	var refusal: String=world_activity.landing_reason(int(p.id))
 	if not refusal.is_empty():
-		landing_clearance=-1;sound("ui_error");notify(p.name+": "+refusal);return
+		landing_clearance=-1;sound("ui_error");notify(p.name+": "+refusal+(" H to hail and offer a landing bribe." if world_activity.can_bribe_landing(int(p.id)) else ""));return
 	if landing_clearance != p.id:
 		landing_clearance = p.id
 		sound("ui_confirm")
-		notify("%s: landing clearance granted. Approach slowly; press L again over the world." % p.name)
+		notify("%s: %s landing clearance granted. Approach slowly; press L again over the world." % [p.name,"Mission" if missions.grants_landing_clearance(int(p.id)) else "Standard"])
 		return
 	if pilot.position.distance_to(p.position) > p.radius or velocity.length() > Travel.MAX_LANDING_SPEED:
 		sound("ui_error")
 		notify(landing_guidance())
 		return
 	world_activity.abort()
+	arsenal.recover_all_fighters()
+	fighter_wing.dock_owned_carriers()
 	docked_id = p.id
 	missions.begin_port_visit()
 	velocity = Vector2.ZERO
@@ -1272,16 +1454,19 @@ func start_jump() -> void:
 	var target: Dictionary = catalog.system(first_hop).fields
 	var direction = Vector2(target.xPos - origin.xPos, target.yPos - origin.yPos)
 	jump_visuals.reset()
+	auto_boarding={}
 	auto_landing=false
 	# Keep the native recording intact: spool plus burn ends at its final sample.
 	hyperdrive.burn_seconds = maxf(0.01, audio.jump_start.stream.get_length() - Hyperspace.SPOOL_SECONDS)
 	hyperdrive.begin(first_hop, Flight.facing(direction))
+	fleet_service.begin_jump()
 	traffic.maverick.begin_warp(self)
 	# Original input dispatch at 0x328bc uses interface sound slot 2 (snd 152).
 	sound("ui_select")
 	notify("Hyperspace: stop, align, spool, accelerate · %s · J cancels" % catalog.system(destination).name)
 
 func cancel_jump(announce: bool = true) -> void:
+	fleet_service.end_jump()
 	var was_active: bool = hyperdrive.active() or not chain_route.is_empty()
 	chain_route.clear()
 	hyperdrive.reset()
@@ -1337,6 +1522,8 @@ func chain_hop() -> void:
 	camera.position = v3(pilot.position+velocity*0.2,1200)
 	destination = final_target if not chain_route.is_empty() else -1
 	chain_timer = 1.0
+	fleet_service.arrive()
+	if not chain_route.is_empty(): fleet_service.begin_jump()
 	update_jump_visuals(0)
 	sound("arrival")
 	notify("%s · %s" % [catalog.system(next).name,"Chain jump complete." if chain_route.is_empty() else "Next jump in 1 second · J cancels"])
@@ -1411,6 +1598,7 @@ func deflect_shot(shot: Dictionary, previous: Vector2) -> void:
 		shot.target = null
 	shot.speed = maxf(shot.speed,275)
 	shot.velocity = direction*shot.speed
+	shot.launch_drift = Vector2.ZERO
 	shot.enemy = false
 	shot.npc_shot = false
 	shot.source = {}
@@ -1428,7 +1616,9 @@ func select_weapon(id: int) -> void:
 	if mode == "cheats" and is_instance_valid(hud): hud.rebuild_modal()
 
 func cycle_weapon(direction: int) -> void:
-	var available = arsenal.available_ids()
+	maverick_volley.reset()
+	var available = arsenal.secondary_ids() if controls.classic_fire else arsenal.available_ids()
+	if available.is_empty(): return
 	select_weapon(available[posmod(available.find(pilot.selected_weapon)+direction,available.size())])
 
 func debug_refuel() -> void:
@@ -1517,7 +1707,10 @@ func save_game(announce: bool = true) -> bool:
 	if f == null:
 		if announce: notify("Could not write the pilot save.")
 		return false
-	f.store_string(JSON.stringify(pilot.snapshot(),"\t"))
+	pilot.fighter_sorties=fighter_wing.saved()
+	var saved: Dictionary=pilot.snapshot()
+	saved.outfits=arsenal.saved_outfits()
+	f.store_string(JSON.stringify(saved,"\t"))
 	f.close()
 	var result = DirAccess.rename_absolute(ProjectSettings.globalize_path(save_path+".tmp"),ProjectSettings.globalize_path(save_path))
 	if result != OK:

@@ -174,6 +174,7 @@ func is_space_station(id: int) -> bool:
 	return game.catalog.stellar_type(int(game.catalog.field("objects",id,"Type"))).kind=="station"
 
 func reason(id: int) -> String:
+	if not game.pilot.cheat_world_killer: return "Enable Death Star in the cheat menu first."
 	var obj: Dictionary=game.catalog.record("objects",id)
 	if obj.is_empty(): return "No target selected."
 	if destroyed(id): return "Only a debris field remains."
@@ -461,7 +462,7 @@ func detonate() -> void:
 	if not game.pilot.mission.is_empty() and int(game.pilot.mission.object)==id:
 		game.pilot.mission={};game.notify("Courier contract failed: destination destroyed.")
 	for m in game.pilot.campaign.active.duplicate():
-		if int(m.dest)==id or int(m.back)==id or (not m.picked and int(m.origin)==id): game.missions.finish(m,false)
+		if int(m.dest)==id or int(m.back)==id or (not m.picked and int(m.origin)==id): game.missions.finish(m,false,false,false,"A required mission destination was obliterated.")
 	var gov: int=int(game.catalog.field("objects",id,"Govt"))
 	if not game.catalog.record("governments",gov).is_empty(): game.pilot.reputation[str(gov)]=-10000
 	if local:

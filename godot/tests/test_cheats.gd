@@ -17,6 +17,9 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func reset_space() -> void:
+	for fighter in game.escorts.duplicate():
+		if not fighter.get("captured",false): fighter.model.queue_free();game.escorts.erase(fighter)
+	game.pilot.fighter_sorties=[]
 	game.load_system()
 	game.set_mode("flight")
 	game.pilot.position=Vector2.ZERO
@@ -77,7 +80,7 @@ func run() -> void:
 	check(not game.hud.invincibility_toggle.button_pressed,"invincibility defaults off")
 	game.hud.invincibility_toggle.button_pressed=true
 	game.hud.fuel_toggle.button_pressed=true
-	check(game.pilot.cheat_all_weapons and game.pilot.cheat_infinite_fuel and not game.hud.weapon_picker.disabled and game.hud.weapon_picker.item_count==26,"actual menu toggles grant all 26 weapons and infinite fuel")
+	check(game.pilot.cheat_all_weapons and game.pilot.cheat_infinite_fuel and not game.hud.weapon_picker.disabled and game.hud.weapon_picker.item_count==game.arsenal.available_ids().size(),"actual menu toggles grant all catalog weapons and infinite fuel")
 	var before=game.pilot.position
 	game._physics_process(5)
 	check(game.pilot.position==before and not game.fire_player(),"cheat menu pauses flight and blocks firing")
@@ -135,11 +138,12 @@ func run() -> void:
 	check("Insufficient fuel" in game.jump_block_reason(),"turning the toggle off immediately restores normal jump requirements")
 	game.set_fuel_cheat(true)
 	reset_space()
-	check(game.arsenal.ids().size()==26,"arsenal includes every imported weapon, including hidden equipment")
+	check(game.arsenal.ids().size()==game.catalog.data.weapons.size(),"arsenal includes every imported weapon, including hidden equipment")
 	var every_weapon: bool=true
-	for id in game.arsenal.ids():
+	for id in game.arsenal.available_ids():
 		reset_space()
 		game.select_weapon(id)
+		if id in [133,134,143]: add_target(Vector2(0,200) if id==143 else Vector2(0,-200))
 		var initial=game.pilot.snapshot()
 		var shot_count: int=game.shots.size()
 		var escort_count: int=game.escorts.size()
@@ -155,7 +159,7 @@ func run() -> void:
 	check(game.shots.size()==50 and game.pilot.snapshot()==stored,"repeated missile launches have unlimited ammunition and no inventory cost")
 	check(not game.fire_player(),"unlimited ammo preserves weapon reload timing")
 	game.cycle_weapon(1)
-	check(game.pilot.selected_weapon==133,"E cycles to the next unlocked weapon")
+	check(game.pilot.selected_weapon==133,"Default E cycles through all selected weapons, including primary turrets")
 	game.cycle_weapon(-1)
 	check(game.pilot.selected_weapon==132,"Q cycles back to the previous weapon")
 	reset_space();game.select_weapon(132)

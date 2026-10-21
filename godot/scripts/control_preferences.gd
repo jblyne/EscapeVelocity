@@ -16,7 +16,9 @@ func _ready():
  var row=HBoxContainer.new();content.add_child(row)
  for classic in [false,true]:
   var button=Button.new();button.text="Classic flight preset" if classic else "Restore remake defaults";row.add_child(button)
-  button.pressed.connect(func():game.controls.preset(classic);refresh())
+  button.pressed.connect(func():game.controls.preset(classic);game.hud.rebuild_modal())
+ var firing=CheckBox.new();firing.name="ClassicFiringToggle";firing.text="Classic firing: separate primary guns and secondary weapons";firing.button_pressed=game.controls.classic_fire;content.add_child(firing)
+ firing.toggled.connect(func(value):game.controls.classic_fire=value;game.controls.save_settings())
  var speed=HSlider.new();speed.min_value=.5;speed.max_value=2;speed.step=.1;speed.value=game.controls.speed;content.add_child(speed)
  speed.tooltip_text="Simulation speed (0.5×–2×); menus are unaffected"
  speed.value_changed.connect(func(value):game.controls.speed=value;game.controls.save_settings();status.text="Game speed: %.1f×" % value)

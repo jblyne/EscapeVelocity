@@ -21,7 +21,9 @@ func run() -> void:
 	game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
 	game.pilot_ready=true;game.set_mode("title")
 	var menu=game.hud.modal_root.get_child(0);menu.set_process(false)
-	check(game.audio.menu_music.playing and game.audio.menu_hum.playing,"Original title music and mechanical hum start with menu")
+	check(not game.audio.menu_hum.playing,"Mechanical hum waits until menu presentation")
+	menu.begin_presentation();menu._process(10)
+	check(menu.animation_time==0 and game.audio.menu_music.playing and game.audio.menu_hum.playing,"Presented menu starts audio and discards scene setup delta")
 	for key in ["menu_click","menu_hum","menu_slam","menu_music"]:
 		check(game.audio[key].stream is AudioStreamWAV and game.audio[key].max_polyphony==1,"Original menu recording loaded with bounded playback: "+key)
 	check(menu.animation_sample(.5/15).first==0 and is_equal_approx(menu.animation_sample(.5/15).blend,.5),"Original frames interpolate between source poses")

@@ -28,7 +28,7 @@ func run() -> void:
 		debris.queue_free()
 	game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev-planet-debris-test.json"
 	if FileAccess.file_exists(game.save_path): DirAccess.remove_absolute(game.save_path)
-	game.traffic.enabled=false;game.muted=true;root.add_child(game);game.set_process(false);game.set_physics_process(false)
+	game.traffic.enabled=false;game.muted=true;root.add_child(game);game.pilot.cheat_world_killer=true;game.set_process(false);game.set_physics_process(false)
 	game.pilot.system_id=129;game.load_system();game.set_mode("flight");game.landing_target=128
 	game.pilot.position=game.world_killer.target_position(128)+Vector2(0,600)
 	game.world_activity.open_contact();game.world_killer.threaten();game.world_killer.deploy()

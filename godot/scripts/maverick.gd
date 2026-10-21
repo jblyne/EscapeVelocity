@@ -2,6 +2,7 @@ extends RefCounted
 const SHIP=900
 const GUN=900
 const MISSILE=901
+const DISRUPTOR=903
 const AFTERBURNER_SPEED=2.5
 const AFTERBURNER_ACCEL=2.75
 const VICTORY_TRACKS=["res://audio/maverick_music.mp3","res://audio/maverick_great_balls.mp3"]
@@ -86,18 +87,22 @@ func advance_warp(game,dt: float) -> void:
 
 static func install(catalog) -> void:
 	var data: Dictionary=catalog.data
-	var ship: Dictionary=data.ships["148"].duplicate(true);ship.id=SHIP;ship.name="SS-Maverick"
-	ship.fields.merge({"Holds":36,"Shield":260,"Armor":70,"Fuel":400,"FreeMass":28,"Cost":650000,"TechLevel":3,"WeapType":[GUN,MISSILE,0,0],"WeapCount":[1,1,0,0],"AmmoLoad":[0,8,0,0],"MaxGun":2,"Mass":30,"Crew":2},true)
+	var ship: Dictionary=data.ships["148"].duplicate(true);ship.id=SHIP;ship.name="F-14 Tomcat"
+	ship.fields.merge({"custom_flight":true,"Holds":72,"Shield":780,"Armor":70,"Fuel":800,"FreeMass":56,"Cost":650000,"TechLevel":3,"WeapType":[GUN,MISSILE,0,0],"WeapCount":[1,1,0,0],"AmmoLoad":[0,8,0,0],"MaxGun":2,"Mass":30,"Crew":2},true)
 	data.ships[str(SHIP)]=ship;data.ship_graphics[str(SHIP)]=data.ship_graphics["148"].duplicate(true)
 	for entry in [[GUN,128,"M61 Machine Gun"],[MISSILE,132,"AIM-9 Sidewinder"]]:
 		var weapon: Dictionary=data.weapons[str(entry[1])].duplicate(true);weapon.id=entry[0];weapon.name=entry[2];data.weapons[str(entry[0])]=weapon
 	data.weapons[str(GUN)].fields.merge({"Reload":4,"Count":40,"MassDmg":5,"EnergyDmg":3,"Speed":1300,"Inaccuracy":2,"Sound":-1},true)
-	data.weapons[str(MISSILE)].fields.merge({"AmmoType":902,"Speed":900,"Sound":4},true)
+	data.weapons[str(MISSILE)].fields.merge({"AmmoType":902,"Speed":900,"Sound":4,"Count":int(data.weapons["132"].fields.Count)*3},true)
+	var disruptor: Dictionary=data.weapons["132"].duplicate(true)
+	disruptor.id=DISRUPTOR;disruptor.name="EMP Disruptor"
+	disruptor.fields.merge({"AmmoType":0,"Reload":120,"Count":150,"Speed":1000,"MassDmg":0,"EnergyDmg":0,"BlastRadius":0,"ProxRadius":0,"Inaccuracy":0,"Sound":4,"MiscFlags":2},true)
+	data.weapons[str(DISRUPTOR)]=disruptor
 	for entry in [[900,128,"M61 Machine Gun",1,GUN,6,18000],[901,133,"Sidewinder Rail",1,MISSILE,4,22000],[902,134,"AIM-9 Sidewinder",3,MISSILE,1,1800]]:
 		var outfit: Dictionary=data.outfits[str(entry[1])].duplicate(true);outfit.id=entry[0];outfit.name=entry[2]
 		outfit.fields.merge({"ModType":entry[3],"ModVal":entry[4],"Mass":entry[5],"Cost":entry[6],"TechLevel":3},true)
 		data.outfits[str(entry[0])]=outfit
-	data.descriptions[str(SHIP)]="A space-rated F-14 Tomcat: swept wings, twin engines and tandem cockpit. Includes an M61 machine gun, Sidewinder rail, eight missiles and a high-output afterburner."
+	data.descriptions[str(SHIP)]="A space-rated F-14 Tomcat: swept wings, twin engines and tandem cockpit. Includes a built-in nonlethal EMP Disruptor, an M61 machine gun, Sidewinder rail, eight missiles, Tritanium Armor, an IFF Decoder and a high-output afterburner."
 static func build() -> Node3D:
 	var root=Node3D.new();root.name="SSMaverick"
 	var steel=Models.material(Color("9ba6ad"),.5);var dark=Models.material(Color("273039"),.5);var glass=Models.material(Color("5eb6ca"),.6);var red=Models.material(Color("a73a32"),.3)

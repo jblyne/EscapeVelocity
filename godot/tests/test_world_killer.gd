@@ -44,9 +44,9 @@ func run() -> void:
 	if "--small" in OS.get_cmdline_user_args(): root.size=Vector2i(1100,740)
 	game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev-death-star-test.json"
 	if FileAccess.file_exists(game.save_path): DirAccess.remove_absolute(game.save_path)
-	game.traffic.enabled=false;game.muted=true;root.add_child(game);killer=game.world_killer
+	game.traffic.enabled=false;game.muted=true;root.add_child(game);game.pilot.cheat_world_killer=true;killer=game.world_killer
 	game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
-	game.restart();travel(129)
+	game.restart();game.pilot.cheat_world_killer=true;travel(129)
 	check(killer.reason(129).is_empty(),"Stations can receive world-killer ultimatum")
 	travel();game.world_activity.open_contact()
 	check(game.mode=="world_comms" and not game.world_activity.response.is_empty(),"Hailing receives planetary response")
@@ -207,12 +207,12 @@ func run() -> void:
 	check(int(game.courier_destination().object)!=128,"Courier jobs avoid destroyed destination")
 	var bad: Dictionary=game.pilot.snapshot();bad.world_killer.destroyed.append(128)
 	check(not copy.restore(bad,game.catalog),"Duplicate destruction records rejected")
-	game.restart();deploy();refuse();game.pilot.system_id=128;game.load_system();game.set_mode("flight")
+	game.restart();game.pilot.cheat_world_killer=true;deploy();refuse();game.pilot.system_id=128;game.load_system();game.set_mode("flight")
 	check(not is_instance_valid(killer.station),"Remote battle station does not appear in unrelated system")
 	remaining(0)
 	check(killer.destroyed(128) and killer.effects.is_empty(),"Off-system attack completes without spawning local effects")
 	travel(128);check(game.planets.all(func(p):return int(p.id)!=128),"Returning reveals off-system destruction")
-	game.restart();travel();game.pilot.position=killer.target_position(128)
+	game.restart();game.pilot.cheat_world_killer=true;travel();game.pilot.position=killer.target_position(128)
 	game.world_activity.open_contact();killer.threaten();killer.deploy();refuse();remaining(20)
 	check(Vector2(killer.bomb().x,killer.bomb().y).distance_to(killer.target_position(128))>killer.target_radius(128)+killer.DeathStar.RADIUS,"Point-blank summons still place station outside planet")
 	var route: Dictionary=killer.bomb().duplicate(true)

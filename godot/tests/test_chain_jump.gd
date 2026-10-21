@@ -68,7 +68,7 @@ func run() -> void:
 		if game.pilot.system_id != departure_system: break
 	check(["stopping","aligning","spooling","accelerating"].all(func(phase):return phase in phases),"initial jump stops, aligns, spools and accelerates")
 	check(game.pilot.system_id==route[0] and game.chain_route.size()==route.size()-1,"full departure arrives at the first intermediate system")
-	check(is_equal_approx(game.velocity.length(),275*game.Hyperspace.DEPARTURE_SPEED_MULTIPLIER) and game.previous_player_velocity==game.velocity,"chain arrival retains full departure speed and interpolation")
+	check(is_equal_approx(game.velocity.length(),float(game.pilot.flight_fields(game.catalog.record("ships",game.pilot.ship_id).fields).Speed)*game.Hyperspace.DEPARTURE_SPEED_MULTIPLIER) and game.previous_player_velocity==game.velocity,"chain arrival retains full departure speed and interpolation")
 	game.hud._process(0)
 	check(not game.hud.jump_button.disabled and game.hud.jump_button.text=="Cancel  J","HUD offers cancellation during chain")
 	var flyby_start: Vector2 = game.pilot.position
@@ -119,7 +119,7 @@ func run() -> void:
 	if not game.planets.is_empty():
 		var to_world: Vector2=game.planets[0].position-game.pilot.position
 		check(to_world.dot(approach_direction)>float(game.planets[0].radius)+260,"final chain jump arrives before the planet along travel direction")
-		var expected=game.Hyperspace.arrival(game.pilot.heading,game.catalog.record("ships",game.pilot.ship_id).fields,game.planets)
+		var expected=game.Hyperspace.arrival(game.pilot.heading,game.pilot.flight_fields(game.catalog.record("ships",game.pilot.ship_id).fields),game.planets)
 		check(game.pilot.position.is_equal_approx(expected.position),"chain jump preserves normal directional arrival point")
 	var final_victim = game.traffic.spawn(130,-1,1,game.pilot.position+game.velocity*.01)
 	game._physics_process(.01)

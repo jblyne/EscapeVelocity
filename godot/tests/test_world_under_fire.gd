@@ -22,7 +22,7 @@ func _initialize() -> void: call_deferred("run")
 func run() -> void:
 	game=load("res://main.tscn").instantiate()
 	game.save_path="/tmp/ev-world-under-fire.json";game.controls.path="/tmp/ev-world-under-fire-controls.json"
-	game.traffic.enabled=false;game.muted=true;root.add_child(game);k=game.world_killer
+	game.traffic.enabled=false;game.muted=true;root.add_child(game);game.pilot.cheat_world_killer=true;k=game.world_killer
 	game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
 	deploy(128);shoot()
 	check(k.bomb().get("under_fire_hits",0)==1 and game.shots.is_empty(),"player laser hits the threatened planet and is consumed")

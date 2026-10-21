@@ -54,7 +54,7 @@ func recover() -> void:
 	if game.mode!="rescue": return
 	var port: int=rescue_port()
 	# Block intermediate mission-failure saves until the replacement is complete.
-	for mission in game.pilot.campaign.active.duplicate(): game.missions.finish(mission,false)
+	for mission in game.pilot.campaign.active.duplicate(): game.missions.finish(mission,false,false,false,"Your ship and its mission cargo were lost during escape-pod rescue.")
 	game.pilot.mission.clear();game.pilot.cargo=[0,0,0,0,0,0]
 	# The original reinitializes its ship/escort slots during rescue (0x31f7c).
 	game.pilot.fleet.clear()

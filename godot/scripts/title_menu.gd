@@ -245,6 +245,11 @@ func preferences() -> void:
 	small_button("Done",pilot_info)
 
 func about() -> void:
+	about_with_modifiers(Input.is_physical_key_pressed(KEY_ALT),Input.is_physical_key_pressed(KEY_META))
+
+func about_with_modifiers(option: bool,command: bool) -> void:
+	if option: original_credits(true);return
+	if command: original_credits(false,true);return
 	clear_screen();line("ABOUT EV",20)
 	line("Escape Velocity\nCreated by Matt Burch\nAmbrosia Software, 1996")
 	line("Escape Velocity HD\nA modern recreation in Godot.")
@@ -263,7 +268,7 @@ var parody_credits: bool=false
 var credits_position: float=0
 var song: AudioStreamPlayer
 
-func original_credits(parody: bool=false) -> void:
+func original_credits(parody: bool=false, additional: bool=false) -> void:
 	close_extras()
 	parody_credits=parody
 	extras_panel=PanelContainer.new()
@@ -277,7 +282,7 @@ func original_credits(parody: bool=false) -> void:
 	credits_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	credits_label.add_theme_font_size_override("font_size",18)
 	var data=JSON.parse_string(FileAccess.get_file_as_string("res://data/original_extras.json"))
-	credits_label.text="\n".join(data["20002" if parody else "20001"].strings)
+	credits_label.text="\n".join(data["20002" if parody else "20003" if additional else "20001"].strings)
 	credits_scroll.add_child(credits_label)
 	credits_position=0
 	var done=Button.new();done.text="Done";done.pressed.connect(func():game.sound("menu_click");close_extras());column.add_child(done)
@@ -305,12 +310,13 @@ func unlock_forklift() -> void:
 func _input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo: return
 	if get_viewport().gui_get_focus_owner() is LineEdit: return
-	if event.keycode==KEY_X and not is_instance_valid(extras_panel): haikus();get_viewport().set_input_as_handled();return
 	if event.keycode==KEY_ESCAPE and is_instance_valid(extras_panel): close_extras();get_viewport().set_input_as_handled();return
+	if (dialog.visible and not is_instance_valid(extras_panel)) or (is_instance_valid(pilot_picker) and pilot_picker.visible): return
+	if event.keycode==KEY_X and not is_instance_valid(extras_panel): haikus();get_viewport().set_input_as_handled();return
 	if Input.is_physical_key_pressed(KEY_S) and Input.is_physical_key_pressed(KEY_O) and Input.is_physical_key_pressed(KEY_L):
 		game.pilot.secrets.satellite=true;game.save_game(false);clear_screen();line("A familiar satellite may appear at a shipyard…");get_viewport().set_input_as_handled();return
 	if not parody_credits or not is_instance_valid(credits_label): return
-	if event.keycode==KEY_F and event.ctrl_pressed and event.meta_pressed and event.alt_pressed and event.shift_pressed:
+	if event.keycode==KEY_F and event.ctrl_pressed and event.meta_pressed and event.alt_pressed:
 		var lines=credits_label.text.split("\n")
 		for i in lines.size():
 			if "MCB 4:35" in lines[i]:
@@ -323,4 +329,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	var key: int=event.physical_keycode if event.physical_keycode!=0 else event.keycode
 	var actions: Dictionary={KEY_N:new_pilot,KEY_O:open_pilot,KEY_Q:quit_game,KEY_E:enter_ship,KEY_ENTER:enter_ship,KEY_P:preferences,KEY_A:about}
 	if actions.has(key):
-		get_viewport().set_input_as_handled();game.sound("menu_click");actions[key].call()
+		get_viewport().set_input_as_handled();game.sound("menu_click")
+		if key==KEY_A: about_with_modifiers(event.alt_pressed,event.meta_pressed)
+		else: actions[key].call()
