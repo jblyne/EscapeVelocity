@@ -1042,3 +1042,139 @@ Incomplete badge guidance now offers destination buttons linked to the actual ne
 Added a reproducible full-suite acceptance runner, a version/signature-checked Mac packaging tool, an explicit manual campaign checklist, and a release evidence ledger. New pilots now include the same default secret-unlock fields as restored pilots. Historical regression checks were updated for accepted flight speed, communications layout, delayed menu presentation, the F-14 name and isolated test saves. Gameplay customizations remain. See [Phase 6 results and remaining manual checks](research/reports/PHASE_6_ACCEPTANCE.md); this candidate does not claim a complete manual original-game playthrough.
 
 Run `python3 tools/run_acceptance.py` for all Godot regressions, or repeat `--test test_name.gd` to select scripts. Logs and `results.json` are retained beneath `builds/acceptance-0.1.178`. After exporting the matching Mac app, `python3 tools/package_macos_release.py` verifies it and creates a ZIP with install notes, credits, the acceptance ledger and a separate SHA-256 checksum.
+
+## 0.1.179 — Bounty banner spacing
+
+Added 18 design pixels above the bounty-hunter announcement heading. The background, lower divider and particles expand by the same amount, preserving the existing spacing below the footer and between text rows.
+
+## 0.1.180 — Steel-world reconstruction
+
+Shattered planets, moons and stations now rebuild on the existing game-day calendar. The destruction day is debris-only; the next game day brings the first landable framework. A mostly skeletal structure is the day-20 milestone, more hull is assembled by day 40, habitats and reclaimed soil appear by day 60, and the finished steel structure with planet-side soil/water areas is complete at day 80. Geometry grows each game day rather than teleporting directly between the four artwork stages. Stations remain steel facilities.
+
+Temporary reconstruction docks permit landing throughout rebuilding, including for pilots with hostile records. Existing local services return with those docks. Flight still enforces position and landing-speed requirements. The map shows recovery status; hover the reconstruction readout for each world's orbital portrait and progress. Landed descriptions and galactic news show the current work. Old ruined-world saves start their recovery clock when migrated because their original destruction date was not recorded. Failed missions, ended tribute agreements, historical fear and reputation consequences are retained. Shattering a rebuilt world restarts its clock without duplicating history.
+
+All **107 bodies** have distinct seeded steel geometry and **856 rendered pictures**: four landing pictures and four orbital portraits each. Later planet pictures include reclaimed dirt and water; mature landing scenes include soil beds, reservoirs and planted rows among the steel. Generated steel/soil material maps, exact prompts and the artwork manifest are in `godot/assets/reconstruction/`. They use built-in image generation for materials and the live seeded 3D geometry for pictures. `res://tests/render_reconstruction_art.gd` reproduces the pictures; `python3 tools/audit_reconstruction_art.py` checks complete coverage and distinct image hashes.
+
+World-state validation also now normalizes JSON numeric IDs before checking destruction/active-ultimatum membership, allowing real disk restores of recovery dates and active bribe negotiations.
+
+
+## 0.1.181 — Faithful HD widescreen main menu
+
+The main menu retains the original green outlined logo, oval star chart, six CRT panels, center pilot display, mechanical opening animation and original menu audio. Its illustration is remastered with sharper materials and edges. New outer metalwork extends into widescreen displays while the original central console and button positions keep their proportions. Pilot operations, keyboard shortcuts and hidden extras are retained.
+
+Artwork provenance and the built-in image-generation prompt are recorded in `godot/assets/menu/art_direction.json`.
+
+
+## 0.1.182 — HD publisher logo and loading artwork
+
+The Ambrosia Software logo and Escape Velocity loading illustration now have faithful high definition remasters. The original logo stays centered and keeps its portrait proportions. The loading artwork retains the pilot, fleet, console and title, with surrounding console extensions filling widescreen monitors. Original startup fades, progress display, music handoff and story timing are retained. Built-in image-generation prompts and source references are recorded in `godot/assets/startup/art_direction.json`.
+
+
+## 0.1.183 — Continuous HD menu panel animation
+
+All six menu panels and their silver connectors now animate directly from the same HD bridge illustration at the display's frame rate. The original low resolution strips and mismatched final-art crossfade have been removed. Text fades in over the settled panels without moving them or replacing their artwork. The opening retains its original machinery sound timing and widescreen layout. Native regression checks capture all 18 opening poses and compare pixels across both the panel-stop and text-reveal boundaries.
+
+
+## 0.1.184 — Restore the original menu folding motion
+
+The HD panels now pivot and unfold in perspective using corners traced from the original PICT 8300–8312 animation poses, followed by the original lettering phase. This replaces the flat sliding reveal introduced in 0.1.183. The silver connectors deform with the folding panels; every pose uses the same HD artwork, including the settled pose, so no final image replacement occurs. Interpolation preserves the source keyframes and settles at zero velocity before the stationary text reveal. Original sound timing, live menu actions and widescreen layout are retained.
+
+
+## 0.1.185 — Original menu lettering and materialization
+
+Menu captions now use the original letterforms from PICT 8000, with the actual four noisy materialization frames from PICT 8313–8316 at their original 15 Hz timing. This replaces the generic font and opacity fade. Only the luminous ink is composited over the HD panels; the folding geometry and settled artwork remain registered. All six labels are centered in consistent text zones with balanced top/bottom spacing, including the previously crowded bottom row. The reveal illuminates each full display while keeping the final lettering aligned to its padded caption area.
+
+
+## 0.1.186 — Overlapping menu ink and folding motion
+
+The noisy lettering starts during the last folding poses instead of waiting until the plates stop. Its pixels deform with the same face geometry throughout the reveal. Corrected a registration mismatch between the traced lit bevel and the texture's dark hinge notch that previously caused the final sideways shift. The four original ink frames, resolved original letterforms, padded caption placement, menu operations and widescreen support are retained. Regression coverage verifies overlap, surface attachment and consistent hinge registration at the final keyframe.
+
+
+## 0.1.187 — Startup pacing and original loading meter
+
+Removed added startup input prompts and the loading caption. The publisher logo now remains visible for two seconds, followed by a quick incremental loading meter over approximately 1.5 seconds and a short full-bar hold. Startup screens advance automatically; Space does not bypass the publisher hold. Setup stalls cannot consume their visible display time. The meter uses the recovered original 200×10 rectangle at (316, 579) on the 832×624 canvas and original CLUT 1000 colors rather than a broad modern progress bar. It never reports completion before the game scene is available.
+
+
+## 0.1.188 — Original pilot readout font
+
+The main menu's center pilot readout now uses Geneva, matching the original game's TextFont(3) and TextSize(9) calls at 0x4d024–0x4d034. Nine points scales to twelve on the HD design canvas. The Mac app uses the system-supplied Geneva family without redistributing Apple's font file.
+
+
+## 0.1.189 — Smoother original menu lettering
+
+The settled menu labels preserve the original letterforms but now retain their original antialiased edge coverage and reconstruct it with a bicubic filter. This replaces the hard color cutoff that fragmented thin strokes and made enlarged text appear choppy. The original noisy phase-in, spacing, folding and pilot readout font remain intact.
+
+
+## 0.1.190 — Temporary opening-sequence replay
+
+About EV includes a temporary **Replay opening sequence** button for reviewing the Ambrosia logo, loading-screen meter and main-menu folding/text animation without relaunching. Replay uses the real startup timings and artwork, shares the existing title-music player and returns to a freshly animated menu. It preserves the active pilot, credits, pilot file and introduction-seen state, and respects mute.
+
+
+## 0.1.191 — Startup fades through black
+
+The loading artwork and completed meter fade fully to black, hold briefly, then the main menu fades in. The publisher-to-loading transition uses the same fade-through-black treatment. Transitions use the original 16/60-second fade interval with a short black hold, preserve continuous title music, and run identically through About EV's replay button.
+
+
+## 0.1.192 — Classic Mac main-menu dialogs
+
+Main-menu dialogs use the original Mac visual treatment: pale panels with square double borders, black text, inset black name fields, monochrome checkboxes and rounded outlined action buttons with default-button rings. New Pilot has paired Cancel/Begin actions. Open Pilot uses an embedded, themed file-list chooser rather than the host's modern native sheet. Preferences, keyboard controls entered from the main menu, About EV, credits, haikus and error dialogs share the treatment. The temporary opening replay button and existing pilot/controls behavior remain available.
+
+## Local build 0.1.193 — Bar gambling
+
+The Spaceport Bar now has a **Gamble** button opening the original six-symbol slot machine. Bet 1,000 or 5,000 credits; a pair returns 1.3× the stake and a triple returns 3×. Reels stop in sequence. Bets settle and save as a single transaction before animation, including when leaving early. Unaffordable bets are disabled.
+
+## Local build 0.1.194 — Native Open Pilot dialog
+
+Open Pilot again uses the operating system's native file picker. The custom classic dialog theme no longer applies to file browsing; pilot selection, validation, and preservation of the previous pilot are unchanged.
+
+## Local build 0.1.195 — Restored Levo arrival artwork
+
+The arrival picture before the opening story now uses a faithful high-definition remaster of the original ocean, islands, shuttle, passing ships, and remote-video display. The complete artwork stays visible with its original scene arrangement; story timing and controls are unchanged. The built-in image generator prompt and provenance are recorded in `godot/assets/startup/art_direction.json`.
+
+## Local build 0.1.196 — Classic port button lettering
+
+Classic port buttons now use bundled ChicagoFLF outline lettering, keeping the classic Mac font appearance with smooth rendering. Body text remains Geneva. ChicagoFLF is by Robin Casady and is distributed as public domain; source and attribution accompany the bundled font.
+
+## Local build 0.1.197 — Classic flight message lettering
+
+Bottom-of-screen flight messages now use the bundled ChicagoFLF classic Mac lettering, matching the restored port buttons. This includes landing notices, recent messages, and mission/combat alerts while retaining their existing wrapping and colors.
+
+## Local build 0.1.198 — Illustrated opening story
+
+Painterly frontier, alien-war, Confederation, and rebellion scenes now accompany the scrolling story. Artwork is synchronized to the corresponding source text, gently drifts, and fades in and out. A dark center and outlined white text preserve readability; widescreen displays reveal the side compositions. Story wording, speed, music, and skip controls are retained. Built-in image-generation prompts and asset provenance are saved in `godot/assets/story/art_direction.json`.
+
+## Local build 0.1.199 — Actual original game font
+
+Recovered the original **Sillycon Plain** TrueType font (sfnt 9295, FOND 2020) from Escape Velocity 1.0.5. Classic buttons and the green flight instrument panel now use that exact font instead of ChicagoFLF and Menlo substitutes. Extraction is reproducible with `tools/extract_original_font.py`; bottom flight messages retain their classic Mac lettering.
+
+## Local build 0.1.200 — Story-to-flight transition
+
+Intro mode no longer creates a hidden pause menu or modal entrance animation. Finishing or skipping the opening story enters flight directly without a closing-menu flash. Startup regression checks cover both the empty intro modal and immediate overlay-free flight handoff.
+
+## Local build 0.1.201 — Full-height story and alternating art
+
+Story text now enters at the bottom edge and exits at the top edge of the viewport. Independently timed left and right paintings alternate by topic and hold until each side's next scene arrives. Four new paintings cover the freighter years, buying a first shuttle, Levo, and the final send-off. Portrait artwork and softly masked half-scenes keep the center readable. New built-in generation prompts are in `godot/assets/story/ending_art_direction.json`. The port's Local Leads button, heading, and references use the shorter requested name.
+
+## Local build 0.1.202 — Oppression and civil-war paintings
+
+Added dedicated paintings of colonial oppression and the galactic civil war to the alternating story sequence. Faction artwork uses blue Confederation livery and red Rebellion livery. Story art now has brighter midtones and stronger side illumination. Its readability mask uses screen coordinates, avoiding excess darkening when portrait art is cropped on wider displays. The center remains dark for the scrolling text. New prompts and provenance are saved in `godot/assets/story/conflict_art_direction.json`.
+
+## Local build 0.1.203 — Clean artwork and story handoff
+
+Story paintings now fade out before their replacement fades in on the same side, preventing double-exposure ghosting. Removed the zoom/drift effect. Finishing or skipping the story fades to opaque black, switches to flight under that cover, then fades gameplay in. Intro, replay, and painting regression checks cover the handoff and nonoverlapping artwork.
+
+## Local build 0.1.204 — Readable story side panels and alien encounter
+
+New portrait paintings show an actual alien attacking a colony, blue Confederation rule, and red Rebel pilots assembling beside their ship. These replace wide compositions that left only narrow fragments visible. Remaining landscape scenes use their populated outer thirds, and the inner mask gives subjects more visible width. Alternating fades stay free of same-side overlaps. Built-in image-generation prompts are recorded in `godot/assets/story/portrait_art_direction.json`.
+
+## Local build 0.1.205 — Distinct story scenes
+
+Fixed the same Confederation portrait appearing simultaneously on both sides. Government power, oppression, and naval imagery now occupy separate cues with distinct artwork. Widened the central readability gradient. The painting regression samples the entire story timeline to reject duplicate paintings across sides, in addition to checking same-side overlap and full-height bounds.
+
+## Local build 0.1.206 — Balanced story artwork
+
+Fixed the painting shader multiplying its cropped image by the original texture a second time. This caused dark, narrow-looking landscape subjects and uneven portrait brightness. Paintings now use a single texture sample with preserved vertex tint, consistent exposure, and a mirrored fade toward the text center. Verified the alien passage and other scenes at standard and ultrawide sizes.
+
+### Current local Mac package: 0.1.206
+
+The complete 0.1.206 update passed **113/113 regression scripts**. The local signed app and installable ZIP are in `builds/`; see [build validation](research/reports/RELEASE_0_1_206.md) for the archive checksum and validation scope. The GitHub download links above continue to identify the last published release.

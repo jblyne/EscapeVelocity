@@ -42,6 +42,9 @@ const TEXTURES={
 static func picture_id(catalog,port: int) -> int:
 	var f: Dictionary=catalog.record("objects",port).fields
 	return int(f.CustPicID) if int(f.CustPicID)>=0 else 10000+int(f.Type)
-static func texture(catalog,port: int) -> Texture2D:
+static func texture(catalog,port: int,reconstruction: Dictionary={}) -> Texture2D:
+	if int(reconstruction.get("stage",0))>0:
+		var path: String="res://assets/reconstruction/landing/%d_%d.webp" % [port,int(reconstruction.stage)]
+		if ResourceLoader.exists(path): return load(path)
 	var id: int=picture_id(catalog,port)
 	return TEXTURES.get(id,TEXTURES[10000])

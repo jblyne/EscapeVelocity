@@ -24,6 +24,27 @@ func _ready():
  speed.value_changed.connect(func(value):game.controls.speed=value;game.controls.save_settings();status.text="Game speed: %.1f×" % value)
  var done=Button.new();done.text="Done";content.add_child(done);done.pressed.connect(func():game.set_mode(game.controls_return_mode))
  restyle(content)
+ if game.controls_return_mode=="title":
+  var mac=preload("res://scripts/mac_dialog_theme.gd")
+  canvas.theme=mac.make()
+  var bridge=preload("res://scripts/title_bridge.gd").new();bridge.size=size
+  bridge.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(bridge);move_child(bridge,0)
+  resized.connect(func():bridge.size=size;bridge.queue_redraw())
+  var old_panel=canvas.get_child(0);canvas.remove_child(old_panel);old_panel.queue_free()
+  # The inherited service draws a dark panel; cover it with the original
+  # Mac dialog treatment only when entered from the main menu.
+  var paper=Panel.new();paper.size=LAYOUT;paper.theme=canvas.theme
+  paper.add_theme_stylebox_override("panel",mac.box(mac.PAPER,Color("4c4c5c"),2,0))
+  paper.mouse_filter=Control.MOUSE_FILTER_IGNORE;canvas.add_child(paper);canvas.move_child(paper,0)
+  mac.frame(paper)
+  mac_restyle(content)
+func mac_restyle(node: Node) -> void:
+ if node is Label or node is Button:
+  node.remove_theme_color_override("font_color")
+  node.remove_theme_font_override("font")
+ if node is Button:
+  for state in ["normal","hover","pressed","disabled"]: node.remove_theme_stylebox_override(state)
+ for child in node.get_children(): mac_restyle(child)
 func refresh():
  waiting=""
  for action in buttons: buttons[action].text=game.controls.caption(action)

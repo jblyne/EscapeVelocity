@@ -26,7 +26,7 @@ func run() -> void:
 	check(not game.pilot_ready,"new pilot requires explicit Begin action")
 	event.physical_keycode=KEY_ENTER;menu._unhandled_key_input(event)
 	check(game.mode=="title","Enter does not bypass new-pilot creation")
-	for child in menu.screen.get_children():
+	for child in menu.screen.find_children("*","Button",true,false):
 		if child is Button and child.text=="Begin new flight": child.pressed.emit();break
 	check(game.pilot_ready and game.mode=="flight","New Pilot begins a flight")
 	game.pilot.credits=23456;game.save_game(false)

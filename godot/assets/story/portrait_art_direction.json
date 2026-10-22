@@ -1,0 +1,17 @@
+{
+  "mode": "built-in image_gen",
+  "assets": [
+    {
+      "file": "alien_attack.png",
+      "prompt": "Create a cinematic painterly science-fiction oil illustration for Escape Velocity's opening story. A clearly visible original extraterrestrial invader wreaking havoc in a human outer-colony city. Large full-bodied alien in foreground, angular armored carapace, long powerful limbs, strange luminous eyes, clearly nonhuman face, firing an energy weapon that tears through a steel landing gantry; burning colony buildings, fleeing small human silhouettes and alien ships in the distance. Dramatic non-graphic action, no gore. The alien itself must be immediately recognizable, not just spacecraft. Portrait 2:3. IMPORTANT composition for a side panel: large subjects occupy the central 70% of the FULL image width, bright readable midtones and silhouette, no empty black central column, no narrow sliver composition. The complete painting is a single coherent vignette. Rich hand-painted brushwork, navy space, warm amber rim light, steel and atmospheric depth, luminous details, classic science fiction book-cover aesthetic. Confederation government is BLUE; Rebellion is RED. No recognizable franchise aliens or ships, no lettering, text, captions, UI, borders, watermark. Maximum resolution."
+    },
+    {
+      "file": "rebel_uprising.png",
+      "prompt": "Create a cinematic painterly science-fiction oil illustration for Escape Velocity's opening story. Outer-colony rebellion forming: two human rebel pilots with RED uniform accents in the foreground beside a substantial RED-and-weathered-gray small spacecraft, industrial colony hangar and assembled red rebel fleet behind, determined resistance, warm sunrise. Human figures and ship are large and clearly readable. Portrait 2:3. IMPORTANT composition for a side panel: large subjects occupy the central 70% of the FULL image width, bright readable midtones and silhouette, no empty black central column, no narrow sliver composition. The complete painting is a single coherent vignette. Rich hand-painted brushwork, navy space, warm amber rim light, steel and atmospheric depth, luminous details, classic science fiction book-cover aesthetic. Confederation government is BLUE; Rebellion is RED. No recognizable franchise aliens or ships, no lettering, text, captions, UI, borders, watermark. Maximum resolution."
+    },
+    {
+      "file": "confed_rule.png",
+      "prompt": "Create a cinematic painterly science-fiction oil illustration for Escape Velocity's opening story. Confederation rule: a massive silver and cobalt BLUE government cruiser fills the upper half over a wealthy core-world city; imposing blue-uniformed officer on a balcony in foreground; grand architecture, distant colony world. Clearly readable broad spacecraft silhouette, not a thin edge-on ship. Portrait 2:3. IMPORTANT composition for a side panel: large subjects occupy the central 70% of the FULL image width, bright readable midtones and silhouette, no empty black central column, no narrow sliver composition. The complete painting is a single coherent vignette. Rich hand-painted brushwork, navy space, warm amber rim light, steel and atmospheric depth, luminous details, classic science fiction book-cover aesthetic. Confederation government is BLUE; Rebellion is RED. No recognizable franchise aliens or ships, no lettering, text, captions, UI, borders, watermark. Maximum resolution."
+    }
+  ]
+}

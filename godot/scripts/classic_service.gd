@@ -22,6 +22,7 @@ func restyle(node: Node) -> void:
 		node.add_theme_color_override("font_color",Color("dddddd"))
 	if node is Label: node.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	if node is Button:
+		node.add_theme_font_override("font",BUTTON_FONT)
 		for state in ["normal","hover","pressed","disabled"]:
 			var style=StyleBoxFlat.new()
 			style.bg_color=Color("444444") if state=="pressed" else Color("777777")

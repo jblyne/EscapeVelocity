@@ -1,0 +1,16 @@
+{
+  "mode": "built-in image_gen",
+  "usage": "AI-generated seamless material maps on unique seeded 3D steel worlds and landing scenes; 107 worlds x four phases x two views. Dirt and water are introduced in later planet stages; stations stay steel.",
+  "materials": [
+    {
+      "file": "steel_panels.png",
+      "prompt": "Use case: stylized-concept. Asset type: seamless PBR-style diffuse/albedo texture for steel megastructure planets and space stations in a 3D space game. Generate a square flat orthographic material tile filling the image edge to edge: weathered gunmetal steel hull plates, fine brushed metal grain, recessed dark seams, subtle bolts, industrial panel variations, a few muted warm safety-yellow maintenance markings, restrained blue-gray palette. No scene, no horizon, no perspective, no lighting gradients, no shadows baked across the whole image, no text, no labels, no watermark. Small repeating industrial details, edges must tile seamlessly. This material will be mapped onto unique procedurally built structures and rendered into landing artwork."
+    },
+    {
+      "file": "reclaimed_soil.png",
+      "prompt": "Use case: stylized-concept. Asset type: seamless square diffuse/albedo texture for reclaimed soil beds on a 3D steel planet in a space game. Flat orthographic overhead close-up, edge-to-edge rich dark brown loamy dirt, small irregular clumps, fine gravel, a little darker damp earth, varied natural granularity, restrained warm umber and cool brown tones. Even neutral illumination suitable for material mapping; no strong shadows, no horizon, no perspective, no plants, no text, no labels, no watermarks. Seamless tile edges. Detailed but avoid oversized rocks. This will be mapped onto engineered soil plots within a rebuilt metallic planetary shell."
+    }
+  ],
+  "render_script": "res://tests/render_reconstruction_art.gd",
+  "live_geometry": "res://scripts/rebuilt_world.gd"
+}

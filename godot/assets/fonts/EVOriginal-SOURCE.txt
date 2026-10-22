@@ -1,0 +1,5 @@
+Sillycon Plain — original font embedded in Escape Velocity 1.0.5.
+Extracted unchanged from Escape Velocity.rsrc, sfnt resource 9295.
+Associated FOND family 2020. Original 17,000-byte TrueType resource.
+Reproduce extraction with: python3 tools/extract_original_font.py
+Original game resource provenance and rights apply; not ChicagoFLF.

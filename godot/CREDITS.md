@@ -15,3 +15,11 @@ Combat panic cries: AI-generated performances created through the user’s Eleve
 Crew scream mixes: layered versions of the saved ElevenLabs cries, created by `tools/mix_crew_screams.py` with staggered starts, varied pitches, normalized levels, and a short fade.
 
 Burning-wreck final words: additional ElevenLabs Harry and Callum performances, layered with saved crew screams by `tools/mix_wreck_audio.py`.
+
+### Steel reconstruction artwork
+
+The steel-panel and reclaimed-soil material maps were generated with the built-in image generation tool for this project. Exact prompts are retained in `assets/reconstruction/art_direction.json`. The 107 unique rebuilt worlds, staged orbital pictures and landing scenes are deterministic 3D renders authored in `scripts/rebuilt_world.gd` and `tests/render_reconstruction_art.gd`, rather than recovered original-game art.
+
+HD main-menu console remaster: generated with the built-in image_gen tool from the original menu, preserving its design. Prompt and provenance: assets/menu/art_direction.json. Original mechanical animation, live labels and interactive controls are rendered in Godot.
+
+HD startup artwork: faithful remasters of the original Ambrosia Software logo and Escape Velocity loading illustration, generated with the built-in image_gen tool. Original artwork and trademarks belong to their respective creators. Prompts and references: assets/startup/art_direction.json.

@@ -2,6 +2,7 @@ extends Control
 const Intel=preload("res://scripts/system_intel.gd")
 const Art=preload("res://scripts/landing_art.gd")
 const DESIGN=Vector2(1200,632)
+const BUTTON_FONT=preload("res://assets/fonts/EVOriginal.ttf")
 var game
 var canvas: Control
 var font: Font
@@ -11,12 +12,13 @@ var compact_service: bool=false
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
 	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
-	compact_service=game.hud.port_page in ["exchange","bar","intel"]
+	compact_service=game.hud.port_page in ["exchange","bar","intel","gambling"]
 	canvas=Control.new();canvas.size=DESIGN;add_child(canvas)
 	panel(Rect2(Vector2.ZERO,DESIGN))
 	match game.hud.port_page:
 		"exchange": build_exchange()
 		"bar": build_bar()
+		"gambling": pass
 		"intel": build_intel()
 		_: build_landing()
 	resized.connect(fit);fit()
@@ -42,6 +44,7 @@ func button_at(id: String,value: String,rect: Rect2,action: Callable) -> Button:
 	b.pressed.connect(func():game.sound("menu_click");game.missions.bar_activity();action.call());canvas.add_child(b);return b
 
 static func style_classic_button(b: Button) -> void:
+	b.add_theme_font_override("font",BUTTON_FONT)
 	for state in ["normal","hover","pressed","disabled"]:
 		var style=StyleBoxFlat.new();style.bg_color=Color("777777") if state!="pressed" else Color("444444")
 		style.border_color=Color("999999") if state=="hover" else Color("444444");style.set_border_width_all(4)
@@ -57,21 +60,23 @@ func build_landing() -> void:
 	var port: Dictionary=game.catalog.record("objects",game.docked_id)
 	scenery=TextureRect.new();scenery.name="LandingScenery";scenery.position=Vector2(16,16);scenery.size=Vector2(666,542)
 	scenery.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;scenery.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	scenery.texture=Art.texture(game.catalog,game.docked_id);scenery.tooltip_text=port.name;canvas.add_child(scenery)
+	scenery.texture=Art.texture(game.catalog,game.docked_id,game.world_killer.reconstruction(game.docked_id));scenery.tooltip_text=port.name;canvas.add_child(scenery)
 	var description: String=str(game.catalog.data.descriptions.get(str(game.docked_id),""))
 	var body=RichTextLabel.new();body.name="PortDescription";body.position=Vector2(696,20);body.size=Vector2(488,226)
 	body.bbcode_enabled=false;body.fit_content=false;body.scroll_active=true;body.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	body.add_theme_font_override("normal_font",font);body.add_theme_font_size_override("normal_font_size",20)
 	body.add_theme_color_override("default_color",Color("dddddd"));body.text=description
 	var leads: Dictionary=Intel.report(game,game.pilot.system_id,game.docked_id)
-	if not leads.hints.is_empty(): body.text="LOCAL LEAD: "+str(leads.hints[0]).split(". ")[0]+". See Local Leads & Unlocks for details.\n\n"+description
+	if not leads.hints.is_empty(): body.text="LOCAL LEAD: "+str(leads.hints[0]).split(". ")[0]+". See Local Leads for details.\n\n"+description
+	var rebuilding: String=game.world_killer.reconstruction_text(game.docked_id)
+	if not rebuilding.is_empty(): body.text=rebuilding+"\n\n"+body.text
 	canvas.add_child(body)
 	var actions: Array=[
 		["RefuelShip","Refuel Ship",game.refuel_ship],
 		["OpenExchange","Commodity Exchange",func():page("exchange")],
 		["OpenOutfitter","Outfit Ship",func():game.set_mode("outfitter")]]
 	if int(port.fields.Flags)&8: actions.append(["OpenShipyard","Visit Shipyard",func():game.set_mode("shipyard")])
-	actions.append(["LocalLeads","Local Leads & Unlocks",func():page("intel")])
+	actions.append(["LocalLeads","Local Leads",func():page("intel")])
 	actions.append(["OpenSpaceportBar","Spaceport Bar",func():page("bar")])
 	var y: float=548-actions.size()*48
 	for action in actions:
@@ -134,10 +139,11 @@ func build_bar() -> void:
 	button_at("BarOffers","Bar Offers",Rect2(800,270,360,44),func():mission_computer(1))
 	button_at("OpenNews","Watch Holo-Vid",Rect2(800,332,360,44),game.world_activity.open_news)
 	button_at("HireEscorts","Hire an Escort",Rect2(800,394,360,44),game.toggle_fleet_menu)
+	button_at("Gamble","Gamble",Rect2(800,456,360,44),func():page("gambling"))
 	button_at("LeaveBar","Leave",Rect2(800,568,360,44),func():page("landing"))
 
 func build_intel() -> void:
-	label_at("LocalIntelHeading","Local Leads & Unlocks — "+str(game.catalog.record("objects",game.docked_id).name),Rect2(24,18,1140,40),24)
+	label_at("LocalIntelHeading","Local Leads — "+str(game.catalog.record("objects",game.docked_id).name),Rect2(24,18,1140,40),24)
 	panel(Rect2(20,72,1160,486))
 	var body=RichTextLabel.new();body.name="LocalIntelText";body.position=Vector2(36,86);body.size=Vector2(1128,456)
 	body.add_theme_font_override("normal_font",font);body.add_theme_font_size_override("normal_font_size",21)

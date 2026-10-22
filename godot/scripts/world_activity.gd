@@ -186,7 +186,7 @@ func headlines(local_port: int=-1) -> Array:
 	sync()
 	var result: Array=[]
 	for id in game.pilot.world_killer.destroyed:
-		result.append("BREAKING: %s has been obliterated by a world-killer. Navigation reports only a debris field." % game.catalog.record("objects",int(id)).name)
+		result.append("%s was obliterated. %s" % [game.catalog.record("objects",int(id)).name,game.world_killer.reconstruction_text(int(id))])
 	for e in state().events:
 		var r: Dictionary=game.catalog.record("events",int(e.id))
 		var f: Dictionary=r.fields
@@ -218,7 +218,8 @@ func fear(port: int) -> Dictionary:
 	return {"score":score,"resolve":resolve,"compliant":score>=resolve and int(obj.fields.Flags)&1 and not int(obj.fields.Flags)&32 and not game.world_killer.destroyed(port)}
 
 func landing_reason(port: int) -> String:
-	if game.world_killer.destroyed(port): return "This world has been obliterated. No landing facilities remain."
+	if game.world_killer.destroyed(port): return "This world has been shattered. Reconstruction begins next game day."
+	if game.world_killer.reconstruction(port).get("landable",false): return ""
 	var f: Dictionary=game.catalog.record("objects",port).fields
 	if not int(f.Flags)&1: return "No landing facilities."
 	if not siege.is_empty() and int(siege.port)==port: return "Landing refused while the defense fleet is deployed."

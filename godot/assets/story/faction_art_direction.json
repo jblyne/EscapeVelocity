@@ -1,0 +1,26 @@
+{
+  "mode": "built-in image_gen edit",
+  "factions": {
+    "Confederation": "blue",
+    "Rebellion": "red"
+  },
+  "note": "These edits supersede the original red-government and green-rebel color directions in earlier generation manifests.",
+  "assets": [
+    {
+      "file": "confederation.png",
+      "prompt": "Edit this exact existing painterly Escape Velocity story illustration. Correct faction colors ONLY: All imposing government capital ships are CONFEDERATION: change their red hull markings and armor accents to cobalt/navy BLUE. Keep neutral steel hull panels. No red government ships. Preserve the exact composition, ship designs and positions, people, scenery, painterly brushwork, visible lighting and midtone detail, atmosphere, aspect ratio and resolution. Retain amber practical lights and blue ambient space light naturally. No additional objects or text. This is a targeted faction livery correction, not a redesign."
+    },
+    {
+      "file": "rebellion.png",
+      "prompt": "Edit this exact existing painterly Escape Velocity story illustration. Correct faction colors ONLY: The small ragtag rebel fleet beside the outpost on the LEFT is REBELLION: give these ships RED hull markings and red armor accents. The imposing distant government capital ships on the RIGHT are CONFEDERATION: replace their red hull markings with BLUE. Faction hull markings must clearly distinguish red rebels versus blue Confederation. Preserve the exact composition, ship designs and positions, people, scenery, painterly brushwork, visible lighting and midtone detail, atmosphere, aspect ratio and resolution. Retain amber practical lights and blue ambient space light naturally. No additional objects or text. This is a targeted faction livery correction, not a redesign."
+    },
+    {
+      "file": "oppression.png",
+      "prompt": "Edit this exact existing painterly Escape Velocity story illustration. Correct faction colors ONLY: The enormous government cruiser is CONFEDERATION: change its red hull paint and markings to cobalt BLUE, keeping silver hull plating. The government overseers' uniform accents should be blue. Colonists and miners remain neutral. No red government markings. Preserve the exact composition, ship designs and positions, people, scenery, painterly brushwork, visible lighting and midtone detail, atmosphere, aspect ratio and resolution. Retain amber practical lights and blue ambient space light naturally. No additional objects or text. This is a targeted faction livery correction, not a redesign."
+    },
+    {
+      "file": "civil_war.png",
+      "prompt": "Edit this exact existing painterly Escape Velocity story illustration. Correct faction colors ONLY: The large imposing government capital ships concentrated on the RIGHT are CONFEDERATION: replace all their red hull paint/markings with cobalt BLUE. The smaller ragtag green/gray ships in the LEFT foreground are REBELLION: replace their green hull armor/markings with RED while retaining weathered gray metal. Keep engine exhaust colors luminous and natural; faction identification is HULL paint, not engine glow. Preserve the exact composition, ship designs and positions, people, scenery, painterly brushwork, visible lighting and midtone detail, atmosphere, aspect ratio and resolution. Retain amber practical lights and blue ambient space light naturally. No additional objects or text. This is a targeted faction livery correction, not a redesign."
+    }
+  ]
+}

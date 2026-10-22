@@ -1,0 +1,21 @@
+{
+  "mode": "built-in image_gen",
+  "assets": [
+    {
+      "file": "freighter_years.png",
+      "prompt": "Cinematic hand-painted science fiction oil painting for Escape Velocity's opening story. Years working as first mate on an ore freighter: a solitary adult pilot in a worn blue flight jacket, seen from behind in a utilitarian freighter cockpit, warm instrument lights, immense rust-streaked ore hauler and asteroid mining docks outside. Rich painterly brushwork, atmospheric depth, classic 1990s science-fiction book-cover illustration, midnight blue and black, warm amber highlights. Portrait 2:3 composition, artwork for one side of a widescreen story: a coherent complete vignette, principal subject in outer half, edges softly dissolve into dark space. Beautiful detailed illustration, not photorealistic, no glossy screenshot look. No text, lettering, symbols, UI, borders, captions, logos, or watermark. Original practical spacecraft, no recognizable franchise designs. Maximum resolution."
+    },
+    {
+      "file": "first_ship.png",
+      "prompt": "Cinematic hand-painted science fiction oil painting for Escape Velocity's opening story. Finally buying your first ship: a small sturdy white boxy cargo shuttle, slanted black windshield, simple gray rounded engine pods, parked in a modest orbital hangar, solitary pilot beside it holding a flight bag, warm light through the open hangar. Rich painterly brushwork, atmospheric depth, classic 1990s science-fiction book-cover illustration, midnight blue and black, warm amber highlights. Portrait 2:3 composition, artwork for one side of a widescreen story: a coherent complete vignette, principal subject in outer half, edges softly dissolve into dark space. Beautiful detailed illustration, not photorealistic, no glossy screenshot look. No text, lettering, symbols, UI, borders, captions, logos, or watermark. Original practical spacecraft, no recognizable franchise designs. Maximum resolution."
+    },
+    {
+      "file": "levo_journey.png",
+      "prompt": "Cinematic hand-painted science fiction oil painting for Escape Velocity's opening story. Beginning your journey at Levo: a small white boxy cargo shuttle with black windshield and rounded gray engine pods in orbit over a blue ocean world with many lush rocky islands, tiny neutral orbital port, bright hopeful horizon. Rich painterly brushwork, atmospheric depth, classic 1990s science-fiction book-cover illustration, midnight blue and black, warm amber highlights. Portrait 2:3 composition, artwork for one side of a widescreen story: a coherent complete vignette, principal subject in outer half, edges softly dissolve into dark space. Beautiful detailed illustration, not photorealistic, no glossy screenshot look. No text, lettering, symbols, UI, borders, captions, logos, or watermark. Original practical spacecraft, no recognizable franchise designs. Maximum resolution."
+    },
+    {
+      "file": "good_luck.png",
+      "prompt": "Cinematic hand-painted science fiction oil painting for Escape Velocity's opening story. Good luck, captain: rear view of a small humble white cargo shuttle, its twin warm engine lights setting out into an immense star-filled galaxy, luminous distant nebula and inviting spiral of stars, inspiring sense of opportunity and unknown danger. No people. Rich painterly brushwork, atmospheric depth, classic 1990s science-fiction book-cover illustration, midnight blue and black, warm amber highlights. Portrait 2:3 composition, artwork for one side of a widescreen story: a coherent complete vignette, principal subject in outer half, edges softly dissolve into dark space. Beautiful detailed illustration, not photorealistic, no glossy screenshot look. No text, lettering, symbols, UI, borders, captions, logos, or watermark. Original practical spacecraft, no recognizable franchise designs. Maximum resolution."
+    }
+  ]
+}

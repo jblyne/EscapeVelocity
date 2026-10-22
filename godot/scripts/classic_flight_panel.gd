@@ -18,8 +18,7 @@ var menu_hit: Button
 func _ready() -> void:
 	mouse_filter=Control.MOUSE_FILTER_IGNORE
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	font=SystemFont.new()
-	font.font_names=PackedStringArray(["Menlo","Monaco","monospace"])
+	font=preload("res://assets/fonts/EVOriginal.ttf")
 	canvas=Control.new();canvas.size=DESIGN;canvas.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	add_child(canvas)
 	canvas.draw.connect(draw_panel)

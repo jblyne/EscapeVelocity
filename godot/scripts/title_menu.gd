@@ -2,6 +2,11 @@ extends Control
 
 # Reconstructed from the original six-button bridge console. All artwork is
 # fitted to the window from a fixed design canvas; raster art stays registered.
+const MacDialog=preload("res://scripts/mac_dialog_theme.gd")
+const Lettering=preload("res://scripts/menu_lettering.gd")
+const PanelMotion=preload("res://scripts/menu_panel_motion.gd")
+const FADE_SECONDS: float=16.0/60.0
+const PANEL_STOP_SECONDS: float=12.0/15.0
 const GREEN=Color("80ed73")
 const FRAME_RATE: float=15.0
 const OPENING_DURATION: float=17.0/FRAME_RATE
@@ -9,7 +14,9 @@ const MOTION_DURATION: float=11.0/FRAME_RATE
 # Registered against PICT 8000's actual asymmetrical button/rail locations.
 const LEFT_ORIGINS=[Vector2(96,316),Vector2(96,387),Vector2(96,455)]
 const RIGHT_ORIGINS=[Vector2(499,313),Vector2(499,384),Vector2(499,452)]
+var fade_cover: ColorRect
 var bridge: Texture2D
+var backdrop: Control
 var motion_finished: bool=false
 var game
 var canvas: Control
@@ -18,8 +25,7 @@ var screen: VBoxContainer
 var presentation_started: bool=false
 var discard_setup_delta: bool=false
 var animation_time: float = 0.0
-var animation_frames: Array[Texture2D] = []
-var globe: Texture2D
+var panel_material: ShaderMaterial
 var dialog: PanelContainer
 var pilot_readout: Label
 var pilot_picker: FileDialog
@@ -33,38 +39,58 @@ func _ready() -> void:
 	canvas=Control.new()
 	canvas.size=Vector2(832,624)
 	add_child(canvas)
-	var art=TextureRect.new()
-	bridge=load("res://assets/classic/8000.png")
-	art.texture=bridge
-	art.size=canvas.size
-	art.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	canvas.add_child(art)
+	backdrop=load("res://scripts/title_bridge.gd").new()
+	backdrop.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	add_child(backdrop);move_child(backdrop,1)
+	panel_material=ShaderMaterial.new()
+	panel_material.shader=load("res://shaders/menu_panels.gdshader")
+	backdrop.material=panel_material
+	var atlas=AtlasTexture.new()
+	var hd: Texture2D=load("res://assets/menu/bridge_hd.png")
+	atlas.atlas=hd
+	atlas.region=Rect2(hd.get_width()*.125,0,hd.get_width()*.75,hd.get_height())
+	bridge=atlas
 	var animated=Control.new()
 	animated.name="OriginalAnimation"
 	animated.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	animated.draw.connect(draw_animation.bind(animated))
 	canvas.add_child(animated)
-	for frame in range(8300,8317): animation_frames.append(load("res://assets/classic/%d.png" % frame))
-	globe=load("res://assets/classic/8001.png")
 	resized.connect(fit)
 	fit()
 	for i in 3:
-		menu_button(["New Pilot","Open Pilot","Quit EV"][i],LEFT_ORIGINS[i]+Vector2(115,0),[new_pilot,open_pilot,quit_game][i])
-		var b=menu_button(["Enter Ship","Set Prefs","About EV"][i],RIGHT_ORIGINS[i],[enter_ship,preferences,about][i])
+		var left_button=menu_button(["New Pilot","Open Pilot","Quit EV"][i],face_rect(i,0).position,[new_pilot,open_pilot,quit_game][i])
+		left_button.size=face_rect(i,0).size
+		var b=menu_button(["Enter Ship","Set Prefs","About EV"][i],face_rect(i,1).position,[enter_ship,preferences,about][i])
+		b.size=face_rect(i,1).size
 		if i==0: b.disabled=not game.pilot_ready
+		for side in 2:
+			var label=Lettering.new()
+			label.name="Ink%d%d" % [i,side];label.row=i;label.side=side
+			label.disabled_ink=side==1 and i==0 and not game.pilot_ready
+			var placement: Rect2=Lettering.bounds(i,side)
+			label.position=placement.position;label.size=placement.size
+			canvas.add_child(label)
 	pilot_readout=Label.new()
 	pilot_readout.position=Vector2(365,350)
 	pilot_readout.size=Vector2(104,150)
 	pilot_readout.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	pilot_readout.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
 	pilot_readout.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	# EV 1.0.5 readout: TextFont(3 / Geneva), TextSize(9), at 0x4d024.
+	# The HD design canvas scales the original 640 x 480 coordinates by 1.3.
+	var readout_font=SystemFont.new()
+	readout_font.font_names=PackedStringArray(["Geneva"])
+	readout_font.hinting=TextServer.HINTING_NORMAL
+	readout_font.subpixel_positioning=TextServer.SUBPIXEL_POSITIONING_DISABLED
+	pilot_readout.add_theme_font_override("font",readout_font)
 	pilot_readout.add_theme_font_size_override("font_size",12)
 	pilot_readout.add_theme_color_override("font_color",GREEN)
 	canvas.add_child(pilot_readout)
 	dialog=PanelContainer.new()
 	dialog.position=Vector2(236,290)
 	dialog.size=Vector2(360,290)
-	dialog.add_theme_stylebox_override("panel",style(Color("041008"),Color("46544a"),18))
+	dialog.theme=MacDialog.make()
+	MacDialog.frame(dialog)
 	canvas.add_child(dialog)
 	screen=VBoxContainer.new()
 	screen.add_theme_constant_override("separation",12)
@@ -74,6 +100,9 @@ func _ready() -> void:
 		if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT and event.alt_pressed: original_credits(true))
 	canvas.add_child(logo)
 	pilot_info()
+	fade_cover=ColorRect.new();fade_cover.name="OpeningFade";fade_cover.color=Color.BLACK
+	fade_cover.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	fade_cover.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);add_child(fade_cover)
 	# Do not play panel machinery while the compositor still displays startup.
 	if DisplayServer.get_name()=="headless": get_tree().process_frame.connect(begin_presentation,CONNECT_ONE_SHOT)
 	else: RenderingServer.frame_post_draw.connect(begin_presentation,CONNECT_ONE_SHOT)
@@ -95,49 +124,50 @@ func _process(dt: float) -> void:
 	if not motion_finished and animation_time>=MOTION_DURATION:
 		motion_finished=true
 		game.finish_title_motion()
-	canvas.get_node("OriginalAnimation").queue_redraw()
+	if dialog.visible:
+		dialog.size=Vector2(520,dialog.get_combined_minimum_size().y)
+		dialog.position=(canvas.size-dialog.size)*.5
+	update_presentation()
 
 func animation_sample(at: float) -> Dictionary:
 	var phase: float=clampf(at*FRAME_RATE,0,16)
 	var first: int=int(floor(phase))
 	return {"first":first,"next":mini(first+1,16),"blend":phase-first,
-		"faces":smoothstep(16.0/FRAME_RATE,OPENING_DURATION,at)}
+		"motion":clampf(at/PANEL_STOP_SECONDS,0,1),
+		"faces":1.0 if Lettering.phase(at)>=0 else 0.0,
+		"ink_phase":Lettering.phase(at)}
 
 func panel_rect(row: int,side: int) -> Rect2:
 	return Rect2(LEFT_ORIGINS[row] if side==0 else RIGHT_ORIGINS[row],Vector2(240,59))
 
 func face_rect(row: int,side: int) -> Rect2:
-	return Rect2(panel_rect(row,side).position+Vector2(115 if side==0 else 0,0),Vector2(125,59))
+	var top: float=[474.0,587.0,701.0][row]
+	var bottom: float=[568.0,682.0,798.0][row]
+	var start=PanelMotion.design(Vector2(478 if side==0 else 973,top))
+	var finish=PanelMotion.design(Vector2(699 if side==0 else 1199,bottom))
+	return Rect2(start,finish-start)
+
+func update_presentation() -> void:
+	fade_cover.color.a=1.0-clampf(animation_time/FADE_SECONDS,0,1)
+	var sample: Dictionary=animation_sample(animation_time)
+	for button in canvas.get_children():
+		if button is Button: button.modulate.a=1.0
+		elif button is Lettering:
+			button.at=animation_time
+			if button.side==1 and button.row==0:
+				button.material.set_shader_parameter("brightness",.35 if canvas.get_node("EnterShip").disabled else 1.0)
+			button.queue_redraw()
+	canvas.get_node("OriginalAnimation").queue_redraw()
 
 func draw_animation(surface: Control) -> void:
-	# Keep the final mechanical frame on screen. Previously the strips vanished
-	# at the end and exposed misaligned geometry in the background illustration.
-	# Blend adjacent original frames for smooth motion at any render frequency.
-	var sample: Dictionary=animation_sample(animation_time)
-	for row in 3:
-		for side in 2:
-			var dest: Rect2=panel_rect(row,side)
-			var source=Rect2((1-side)*240,0,240,59)
-			surface.draw_texture_rect_region(animation_frames[sample.first],dest,source)
-			if sample.next!=sample.first:
-				surface.draw_texture_rect_region(animation_frames[sample.next],dest,source,Color(1,1,1,sample.blend))
-			# Resolve the materializing text into each button's own label, without
-			# replacing its piston/rail geometry or shifting its clickable bounds.
-			if sample.faces>0:
-				var face: Rect2=face_rect(row,side)
-				surface.draw_texture_rect_region(bridge,face,face,Color(1,1,1,sample.faces))
-	if animation_time>=OPENING_DURATION:
-		for row in 3:
-			for side in 2:
-				var origin: Vector2=face_rect(row,side).position
-				var offset=Vector2(9,16) if side==0 else Vector2(91,16)
-				surface.draw_texture_rect_region(globe,Rect2(origin+offset,Vector2(25,25)),Rect2((int((animation_time-OPENING_DURATION)*10.0)%4)*25,0,25,25))
+	PanelMotion.draw(surface,bridge.atlas,animation_time)
 
 func fit() -> void:
 	if not is_instance_valid(canvas): return
 	var ratio=minf(size.x/832.0,size.y/624.0)
 	canvas.scale=Vector2.ONE*ratio
 	canvas.position=(size-canvas.size*ratio)/2
+	backdrop.size=size;backdrop.queue_redraw()
 
 func style(fill: Color, border: Color, padding: int=10) -> StyleBoxFlat:
 	var box=StyleBoxFlat.new()
@@ -152,13 +182,20 @@ func style(fill: Color, border: Color, padding: int=10) -> StyleBoxFlat:
 func menu_button(caption: String, pos: Vector2, action: Callable) -> Button:
 	var b=Button.new()
 	b.name=caption.replace(" ","")
+	b.modulate.a=1
 	b.tooltip_text=caption
+	b.text=""
+	b.alignment=HORIZONTAL_ALIGNMENT_RIGHT if pos.x<400 else HORIZONTAL_ALIGNMENT_LEFT
+	b.add_theme_font_size_override("font_size",19)
+	b.add_theme_color_override("font_color",Color("a0ff63"))
+	b.add_theme_color_override("font_disabled_color",Color("345c2a"))
 	b.position=pos;b.size=Vector2(125,59)
 	var clear=StyleBoxEmpty.new()
+	clear.content_margin_left=12;clear.content_margin_right=12
 	b.add_theme_stylebox_override("normal",clear)
 	b.add_theme_stylebox_override("disabled",clear)
-	b.add_theme_stylebox_override("hover",style(Color(0.4,1,0.2,0.12),GREEN,0))
-	b.add_theme_stylebox_override("pressed",style(Color(0,0,0,0.45),GREEN,0))
+	b.add_theme_stylebox_override("hover",style(Color(0.4,1,0.2,0.12),GREEN,12))
+	b.add_theme_stylebox_override("pressed",style(Color(0,0,0,0.45),GREEN,12))
 	b.pressed.connect(func():game.sound("menu_click");action.call())
 	canvas.add_child(b)
 	return b
@@ -171,23 +208,28 @@ func text_at(value: String, pos: Vector2, dimensions: Vector2, font_size: int, c
 	canvas.add_child(l)
 
 func clear_screen() -> void:
+	dialog.size=Vector2(520,340);dialog.position=(canvas.size-dialog.size)*.5
 	dialog.show()
 	for child in screen.get_children():
 		screen.remove_child(child);child.queue_free()
 
 func line(value: String, font_size: int=16) -> Label:
 	var l=Label.new();l.text=value
-	l.add_theme_color_override("font_color",GREEN)
+	l.add_theme_color_override("font_color",Color.BLACK)
 	l.add_theme_font_size_override("font_size",font_size)
 	l.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	screen.add_child(l)
 	return l
 
 func small_button(value: String, action: Callable) -> void:
-	var b=Button.new();b.text=value;b.pressed.connect(func():game.sound("menu_click");action.call());screen.add_child(b)
+	var b=Button.new();b.text=value;b.custom_minimum_size=Vector2(180,32);b.size_flags_horizontal=Control.SIZE_SHRINK_END;b.pressed.connect(func():game.sound("menu_click");action.call());screen.add_child(b)
+	if value in ["Begin new flight","Done"]:
+		b.draw.connect(func():b.draw_style_box(MacDialog.box(Color.TRANSPARENT,Color.BLACK,3,0,7),Rect2(Vector2(-4,-4),b.size+Vector2(8,8))))
+		b.resized.connect(b.queue_redraw)
 
 func pilot_info() -> void:
 	clear_screen()
+	dialog.position=Vector2(236,290);dialog.size=Vector2(360,290)
 	dialog.hide()
 	pilot_readout.text="NO PILOT\n\nNew Pilot\nto begin" if not game.pilot_ready else (game.pilot.pilot_name+"\n"+("STRICT" if game.pilot.strict else "NORMAL")+"\n\n")+str(game.catalog.system(game.pilot.system_id).name)+"\n\nEnter Ship"
 
@@ -203,6 +245,12 @@ func new_pilot() -> void:
 		if not game.create_pilot(name.text,strict.button_pressed):
 			clear_screen();line("PILOT NOT CREATED",20);line(game.pilot_file_error);small_button("Back",new_pilot);small_button("Cancel",pilot_info))
 	small_button("Cancel",pilot_info)
+	var primary=screen.get_child(screen.get_child_count()-2)
+	var cancel=screen.get_child(screen.get_child_count()-1)
+	screen.remove_child(primary);screen.remove_child(cancel)
+	var actions=HBoxContainer.new();actions.alignment=BoxContainer.ALIGNMENT_END
+	actions.add_theme_constant_override("separation",16);screen.add_child(actions)
+	actions.add_child(cancel);actions.add_child(primary)
 
 func open_pilot() -> void:
 	if is_instance_valid(pilot_picker):
@@ -211,7 +259,7 @@ func open_pilot() -> void:
 	pilot_picker.title="Open Pilot";pilot_picker.file_mode=FileDialog.FILE_MODE_OPEN_FILE
 	pilot_picker.access=FileDialog.ACCESS_FILESYSTEM
 	pilot_picker.filters=PackedStringArray(["*.json ; Escape Velocity HD pilots"])
-	pilot_picker.use_native_dialog=DisplayServer.get_name()!="headless"
+	pilot_picker.use_native_dialog=true
 	var current: String=ProjectSettings.globalize_path(game.save_path)
 	pilot_picker.current_dir=current.get_base_dir()
 	if FileAccess.file_exists(current): pilot_picker.current_file=current.get_file()
@@ -250,9 +298,10 @@ func about() -> void:
 func about_with_modifiers(option: bool,command: bool) -> void:
 	if option: original_credits(true);return
 	if command: original_credits(false,true);return
-	clear_screen();line("ABOUT EV",20)
+	clear_screen();dialog.position=Vector2(236,120);dialog.size=Vector2(360,440);line("ABOUT EV",20)
 	line("Escape Velocity\nCreated by Matt Burch\nAmbrosia Software, 1996")
 	line("Escape Velocity HD\nA modern recreation in Godot.")
+	small_button("Replay opening sequence",game.replay_opening_sequence)
 	small_button("Original credits",original_credits)
 	small_button("Original haikus",haikus)
 	small_button("Done",pilot_info)
@@ -273,7 +322,7 @@ func original_credits(parody: bool=false, additional: bool=false) -> void:
 	parody_credits=parody
 	extras_panel=PanelContainer.new()
 	extras_panel.position=Vector2(100,50);extras_panel.size=Vector2(632,524)
-	extras_panel.add_theme_stylebox_override("panel",style(Color("041008"),GREEN,20))
+	extras_panel.theme=MacDialog.make();MacDialog.frame(extras_panel)
 	canvas.add_child(extras_panel)
 	var column=VBoxContainer.new();extras_panel.add_child(column)
 	credits_scroll=ScrollContainer.new();credits_scroll.custom_minimum_size=Vector2(580,450)
@@ -281,6 +330,7 @@ func original_credits(parody: bool=false, additional: bool=false) -> void:
 	credits_label=Label.new();credits_label.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	credits_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	credits_label.add_theme_font_size_override("font_size",18)
+	credits_label.add_theme_color_override("font_color",Color.BLACK)
 	var data=JSON.parse_string(FileAccess.get_file_as_string("res://data/original_extras.json"))
 	credits_label.text="\n".join(data["20002" if parody else "20003" if additional else "20001"].strings)
 	credits_scroll.add_child(credits_label)
@@ -294,6 +344,7 @@ func close_extras() -> void:
 func haikus() -> void:
 	close_extras()
 	extras_panel=PanelContainer.new();extras_panel.position=Vector2(196,90)
+	extras_panel.theme=MacDialog.make();MacDialog.frame(extras_panel)
 	canvas.add_child(extras_panel)
 	var column=VBoxContainer.new();extras_panel.add_child(column)
 	var art=TextureRect.new();art.texture=load("res://assets/classic/8011.png");column.add_child(art)

@@ -1,0 +1,13 @@
+{
+  "mode": "built-in image_gen",
+  "assets": [
+    {
+      "file": "oppression.png",
+      "prompt": "Create a luminous painterly science-fiction oil illustration for Escape Velocity's opening story. Confederation oppression on an outer colony: exhausted miners in practical work clothing beneath towering steel resource extractors, armed uniformed overseers silhouetted on a gantry, enormous red-and-silver naval cruiser above a smoky mining settlement, distant wealthy planet. Convey exploitation and tyranny without gore. Portrait 2:3 composition, coherent vignette for one side of the scrolling story. Rich visible brushwork, detailed readable silhouettes, strong warm rim light and blue ambient fill, bright midtones with restrained highlights; avoid murky shadows and black crush. Classic science-fiction book cover painting, midnight blue, teal, amber and steel. Place main subject away from the inner edge, softly darkened borders. No text, captions, symbols, logos, UI, or watermark. No recognizable franchise designs. Maximum resolution."
+    },
+    {
+      "file": "civil_war.png",
+      "prompt": "Create a luminous painterly science-fiction oil illustration for Escape Velocity's opening story. Galactic civil war: a ragtag green-and-gray rebel fleet clashes with imposing red-and-silver Confederation capital ships over a fractured blue planet, bright blue engine trails and amber distant explosions, human-scale practical spacecraft, dramatic opposing formations. Portrait 2:3 composition, coherent vignette for one side of the scrolling story. Rich visible brushwork, detailed readable silhouettes, strong warm rim light and blue ambient fill, bright midtones with restrained highlights; avoid murky shadows and black crush. Classic science-fiction book cover painting, midnight blue, teal, amber and steel. Place main subject away from the inner edge, softly darkened borders. No text, captions, symbols, logos, UI, or watermark. No recognizable franchise designs. Maximum resolution."
+    }
+  ]
+}

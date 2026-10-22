@@ -439,7 +439,10 @@ func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) 
 		var pos = Vector2(obj.fields.xPos, obj.fields.yPos)
 		var info = catalog.stellar_type(int(obj.fields.Type))
 		var radius: float = StellarModels.radius(info)
-		var node = StellarModels.create(world,pos,info,int(id))
+		var reconstruction: Dictionary=world_killer.reconstruction(int(id))
+		var node: Node3D
+		if reconstruction.is_empty(): node=StellarModels.create(world,pos,info,int(id))
+		else: node=world_killer.Rebuilt.create(world,v3(pos,-35 if info.kind=="station" else -radius-35),radius,int(id),info.kind=="station",float(reconstruction.progress))
 		planets.append({"id": int(id), "name": obj.name, "position": pos, "radius": radius, "node": node,"kind":info.kind})
 	environment_hazards.build()
 	world_killer.restore_visuals()
@@ -1745,6 +1748,16 @@ func load_game() -> void:
 	set_mode("flight")
 	notify("Pilot restored.")
 
+func replay_opening_sequence() -> void:
+	if mode!="title": return
+	set_mode("intro")
+	var layer=CanvasLayer.new();layer.name="OpeningReplay";layer.layer=50;add_child(layer)
+	var opening=load("res://scripts/startup.gd").new()
+	opening.replay_only=true;opening.music_muted=muted;opening.replay_music=audio.menu_music
+	opening.opening_finished.connect(func():
+		layer.queue_free();set_mode("title"))
+	layer.add_child(opening)
+
 var opening_story_seen: bool=false
 func enter_ship_with_intro(force_intro: bool=false) -> void:
 	if not pilot_ready: return
@@ -1754,8 +1767,8 @@ func enter_ship_with_intro(force_intro: bool=false) -> void:
 	set_mode("intro")
 	var layer=CanvasLayer.new();layer.layer=50;add_child(layer)
 	var intro=load("res://scripts/startup.gd").new();intro.story_only=true;intro.music_muted=muted
-	intro.story_finished.connect(func():
-		layer.queue_free();set_mode("flight"))
+	intro.story_finished.connect(func():set_mode("flight"))
+	intro.story_revealed.connect(layer.queue_free)
 	layer.add_child(intro)
 
 func remember_active_pilot() -> void:

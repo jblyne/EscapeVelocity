@@ -289,9 +289,9 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 	var saved_history=value.get("interaction_history",History.fresh())
 	if not History.valid(saved_history): return false
 	var saved_killer=value.get("world_killer",WorldKiller.fresh())
-	if not WorldKiller.valid(saved_killer,catalog): return false
+	if not WorldKiller.valid(saved_killer,catalog,int(saved_campaign.day)): return false
 	interaction_history=History.normalized(saved_history)
-	world_killer=WorldKiller.normalized(saved_killer,catalog)
+	world_killer=WorldKiller.normalized(saved_killer,catalog,int(saved_campaign.day))
 	local_records={}
 	for id in saved_local: local_records[id]=int(saved_local[id])
 	world_state=WorldState.normalized(saved_world)

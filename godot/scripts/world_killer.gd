@@ -2,6 +2,7 @@ extends RefCounted
 
 # An intentional remake feature. Its countdown uses flight time, including
 # flight in other systems; every menu pauses it with the rest of the simulation.
+const Rebuilt=preload("res://scripts/rebuilt_world.gd")
 const State=preload("res://scripts/campaign_state.gd")
 const Rupture=preload("res://scripts/planet_rupture.gd")
 const COUNTDOWN: float=120.0
@@ -31,9 +32,9 @@ func _init() -> void:
 	negotiation_rng.randomize()
 
 static func fresh() -> Dictionary:
-	return {"destroyed":[],"threatened":[],"active":{}}
+	return {"destroyed":[],"threatened":[],"active":{},"destroyed_at":{}}
 
-static func valid(value: Variant,catalog) -> bool:
+static func valid(value: Variant,catalog,day: int=-1) -> bool:
 	if not value is Dictionary: return false
 	for key in ["destroyed","threatened"]:
 		if not value.get(key) is Array or value[key].size()>catalog.data.objects.size(): return false
@@ -42,12 +43,20 @@ static func valid(value: Variant,catalog) -> bool:
 			if not State.integer(id,128,32767) or catalog.record("objects",int(id)).is_empty() or int(id) in seen: return false
 			var obj: Dictionary=catalog.record("objects",int(id))
 			seen.append(int(id))
+	var destroyed_ids: Array=value.destroyed.map(func(id):return int(id))
+	var threatened_ids: Array=value.threatened.map(func(id):return int(id))
+	var dates=value.get("destroyed_at",{})
+	if not dates is Dictionary or dates.size()>catalog.data.objects.size(): return false
+	for key in dates:
+		if not key is String or not key.is_valid_int() or str(int(key))!=key or int(key) not in destroyed_ids: return false
+		if not State.integer(dates[key],0,1000000000) or (day>=0 and int(dates[key])>day): return false
 	if not value.get("active") is Dictionary: return false
 	var bomb: Dictionary=value.active
 	if bomb.is_empty(): return true
 	if not State.integer(bomb.get("id"),128,32767): return false
 	var obj: Dictionary=catalog.record("objects",int(bomb.id))
-	if obj.is_empty() or int(bomb.id) in value.destroyed or int(bomb.id) not in value.threatened: return false
+	if obj.is_empty() or int(bomb.id) not in threatened_ids: return false
+	if int(bomb.id) in destroyed_ids and (not dates.has(str(int(bomb.id))) or day<=int(dates[str(int(bomb.id))])): return false
 	if not State.integer(bomb.get("system"),128,32767) or int(bomb.system)!=int(obj.fields.System): return false
 	if not State.integer(bomb.get("sequence",1),1,3): return false
 	var sequence: int=int(bomb.get("sequence",1))
@@ -113,10 +122,11 @@ static func sequence_position(b: Dictionary) -> Vector2:
 	var progress: float=clampf((COUNTDOWN-float(b.remaining)-warp)/(COUNTDOWN-DeathStar.STOP_REMAINING-warp),0,1)
 	return Vector2(b.start_x,b.start_y).lerp(Vector2(b.anchor_x,b.anchor_y),smoothstep(0,1,progress))
 
-static func normalized(value: Dictionary,catalog) -> Dictionary:
+static func normalized(value: Dictionary,catalog,day: int=0) -> Dictionary:
 	var result=fresh()
 	for key in ["destroyed","threatened"]:
 		for id in value[key]: result[key].append(int(id))
+	for id in result.destroyed: result.destroyed_at[str(id)]=int(value.get("destroyed_at",{}).get(str(id),day))
 	result.active=value.active.duplicate(true)
 	if not result.active.is_empty():
 		var b: Dictionary=result.active
@@ -144,7 +154,21 @@ static func normalized(value: Dictionary,catalog) -> Dictionary:
 	return result
 
 func state() -> Dictionary: return game.pilot.world_killer
-func destroyed(id: int) -> bool: return id in state().destroyed
+func reconstruction(id: int) -> Dictionary:
+	if id not in state().destroyed: return {}
+	var elapsed: int=maxi(0,int(game.pilot.campaign.day)-int(state().get("destroyed_at",{}).get(str(id),game.pilot.campaign.day)))
+	var stage: int=0 if elapsed==0 else mini(4,1+int((elapsed-1)/20))
+	return {"days":elapsed,"stage":stage,"progress":clampf(float(elapsed)/80,0,1),"landable":elapsed>0,"complete":elapsed>=80}
+func destroyed(id: int) -> bool:
+	return id in state().destroyed and not reconstruction(id).landable
+func reconstruction_text(id: int) -> String:
+	var r: Dictionary=reconstruction(id)
+	if r.is_empty(): return ""
+	if not r.landable: return "Shattered · reconstruction begins next game day. No landing facilities remain yet."
+	var title: String=["","Steel skeleton","Hull assembly","Habitat and soil fitting","Steel shell and water reclamation"][int(r.stage)]
+	if r.complete: title="Complete"
+	var reclamation: String=" Soil and water reclamation is underway." if not is_space_station(id) and int(r.days)>40 else ""
+	return "Steel reconstruction: %s · %d%% · day %d / 80. %s%s" % [title,roundi(float(r.progress)*100),mini(80,int(r.days)),"Docking facilities are operational." if r.complete else "Temporary docks are open.",reclamation]
 func bomb() -> Dictionary: return state().active
 func target_position(id: int) -> Vector2:
 	var f: Dictionary=game.catalog.record("objects",id).fields
@@ -167,7 +191,7 @@ func restore_visuals() -> void:
 		plea_pending=bool(bomb().plea_sent) and not bool(bomb().denied)
 		if int(bomb().system)==game.pilot.system_id: create_station()
 	for id in state().destroyed:
-		if int(game.catalog.field("objects",int(id),"System"))==game.pilot.system_id:
+		if destroyed(int(id)) and int(game.catalog.field("objects",int(id),"System"))==game.pilot.system_id:
 			create_remnant(int(id),true)
 
 func is_space_station(id: int) -> bool:
@@ -436,7 +460,8 @@ func advance(dt: float) -> void:
 		if not is_instance_valid(warning_shell):
 			for body in game.planets:
 				if int(body.id)!=int(b.id) or is_space_station(int(b.id)): continue
-				var surface: MeshInstance3D=body.node.get_node("Surface")
+				var surface: MeshInstance3D=body.node.get_node_or_null("Surface")
+				if surface==null or not surface.material_override is ShaderMaterial: continue
 				warning_shell=MeshInstance3D.new();warning_shell.mesh=surface.mesh;warning_shell.scale=Vector3.ONE*1.006
 				var mat: ShaderMaterial=surface.material_override.duplicate();mat.shader=preload("res://shaders/planet_crust.gdshader")
 				mat.set_shader_parameter("rupture_fade",.65);warning_shell.material_override=mat;surface.add_child(warning_shell)
@@ -451,7 +476,11 @@ func detonate() -> void:
 	var id: int=int(bomb().id)
 	var local: bool=int(bomb().system)==game.pilot.system_id
 	# Commit the destroyed state before mission-failure handlers can save.
-	state().active={};state().destroyed.append(id);plea_pending=false;launch_preview=false;clear_warning_shell()
+	state().active={}
+	if id not in state().destroyed: state().destroyed.append(id)
+	if not state().has("destroyed_at"): state().destroyed_at={}
+	state().destroyed_at[str(id)]=int(game.pilot.campaign.day)
+	plea_pending=false;launch_preview=false;clear_warning_shell()
 	if is_instance_valid(station): station.begin_departure(true);effects.append(station)
 	station=null;stop_audio()
 	game.pilot.world_state.dominated.erase(id)
@@ -469,7 +498,7 @@ func detonate() -> void:
 		for body in game.planets.duplicate():
 			if int(body.id)!=id: continue
 			var effect: Node3D
-			if is_space_station(id):
+			if is_space_station(id) or body.node.has_meta("rebuild_id"):
 				effect=preload("res://scripts/explosion.gd").new();game.world.add_child(effect)
 				effect.position=body.node.position;effect.setup(body.node,Vector2.ZERO,id,3.0)
 				var breakup=preload("res://scripts/breakup.gd").new();game.world.add_child(breakup)
@@ -479,7 +508,7 @@ func detonate() -> void:
 			effects.append(effect);body.node.queue_free();game.planets.erase(body)
 		create_remnant(id);shake=3.5
 		game.sound("explosion");game.sound("arrival")
-	game.notify("%s OBLITERATED. Only a shattered debris field remains." % world_name(id))
+	game.notify("%s SHATTERED. Steel reconstruction starts next game day; complete in 80 days." % world_name(id))
 	game.save_game(false)
 
 func create_remnant(id: int,restored: bool=false) -> void:

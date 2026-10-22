@@ -1,0 +1,20 @@
+{
+  "mode": "built-in image_gen",
+  "assets": [
+    {
+      "file": "ambrosia_hd.png",
+      "reference": "../classic/8100.png",
+      "prompt": "Use case: style-transfer. Edit target: original Ambrosia Software publisher logo. Faithful high resolution restoration, not a redesign. Preserve the EXACT original portrait rectangular logo composition, white/light ivory field, hand drawn double black rectangular border, burgundy red circular woodcut scene of the bearded mythological figure pouring a cup, all original poses, silhouettes, negative spaces and decorative line work. Retain original serif AMBROSIA and widely tracked SOFTWARE lettering verbatim and tiny trademark. Clean sharp high resolution ink edges and fine engraving detail, same flat red white charcoal palette. No new objects, no gradient, no modernized symbol, no 3D, no mockup, no shadow, no additional text. Entire original logo visible with a narrow white margin, portrait aspect ratio matching reference. Maximum high definition resolution."
+    },
+    {
+      "file": "loading_hd.png",
+      "reference": "../classic/131.png",
+      "prompt": "Use case: style-transfer. Edit target: original Escape Velocity loading screen. Faithful high definition remaster of this exact artwork, NOT a redesign. Preserve the identical arrangement: blue suited pilot seen from behind standing left of center, looking through the arched bridge window at a dense fleet of small red and blue spacecraft and a central distant green planet; huge red and silver ships framing the window at both sides; dark industrial bridge console with multicolored tiny square lights; large original extruded silver ESCAPE lettering with the original slanted neon yellow-green script Velocity across the lower foreground. Text verbatim ESCAPE Velocity, reproduce the original logo typography and proportions. Same camera, same 1990s rendered science fiction aesthetic, same colors, same character pose and placement, same ships and framing. Improve material definition, fine detail, clean anti-aliasing and resolution. Widescreen 16:9 extension only: entire original 4:3 picture remains intact, uncropped, centered at full height, occupying middle 75% of output width. Extend existing dark console and surrounding ship bridge equally to left and right. Do not change central composition. No extra people, no new UI, no new typography or labels, no holograms, no cinematic planet vista. Maximum high definition resolution."
+    },
+    {
+      "file": "levo_arrival_hd.png",
+      "reference": "../classic/8200.png and user screenshot",
+      "prompt": "Faithful high-definition remaster of the attached original Escape Velocity Levo spaceport remote video image, NOT a redesign. Preserve the exact composition and camera: blue sky with layered white clouds in upper half, sunlit silver-blue ocean, the exact arrangement of jagged green rocky islands in foreground and middle distance, small silver dome on middle island, large white boxy cargo shuttle with black windshield at upper right center flying left, same rounded twin gray engine pods, same six small distant spacecraft and red-white three-ship formation high left-center. Preserve original simple spacecraft silhouettes, scale and placement, original restrained 1990s science fiction render aesthetic and colors. Sharpen into clean detailed high-resolution 3D rendered materials, smooth antialiasing, detailed rippling water, rocky lush islands, realistic soft daylight without altering layout. Preserve thin metallic outer display border and small black bordered readout panels in bottom corners, same compact original green digital lettering. Text bottom left: 'M83-96', 'HOLO RECONSTRUCTION ENABLED', 'ALO-994/R REMOTE VIDEO LINK', 'EXTERNAL VIEW ACTIVATED', red '[LOCKED]'. Bottom right: 'LEVO SPACEPORT DOWNLINK', 'REALTIME UPDATE AVAILABLE'. No other text, no added ships or structures. Same approximately 1.39:1 aspect ratio, entire original image uncropped, maximum high resolution."
+    }
+  ]
+}

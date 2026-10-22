@@ -1,5 +1,7 @@
 extends Control
 var game
+const TOP_PADDING=18.0
+const DIVIDER_BOTTOM=170.0+TOP_PADDING
 var generation=-1
 var age=20.0
 var heading: Label
@@ -19,7 +21,7 @@ func _process(dt):
  visible=game.mode=="flight" and age<9
  if not visible: return
  var available: float=game.hud.root.size.x-game.hud.flight_panel.panel_width()
- size=Vector2(minf(900,available-32),175);position=Vector2((available-size.x)*.5,140-18*(1-smoothstep(0,.4,age)))
+ size=Vector2(minf(900,available-32),175+TOP_PADDING);position=Vector2((available-size.x)*.5,140-18*(1-smoothstep(0,.4,age)))
  modulate.a=smoothstep(0,.25,age)*(1-smoothstep(8,9,age))
  heading.text="BOUNTY HUNTER DEFEATED"
  reward.text="+%s CREDITS / DAY" % game.hud.commas(int(round(5000*smoothstep(.1,.8,age))))
@@ -27,14 +29,14 @@ func _process(dt):
  footer.text="THEY GIVE UP · No more hunters from this world" if data.get("gave_up",false) else "YOUR TRIBUTE HAS INCREASED"
  var ys=[0,34,91,126];var labels=[heading,reward,detail,footer]
  for i in labels.size():
-  labels[i].position=Vector2(0,ys[i]);labels[i].size=Vector2(size.x,42);labels[i].scale=Vector2.ONE*minf(1,(size.x-10)/maxf(1,labels[i].get_minimum_size().x));labels[i].position.x=(size.x-labels[i].size.x*labels[i].scale.x)*.5
+  labels[i].position=Vector2(0,ys[i]+TOP_PADDING);labels[i].size=Vector2(size.x,42);labels[i].scale=Vector2.ONE*minf(1,(size.x-10)/maxf(1,labels[i].get_minimum_size().x));labels[i].position.x=(size.x-labels[i].size.x*labels[i].scale.x)*.5
  queue_redraw()
 func _draw():
  var glow: float=.35+.15*sin(age*4)
- draw_rect(Rect2(0,0,size.x,170),Color(.01,.025,.008,.65))
+ draw_rect(Rect2(0,0,size.x,DIVIDER_BOTTOM),Color(.01,.025,.008,.65))
  draw_line(Vector2(0,0),Vector2(size.x,0),Color(.7,1,.45,glow),2)
- draw_line(Vector2(0,170),Vector2(size.x,170),Color(.7,1,.45,glow),2)
+ draw_line(Vector2(0,DIVIDER_BOTTOM),Vector2(size.x,DIVIDER_BOTTOM),Color(.7,1,.45,glow),2)
  for i in 16:
   var t: float=fmod(age*.3+i*.061,1)
   var x: float=fmod(i*127.3,size.x)
-  draw_circle(Vector2(x,170*(1-t)),1.5,Color(.8,1,.5,sin(t*PI)*.4))
+  draw_circle(Vector2(x,DIVIDER_BOTTOM*(1-t)),1.5,Color(.8,1,.5,sin(t*PI)*.4))

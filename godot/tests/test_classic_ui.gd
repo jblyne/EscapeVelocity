@@ -16,7 +16,7 @@ func run():
 	game.muted=true;root.add_child(game)
 	game.set_mode("title")
 	var menu=game.hud.modal_root.get_child(0)
-	check(menu.animation_frames.size()==17,"all original animation frames loaded")
+	check(menu.panel_material.shader.resource_path.ends_with("menu_panels.gdshader"),"Menu uses registered HD artwork for every animated pose")
 	menu.animation_time=2
 	if "--visual" in OS.get_cmdline_user_args(): await capture("menu")
 	game.set_mode("flight");game.hud._process(0)

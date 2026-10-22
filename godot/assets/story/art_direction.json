@@ -1,0 +1,21 @@
+{
+  "mode": "built-in image_gen",
+  "assets": [
+    {
+      "file": "frontier.png",
+      "prompt": "Create a cinematic science-fiction oil painting for Escape Velocity's scrolling opening story. A hopeful human space frontier: small weathered cargo shuttle and ore freighter sailing past the blue curve of an ocean planet, distant new colonies, star lanes opening into a vast luminous galaxy. Elegant hand-painted brushwork, rich atmospheric depth, luminous restrained highlights, classic painted 1990s science-fiction book-cover quality, deep midnight blue and black with amber accents. Landscape 16:9. Place main storytelling imagery in the OUTER left and right thirds, leave the central third mostly dark quiet space for white scrolling text. Edges dissolve into near-black, no border. No text, lettering, captions, logos, UI, or watermarks. Detailed original spacecraft, no recognizable franchise designs. Cohesive painterly aesthetic, not a photograph or glossy video-game screenshot."
+    },
+    {
+      "file": "alien_war.png",
+      "prompt": "Create a cinematic science-fiction oil painting for Escape Velocity's scrolling opening story. The sudden Great War: immense mysterious angular alien warships eclipse a blue outer-colony planet, distant orange explosions around orbital cities; tiny human defenders face the overwhelming invasion. Elegant hand-painted brushwork, rich atmospheric depth, luminous restrained highlights, classic painted 1990s science-fiction book-cover quality, deep midnight blue and black with amber accents. Landscape 16:9. Place main storytelling imagery in the OUTER left and right thirds, leave the central third mostly dark quiet space for white scrolling text. Edges dissolve into near-black, no border. No text, lettering, captions, logos, UI, or watermarks. Detailed original spacecraft, no recognizable franchise designs. Cohesive painterly aesthetic, not a photograph or glossy video-game screenshot."
+    },
+    {
+      "file": "confederation.png",
+      "prompt": "Create a cinematic science-fiction oil painting for Escape Velocity's scrolling opening story. A powerful human Confederation navy after victory: imposing silver and red capital ships above wealthy illuminated core worlds, an exploited dark mining colony in the foreground; grandeur turning to oppression. Elegant hand-painted brushwork, rich atmospheric depth, luminous restrained highlights, classic painted 1990s science-fiction book-cover quality, deep midnight blue and black with amber accents. Landscape 16:9. Place main storytelling imagery in the OUTER left and right thirds, leave the central third mostly dark quiet space for white scrolling text. Edges dissolve into near-black, no border. No text, lettering, captions, logos, UI, or watermarks. Detailed original spacecraft, no recognizable franchise designs. Cohesive painterly aesthetic, not a photograph or glossy video-game screenshot."
+    },
+    {
+      "file": "rebellion.png",
+      "prompt": "Create a cinematic science-fiction oil painting for Escape Velocity's scrolling opening story. The outer colonies rise: a ragtag fleet of compact green and gray rebel spacecraft assembling beside an industrial asteroid outpost, distant red Confederation cruisers, a hopeful warm sunrise amid a cold blue nebula. Elegant hand-painted brushwork, rich atmospheric depth, luminous restrained highlights, classic painted 1990s science-fiction book-cover quality, deep midnight blue and black with amber accents. Landscape 16:9. Place main storytelling imagery in the OUTER left and right thirds, leave the central third mostly dark quiet space for white scrolling text. Edges dissolve into near-black, no border. No text, lettering, captions, logos, UI, or watermarks. Detailed original spacecraft, no recognizable franchise designs. Cohesive painterly aesthetic, not a photograph or glossy video-game screenshot."
+    }
+  ]
+}

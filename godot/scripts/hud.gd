@@ -83,6 +83,9 @@ func _ready() -> void:
 	cheat_status=label(hidden,"",11,Color("e7c993"))
 	mission_label=label(hidden,"",16,Color("e7c993"))
 	flight_messages=VBoxContainer.new()
+	var message_theme=Theme.new()
+	message_theme.default_font=preload("res://assets/fonts/ChicagoFLFRegular.ttf")
+	flight_messages.theme=message_theme
 	flight_messages.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	flight_messages.offset_left=16;flight_messages.offset_right=-300
 	flight_messages.offset_top=-64;flight_messages.offset_bottom=-14
@@ -295,7 +298,7 @@ func begin_modal_motion() -> void:
 	if is_instance_valid(modal_tween): modal_tween.kill()
 	if is_instance_valid(modal_outgoing):
 		modal_outgoing.hide();modal_outgoing.queue_free()
-	if changed and modal_mode!="title" and modal_root.get_child_count()>0:
+	if changed and modal_mode not in ["title","intro"] and modal_root.get_child_count()>0:
 		var outgoing=Control.new()
 		outgoing.name="ClosingWindow"
 		outgoing.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -316,7 +319,7 @@ func begin_modal_motion() -> void:
 	modal_mode=game.mode
 	modal_root.scale=Vector2.ONE
 	modal_root.modulate=Color.WHITE
-	if entering and game.mode not in ["title","flight","ejecting"]:
+	if entering and game.mode not in ["title","intro","flight","ejecting"]:
 		modal_root.pivot_offset=modal_root.size*.5
 		modal_root.scale=Vector2.ONE*.985
 		modal_root.modulate.a=0
@@ -339,7 +342,7 @@ func rebuild_modal() -> void:
 	for child in modal_root.get_children():
 		modal_root.remove_child(child)
 		child.queue_free()
-	if game.mode=="flight" or game.mode=="ejecting": return
+	if game.mode in ["flight","intro","ejecting"]: return
 	if game.mode in ["eject_confirm","rescue"]:
 		var col=modal(580)
 		label(col,"ABANDON SHIP" if game.mode=="eject_confirm" else "ESCAPE POD · SIGNAL RECEIVED",24)
@@ -682,7 +685,7 @@ func build_outfitter() -> void:
 	var screen=preload("res://scripts/classic_outfitter.gd").new();screen.game=game;modal_root.add_child(screen)
 
 func build_dock() -> void:
-	var port=preload("res://scripts/classic_port.gd").new();port.game=game;modal_root.add_child(port)
+	var port=preload("res://scripts/classic_gambling.gd").new() if port_page=="gambling" else preload("res://scripts/classic_port.gd").new();port.game=game;modal_root.add_child(port)
 
 func build_missions() -> void:
 	var screen=preload("res://scripts/classic_missions.gd").new();screen.game=game;modal_root.add_child(screen)

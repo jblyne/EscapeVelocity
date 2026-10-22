@@ -39,8 +39,9 @@ func run() -> void:
 	game.set_mode("flight");killer.open_active()
 	check(killer.bomb().bribe_offer==offer,"Reopening channel does not reroll bribe")
 	check(game.save_game(false),"Offer saves to disk")
+	var previous_pilot=game.pilot
 	game.load_game();killer.open_active()
-	check(killer.bomb().bribe_offer==offer and killer.bomb().bribe_round==1,"Reload preserves quoted offer")
+	check(game.pilot!=previous_pilot and killer.bomb().bribe_offer==offer and killer.bomb().bribe_round==1,"Actual disk reload replaces pilot and preserves quoted offer")
 	var delays: Array=[];var increases: Array=[]
 	for round in 3:
 		var old: int=killer.bomb().bribe_offer
@@ -55,7 +56,7 @@ func run() -> void:
 		check(killer.bomb().bribe_offer==old,"Bribe stays fixed until scheduled increase")
 		if round==0:
 			var scheduled: float=killer.bomb().bribe_next;game.save_game(false);game.load_game()
-			check(killer.bomb().bribe_next==scheduled and killer.bomb().bribe_offer==old,"Reload preserves rejected offer and scheduled counteroffer")
+			check(is_equal_approx(float(killer.bomb().bribe_next),scheduled) and killer.bomb().bribe_offer==old,"Reload preserves rejected offer and scheduled counteroffer")
 		killer.advance(.11)
 		check(killer.bomb().bribe_offer>old and killer.plea_pending,"Rejection leads to a strictly larger incoming offer")
 		check(game.mode=="flight" and killer.bomb().remaining<remaining,"Counteroffer never interrupts flight or resets countdown")

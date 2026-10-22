@@ -62,7 +62,7 @@ func make_button(id: String,text: String,rect: Rect2,action: Callable) -> Button
 func text(at: Vector2,value: String,color: Color=Color("dddddd"),font_size: int=16) -> void:
 	var key: String=str(at)
 	if not readouts.has(key):
-		var label=Label.new();label.position=at-Vector2(0,font_size+2);label.mouse_filter=Control.MOUSE_FILTER_IGNORE
+		var label=preload("res://scripts/reconstruction_readout.gd").new() if at==Vector2(656,130) else Label.new();label.position=at-Vector2(0,font_size+2);label.mouse_filter=Control.MOUSE_FILTER_IGNORE
 		label.size=Vector2(210 if at.x>=628 else 810,26);label.clip_text=true
 		label.add_theme_font_override("font",font);label.add_theme_font_size_override("font_size",font_size)
 		canvas.add_child(label);readouts[key]=label
@@ -111,6 +111,21 @@ func refresh_details() -> void:
 	if not d.shattered.is_empty():
 		text(Vector2(646,104),"Destroyed targets:",Color("ffad60"))
 		text(Vector2(656,130),", ".join(d.shattered),Color("ffad60"))
+	var reconstruction_notes: Array[String]=[]
+	var reconstruction_ports: Array=[]
+	if readouts.has(str(Vector2(656,130))): readouts[str(Vector2(656,130))].ports=[]
+	for port in game.catalog.system(int(d.id)).get("objects",[]):
+		var note: String=game.world_killer.reconstruction_text(int(port))
+		if not note.is_empty():
+			reconstruction_notes.append(game.catalog.record("objects",int(port)).name+": "+note)
+			reconstruction_ports.append(int(port))
+	if d.explored and not reconstruction_notes.is_empty():
+		text(Vector2(646,104),"Steel reconstruction",Color("a7cce8"))
+		text(Vector2(656,130),"%d restored · %d shattered · hover" % [reconstruction_notes.size()-d.shattered.size(),d.shattered.size()],Color("a7cce8"))
+		readouts[str(Vector2(656,130))].game=game
+		readouts[str(Vector2(656,130))].ports=reconstruction_ports
+		readouts[str(Vector2(656,130))].mouse_filter=Control.MOUSE_FILTER_PASS
+		readouts[str(Vector2(656,130))].tooltip_text="\n".join(reconstruction_notes)
 	text(Vector2(646,164),"Government:");text(Vector2(656,190),d.gov)
 	text(Vector2(646,252),"Legal Status:");text(Vector2(656,278),d.legal,chart.DOMINATED_COLOR if not d.dominated.is_empty() else Color("dddddd"))
 	var legal_label: Label=readouts[str(Vector2(656,278))]
