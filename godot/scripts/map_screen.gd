@@ -51,7 +51,7 @@ func fit() -> void:
 
 func make_button(id: String,text: String,rect: Rect2,action: Callable) -> Button:
 	var b=Button.new();b.name=id;b.text=text;b.position=rect.position;b.size=rect.size;b.focus_mode=Control.FOCUS_NONE
-	b.add_theme_font_override("font",font);b.add_theme_font_size_override("font_size",22)
+	b.add_theme_font_override("font",preload("res://assets/fonts/EVOriginal.ttf"));b.add_theme_font_size_override("font_size",22)
 	for state in ["normal","hover","pressed","disabled"]:
 		var style=StyleBoxFlat.new();style.bg_color=Color("777777") if state!="pressed" else Color("444444")
 		style.set_border_width_all(4);style.border_color=Color("444444");style.border_color=Color("999999") if state=="hover" else style.border_color

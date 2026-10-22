@@ -134,7 +134,7 @@ func show_phase(value: String) -> void:
 	hint.text="";hint.hide()
 	progress.visible=value=="loading";story_clip.visible=value=="story"
 	wide_art.visible=value=="loading";art.visible=value!="loading"
-	art.position=Vector2(0,16) if value=="logo" else Vector2.ZERO
+	art.position=Vector2(0,(canvas.size.y-560)*.5) if value=="logo" else Vector2.ZERO
 	art.size=Vector2(832,560) if value=="logo" else canvas.size
 	if value=="logo":
 		art.texture=load("res://assets/startup/ambrosia_hd.png")

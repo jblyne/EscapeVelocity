@@ -25,7 +25,7 @@ func run() -> void:
 			if line>=12: check(visible_sides[0] and visible_sides[1],"Both sides persist between topic changes")
 			if "--visual" in OS.get_cmdline_user_args():
 				await process_frame;await RenderingServer.frame_post_draw
-				root.get_texture().get_image().save_png("/tmp/ev206-story-%d-%d.png" % [line,dimensions.x])
+				root.get_texture().get_image().save_png("/tmp/ev213-story-%d-%d.png" % [line,dimensions.x])
 		# Fade starts independently: right arrives while left keeps showing.
 		paintings.present(intro.story_clip.size.y*.5-8.5*39,39,intro.STORY_SPEED,intro.story_clip.size.y)
 		check(paintings.panels[0].modulate.a>.99 and paintings.panels[1].modulate.a>0 and paintings.panels[1].modulate.a<1,"Independent left/right fade")

@@ -1,0 +1,16 @@
+{
+  "mode": "built-in image_gen edit",
+  "reference": "User-provided vintage theatrical space-adventure poster; style only, not its characters or branding.",
+  "assets": [
+    {
+      "file": "frontier_poster.png",
+      "source": "frontier.png",
+      "prompt": "Image 1 is the Escape Velocity scene to restyle; image 2 is a STYLE REFERENCE ONLY. Keep the frontier subjects from image 1: a small practical weathered white cargo shuttle with twin engines, blue ocean planet and distant human colonies, larger ore freighter among asteroids and luminous stars. Recompose as ONE full-width portrait vignette with the shuttle large and clearly visible, planet and freighter arranged as a dramatic illustrated montage. No empty central black column. Transform into the reference's late-1970s hand-painted space-adventure theatrical poster illustration: bold ink-black shadows, saturated electric cyan and cobalt blue reflected light, hot vermilion and orange accents, cream-white highlights, dramatic graphic silhouettes, confident simplified painted shapes, crisp contour accents, visible gouache/airbrush and brushwork, vintage printed poster texture. Strong cinematic illustrated montage, NOT photorealistic, NOT a 3D render, NOT the previous naturalistic digital concept art. Preserve Escape Velocity subjects only; do not import Star Wars characters, weapons, logos, costumes, lettering, or emblems from the style reference. No text, typography, titles, credits, borders, logos, or watermarks. Portrait 2:3, artwork fills canvas; do not pre-darken or fade the inner edge (the game handles that). Maximum resolution."
+    },
+    {
+      "file": "alien_attack_poster.png",
+      "source": "alien_attack.png",
+      "prompt": "Image 1 is the Escape Velocity scene to restyle; image 2 is a STYLE REFERENCE ONLY. Keep the exact alien attack subject and design from image 1: clearly nonhuman armored alien firing an energy weapon into a human colony gantry, small fleeing people, burning city, dark alien warships overhead. Preserve its readable full-body action silhouette and weapon direction. Portrait composition, main figure large and readable. Transform into the reference's late-1970s hand-painted space-adventure theatrical poster illustration: bold ink-black shadows, saturated electric cyan and cobalt blue reflected light, hot vermilion and orange accents, cream-white highlights, dramatic graphic silhouettes, confident simplified painted shapes, crisp contour accents, visible gouache/airbrush and brushwork, vintage printed poster texture. Strong cinematic illustrated montage, NOT photorealistic, NOT a 3D render, NOT the previous naturalistic digital concept art. Preserve Escape Velocity subjects only; do not import Star Wars characters, weapons, logos, costumes, lettering, or emblems from the style reference. No text, typography, titles, credits, borders, logos, or watermarks. Portrait 2:3, artwork fills canvas; do not pre-darken or fade the inner edge (the game handles that). Maximum resolution."
+    }
+  ]
+}

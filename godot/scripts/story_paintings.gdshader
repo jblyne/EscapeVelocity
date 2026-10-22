@@ -1,6 +1,7 @@
 shader_type canvas_item;
 uniform float side=0.0;
 uniform float source_half=-1.0;
+uniform float vertical_focus_offset=0.0;
 varying vec4 painting_tint;
 void vertex(){
 	// Fragment COLOR already includes the texture. Preserve only vertex tint so
@@ -9,6 +10,7 @@ void vertex(){
 }
 void fragment(){
 	vec2 uv=UV;
+	uv.y=clamp(uv.y+vertical_focus_offset,0.0,1.0);
 	if(source_half>=0.0){
 		if(abs(source_half-side)>0.5){uv.x=1.0-uv.x;}
 		uv.x=uv.x*0.34+source_half*0.66;

@@ -1178,3 +1178,40 @@ Fixed the painting shader multiplying its cropped image by the original texture 
 ### Current local Mac package: 0.1.206
 
 The complete 0.1.206 update passed **113/113 regression scripts**. The local signed app and installable ZIP are in `builds/`; see [build validation](research/reports/RELEASE_0_1_206.md) for the archive checksum and validation scope. The GitHub download links above continue to identify the last published release.
+
+## Local build 0.1.207 — Escape menu to Main Menu
+
+The Escape menu now places a clearly labeled **Main Menu** button immediately below Resume Flight. It saves the current pilot before returning to the title screen. If saving fails, the player stays paused and sees an error instead of silently leaving flight.
+
+## Local build 0.1.208 — Consistent gray menu button fonts
+
+Audited gray in-game menu buttons and applied original Sillycon lettering to map controls, autopilot selections, and shared button/dropdown/checkbox theme defaults. Existing classic service buttons retain the same font. Main-menu paper dialogs and body text keep their separate original-style typography.
+
+## Local build 0.1.209 — Centered publisher logo
+
+Centered the Ambrosia artwork vertically within its startup canvas, giving it equal top and bottom margins at every window aspect ratio.
+
+## Local build 0.1.210 — First two vintage-poster story paintings
+
+Restyled only the opening frontier and alien-attack paintings as the first preview of a bold vintage space-adventure poster direction: graphic shadows, electric blue rim light, warm orange accents, and hand-painted illustration. The remaining story images are retained for comparison. Original versions are preserved as sibling assets. Built-in generation prompts and reference roles are recorded in `godot/assets/story/poster_art_direction.json`.
+
+
+## Local build 0.1.211 — Complete vintage-poster story artwork
+
+Restyled the ten remaining opening-story paintings to match the approved vintage theatrical poster direction, with blue Confederation and red Rebellion subjects. All thirteen story cues now use the poster artwork, including the pilot's first ship, Levo and the final send-off. Landscape originals have portrait replacements for consistent side framing; the existing inward fades and independent scene transitions are retained. Original assets remain available. Built-in image generation prompts and source provenance are saved in `godot/assets/story/remaining_poster_art_direction.json`.
+
+Validation: all three targeted story/startup/replay checks passed. Native-rendered standard and ultrawide story captures were reviewed; the macOS app was rebuilt.
+
+
+## Local build 0.1.212 — Consistent in-game shuttle artwork
+
+Corrected the frontier, first-ship, Levo journey and final send-off poster paintings to use the actual Shuttlecraft model's compact silver hull, blue canopy, integrated vented rails and small paired rear engines. Removed the invented large round pods, wings and fins. The Levo arrival illustration uses the same model while preserving its existing rendered ocean scene and instrument frame. Built-in image-edit prompts and references are recorded in the story and startup `shuttle_art_direction.json` manifests; `tools/capture_shuttle_reference.gd` captures the design directly from the game.
+
+Validation: three targeted opening/story checks passed, with native standard and ultrawide rendering reviewed. macOS app rebuilt as 0.1.212.
+
+
+## Local build 0.1.213 — Riches and dangers opening painting
+
+The first story illustration now depicts an explorer discovering glowing mineral deposits above a prosperous trading port, with hyperspace arrivals and an ominous alien vessel. It matches the vintage poster treatment and replaces only cue zero; the later frontier/shuttle painting remains unchanged. Built-in image generation prompt and reference are recorded in `godot/assets/story/riches_art_direction.json`.
+
+Validation: three targeted opening/story checks passed; native standard and ultrawide framing reviewed. macOS app rebuilt.

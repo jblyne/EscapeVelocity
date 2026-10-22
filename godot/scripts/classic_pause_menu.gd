@@ -19,14 +19,14 @@ func _ready() -> void:
 	reference.text+="[/table]";canvas.add_child(reference)
 	var actions: Array=[
 		["ResumeFlight","Resume Flight",func():game.set_mode("flight")],
+		["MainMenu","Main Menu",return_to_main_menu],
 		["ShipInformation","Ship & Target Information",func():game.set_mode("info")],
 		["MissionJournal","Mission Journal",func():game.set_mode("flight");game.missions.open()],
 		["ManageFleet","Manage Fleet",game.toggle_fleet_menu],
 		["ToggleCloak","Cloaking Device",func():game.set_mode("flight");game.cloak.toggle()],
 		["KeyboardControls","Keyboard & Game Speed",game.open_controls],
 		["Fullscreen","Toggle Fullscreen",func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if DisplayServer.window_get_mode()==DisplayServer.WINDOW_MODE_FULLSCREEN else DisplayServer.WINDOW_MODE_FULLSCREEN)],
-		["ToggleSound","Sound: Off" if game.muted else "Sound: On",func():game.toggle_audio();game.hud.rebuild_modal()],
-		["MainMenu","Exit Ship / Main Menu",func():game.set_mode("title")]]
+		["ToggleSound","Sound: Off" if game.muted else "Sound: On",func():game.toggle_audio();game.hud.rebuild_modal()]]
 	for i in actions.size():
 		var action=actions[i]
 		var b=button_at(action[0],action[1],Rect2(564,62+i*45,372,35),action[2]);b.add_theme_font_size_override("font_size",19)
@@ -41,3 +41,11 @@ func _ready() -> void:
 func fit() -> void:
 	var ratio=minf(1.0,minf((size.x-40)/LAYOUT.x,(size.y-40)/LAYOUT.y))
 	canvas.scale=Vector2.ONE*ratio;canvas.position=(size-LAYOUT*ratio)*.5
+
+func return_to_main_menu() -> void:
+	var error: String=game.preserve_current_pilot()
+	if not error.is_empty():
+		var hint=canvas.get_node("ResumeHint")
+		hint.text="Save failed — still paused.";hint.tooltip_text=error
+		return
+	game.set_mode("title")

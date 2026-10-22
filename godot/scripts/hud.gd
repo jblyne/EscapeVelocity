@@ -64,6 +64,8 @@ func _ready() -> void:
 	font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
 	theme.default_font=font
 	theme.default_font_size=15
+	for button_type in ["Button","OptionButton","CheckBox","CheckButton"]:
+		theme.set_font("font",button_type,preload("res://assets/fonts/EVOriginal.ttf"))
 	theme.set_color("font_color","Label",INK)
 	root.theme=theme
 	# Detailed backing readouts are shared by the information screen and tests.

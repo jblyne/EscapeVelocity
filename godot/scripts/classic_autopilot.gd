@@ -34,7 +34,7 @@ func fill() -> void:
 			var target: int=game.autopilot.mission_target(option)
 			caption+="\n"+str(game.catalog.record("objects",target).get("name","Unknown"))+" · "+str(game.catalog.system(game.missions.system_of(target)).get("name","Unknown"))+" · %d jump(s)" % game.autopilot.path(game.pilot.system_id,game.missions.system_of(target)).size()
 		var button=Button.new();button.name="EngageAutopilot%d" % i;button.text=caption;button.custom_minimum_size=Vector2(916,66);button.clip_text=true;button.focus_mode=Control.FOCUS_NONE
-		style_classic_button(button);button.add_theme_font_override("font",font);button.add_theme_font_size_override("font_size",18)
+		style_classic_button(button);button.add_theme_font_size_override("font_size",18)
 		button.tooltip_text=caption;button.pressed.connect(func():game.sound("menu_click");game.autopilot.start(option));list.add_child(button)
 func fit() -> void:
 	var ratio=minf(1.0,minf((size.x-40)/LAYOUT.x,(size.y-40)/LAYOUT.y))

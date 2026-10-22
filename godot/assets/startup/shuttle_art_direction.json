@@ -1,0 +1,7 @@
+{
+  "mode": "built-in image_gen edit",
+  "source": "levo_arrival_hd.png",
+  "reference": "../story/shuttle_model_reference.png",
+  "prompt": "Edit image 1, the Escape Velocity Levo arrival screen. Image 2 is the authoritative actual IN-GAME SHUTTLE MODEL. Replace ONLY the large white shuttle near the upper-right center with a similar accurate shuttle matching image 2: compact low chamfered rectangular silver-white hull, broad blue cockpit glazing with center divider at front, low raised cargo panel behind it, slim integrated side rails with dark rectangular vent slats, two SMALL flush engines at rear. No round side pods, no bulbous landing floats, no external engine barrels, no wings or fins. Maintain its approximately existing placement and size and believable flying three-quarter perspective, pointing toward foreground/right. Match original image 1's polished realistic HD rendered aesthetic and daylight, NOT the poster illustration style. Preserve ocean, green islands, domed base, clouded sky, all distant other ships, image composition, metallic frame, and all existing bottom instrument labels exactly. No other changes. Landscape 4:3, high resolution.",
+  "generated": "/Users/jblyne/.codex/generated_images/01a15482-897c-7773-8e31-9c36a05c5c2d/exec-e9e70c49-9b58-497d-aa40-9c9ec57bea2a.png"
+}

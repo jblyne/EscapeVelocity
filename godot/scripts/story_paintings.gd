@@ -1,19 +1,19 @@
 extends Control
 # Each side holds its current painting until its own next story topic arrives.
 const CUES=[
-	{"line":0,"image":"frontier","side":0,"half":0},
-	{"line":8,"image":"alien_attack","side":1,"half":-1},
-	{"line":12,"image":"alien_war","side":0,"half":0},
-	{"line":18,"image":"confed_rule","side":0,"half":-1},
-	{"line":27,"image":"oppression","side":1,"half":-1},
-	{"line":34,"image":"confederation","side":0,"half":0},
-	{"line":42,"image":"rebel_uprising","side":1,"half":-1},
-	{"line":52,"image":"civil_war","side":0,"half":-1},
-	{"line":56,"image":"frontier","side":1,"half":1},
-	{"line":62,"image":"freighter_years","side":0,"half":-1},
-	{"line":65,"image":"first_ship","side":1,"half":-1},
-	{"line":69,"image":"levo_journey","side":0,"half":-1},
-	{"line":74,"image":"good_luck","side":1,"half":-1}]
+	{"line":0,"image":"riches_dangers_poster","side":0,"half":-1},
+	{"line":8,"image":"alien_attack_poster","side":1,"half":-1},
+	{"line":12,"image":"alien_war_poster","side":0,"half":-1},
+	{"line":18,"image":"confed_rule_poster","side":0,"half":-1},
+	{"line":27,"image":"oppression_poster","side":1,"half":-1},
+	{"line":34,"image":"confederation_poster","side":0,"half":-1},
+	{"line":42,"image":"rebel_uprising_poster","side":1,"half":-1},
+	{"line":52,"image":"civil_war_poster","side":0,"half":-1},
+	{"line":56,"image":"frontier_poster","side":1,"half":-1},
+	{"line":62,"image":"freighter_years_poster","side":0,"half":-1},
+	{"line":65,"image":"first_ship_poster","side":1,"half":-1},
+	{"line":69,"image":"levo_journey_poster","side":0,"half":-1},
+	{"line":74,"image":"good_luck_poster","side":1,"half":-1}]
 const FADE=2.5
 var panels: Array[TextureRect]=[]
 var active_cue: int=-1
@@ -30,6 +30,7 @@ func _ready() -> void:
 		if int(cue.half)>=0: image.stretch_mode=TextureRect.STRETCH_SCALE
 		var material=ShaderMaterial.new();material.shader=load("res://scripts/story_paintings.gdshader")
 		material.set_shader_parameter("source_half",float(cue.half))
+		if cue.image=="alien_attack_poster": material.set_shader_parameter("vertical_focus_offset",-0.12)
 		material.set_shader_parameter("side",float(cue.side));image.material=material
 		image.hide();add_child(image);panels.append(image)
 func present(scroll_y: float,line_height: float,speed: float,clip_height: float) -> void:
