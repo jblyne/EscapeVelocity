@@ -9,17 +9,36 @@ func write_json(path: String,value) -> void:
  var file=FileAccess.open(path,FileAccess.WRITE);file.store_string(JSON.stringify(value));file.close()
 func _initialize() -> void: call_deferred("run")
 func run() -> void:
- var game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev103-current.json";game.controls.path="/tmp/ev103-controls.json";game.traffic.enabled=false;game.muted=true
+ DirAccess.make_dir_recursive_absolute("/tmp/ev232-pilots")
+ var game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev232-pilots/current.json";game.controls.path="/tmp/ev103-controls.json";game.traffic.enabled=false;game.muted=true
  root.add_child(game);game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
+ game.save_path="/tmp/ev232-pilots/current.json"
  game.pilot.pilot_name="First Pilot";game.pilot.credits=12345;game.pilot_ready=true;game.save_game(false)
  var original_path: String=game.save_path
  var original: String=FileAccess.get_file_as_string(game.save_path)
  var alternate: Dictionary=game.pilot.snapshot();alternate.pilot_name="Selected Pilot";alternate.credits=98765
- var path="/tmp/ev103-other pilot.json";write_json(path,alternate)
+ var path=ProjectSettings.globalize_path("/tmp/ev232-pilots/other pilot.json");write_json(path,alternate)
  game.set_mode("title");var menu=game.hud.modal_root.get_child(0)
- menu.open_pilot();check(menu.pilot_picker.visible and menu.pilot_picker.file_mode==FileDialog.FILE_MODE_OPEN_FILE,"File chooser opens for pilot selection")
- menu.pilot_picker.hide();check(game.pilot.pilot_name=="First Pilot","Canceling file selection preserves the active pilot")
- menu.pilot_picker.file_selected.emit(path)
+ write_json("/tmp/ev232-pilots/preferences.json",{"sound":true})
+ write_json("/tmp/ev232-pilots/broken.json",{"invalid":true})
+ var pad=game.controls.controller
+ pad.set_process(false);pad.set_process_input(false);pad.last_mode="title";pad.using_pad=true
+ pad.selected=menu.canvas.get_node("OpenPilot")
+ pad.menu_button(JOY_BUTTON_A)
+ check(menu.pilot_picker.visible and menu.pilot_picker.item_count==2,"Custom list shows only valid pilots, excluding preferences and invalid saves")
+ check(pad.selected==menu.pilot_picker,"Controller activation preserves the pilot list focus handoff")
+ var before: int=menu.pilot_picker.get_selected_items()[0]
+ pad.menu_button(JOY_BUTTON_DPAD_DOWN)
+ check(menu.pilot_picker.get_selected_items()[0]==before+1,"First D-pad press immediately changes pilot, without entering list first")
+ pad.menu_button(JOY_BUTTON_DPAD_UP)
+ check(menu.pilot_picker.get_selected_items()[0]==before,"Up immediately returns to previous pilot")
+ var found: int=-1
+ for i in menu.pilot_picker.item_count:
+  if menu.pilot_picker.get_item_metadata(i)==path: found=i
+ check(found>=0,"Pilot is listed by saved identity")
+ menu.pilot_info();check(game.pilot.pilot_name=="First Pilot","Canceling pilot selection preserves the active pilot")
+ menu.open_pilot();menu.pilot_picker.select(found)
+ menu.pilot_picker.item_activated.emit(found)
  check(game.pilot.pilot_name=="Selected Pilot" and game.pilot.credits==98765 and game.save_path==path,"File selection loads the chosen pilot and activates its save path")
  check(game.mode=="title" and not menu.canvas.get_node("EnterShip").disabled and "Selected Pilot" in menu.pilot_readout.text,"Loaded pilot is shown on title screen before Enter Ship")
  game.save_game(false);check(FileAccess.get_file_as_string(original_path)==original,"Autosave does not overwrite the previous pilot")

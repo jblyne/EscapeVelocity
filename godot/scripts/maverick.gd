@@ -64,6 +64,7 @@ func advance_victory_fade() -> void:
 	victory.volume_db=-0.98+linear_to_db(maxf(.0001,gain))
 
 func begin_warp(game) -> void:
+	if is_instance_valid(victory): victory.stop()
 	if game.pilot.ship_id!=SHIP: return
 	warp_active=true;warp_fade=0
 	var music: AudioStreamPlayer=game.audio.maverick_warp
@@ -92,8 +93,8 @@ static func install(catalog) -> void:
 	data.ships[str(SHIP)]=ship;data.ship_graphics[str(SHIP)]=data.ship_graphics["148"].duplicate(true)
 	for entry in [[GUN,128,"M61 Machine Gun"],[MISSILE,132,"AIM-9 Sidewinder"]]:
 		var weapon: Dictionary=data.weapons[str(entry[1])].duplicate(true);weapon.id=entry[0];weapon.name=entry[2];data.weapons[str(entry[0])]=weapon
-	data.weapons[str(GUN)].fields.merge({"Reload":4,"Count":40,"MassDmg":5,"EnergyDmg":3,"Speed":1300,"Inaccuracy":2,"Sound":-1},true)
-	data.weapons[str(MISSILE)].fields.merge({"AmmoType":902,"Speed":900,"Sound":4,"Count":int(data.weapons["132"].fields.Count)*3},true)
+	data.weapons[str(GUN)].fields.merge({"Reload":4,"Count":40,"MassDmg":15,"EnergyDmg":9,"Speed":1300,"Inaccuracy":2,"Sound":-1},true)
+	data.weapons[str(MISSILE)].fields.merge({"Reload":50,"AmmoType":902,"Speed":900,"Sound":4,"Count":int(data.weapons["132"].fields.Count)*3},true)
 	var disruptor: Dictionary=data.weapons["132"].duplicate(true)
 	disruptor.id=DISRUPTOR;disruptor.name="EMP Disruptor"
 	disruptor.fields.merge({"AmmoType":0,"Reload":120,"Count":150,"Speed":1000,"MassDmg":0,"EnergyDmg":0,"BlastRadius":0,"ProxRadius":0,"Inaccuracy":0,"Sound":4,"MiscFlags":2},true)

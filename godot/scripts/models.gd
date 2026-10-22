@@ -107,6 +107,11 @@ static func add_exhaust(root: Node3D, nozzle: Vector3, side: int) -> void:
 	root.add_child(flame)
 
 static func set_thrust(model: Node3D, power: float, clock: float, hyperdrive_vibration: bool = false,afterburner: bool=false) -> void:
+	var warp_burn: bool=hyperdrive_vibration and power>.02
+	if warp_burn and not model.has_meta("warp_exhaust_started"): model.set_meta("warp_exhaust_started",clock)
+	if not warp_burn: model.remove_meta("warp_exhaust_started")
+	var orange: bool=power>.02 and (afterburner or (warp_burn and clock-float(model.get_meta("warp_exhaust_started",clock))>=1.0))
+	model.set_meta("afterburner_active",orange)
 	for n in model.get_children():
 		if str(n.name).begins_with("Flame"):
 			n.visible = power > 0.02
@@ -116,7 +121,7 @@ static func set_thrust(model: Node3D, power: float, clock: float, hyperdrive_vib
 			if n.has_meta("nozzle"):
 				n.position = n.get_meta("nozzle")+Vector3(0,0,0.7*length_scale)
 			if n.material_override is ShaderMaterial:
-				n.material_override.set_shader_parameter("afterburner_heat",1.0 if (afterburner or hyperdrive_vibration) and int(model.get_meta("ship_id",-1))==900 else 0.0)
+				n.material_override.set_shader_parameter("afterburner_heat",1.0 if orange else 0.0)
 				n.material_override.set_shader_parameter("clock",clock)
 				n.material_override.set_shader_parameter("power",power)
 

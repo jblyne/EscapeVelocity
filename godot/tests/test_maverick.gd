@@ -11,6 +11,7 @@ func run() -> void:
  var game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev101-maverick.json";game.controls.path="/tmp/ev101-controls.json";game.traffic.enabled=false;game.muted=true
  root.add_child(game);game.set_process(false);game.set_physics_process(false);game.hud.set_process(false)
  check(game.catalog.field("weapons",901,"Count")==game.catalog.field("weapons",132,"Count")*3,"Sidewinder flight time triples for longer range without changing speed")
+ check(game.catalog.field("weapons",900,"MassDmg")==15 and game.catalog.field("weapons",900,"EnergyDmg")==9,"M61 machine gun has triple original armor and shield damage")
  var forklift_power=game.Combat.powers(game.catalog.record("weapons",191).fields)
  var sidewinder_power=game.Combat.powers(game.catalog.record("weapons",901).fields)
  check(sidewinder_power.is_equal_approx(forklift_power*.5),"Sidewinder deals exactly half forklift damage to shields and armor")
@@ -61,7 +62,9 @@ func run() -> void:
  check(is_zero_approx(burner_wing.rotation.y),"Afterburner wings return fully open after release")
  check(is_zero_approx(float(plume.material_override.get_shader_parameter("afterburner_heat"))),"Releasing afterburner restores ordinary exhaust color")
  game.Models.set_thrust(game.player_model,1.6,1.0,true)
- check(is_equal_approx(float(plume.material_override.get_shader_parameter("afterburner_heat")),1),"Maverick hyperspace acceleration uses the same orange exhaust as its afterburner")
+ check(is_zero_approx(float(plume.material_override.get_shader_parameter("afterburner_heat"))),"Maverick hyperspace begins with blue exhaust")
+ game.Models.set_thrust(game.player_model,1.6,2.01,true)
+ check(is_equal_approx(float(plume.material_override.get_shader_parameter("afterburner_heat")),1),"Maverick hyperspace turns orange after warm-up")
  var standard=game.ShipModels.create(game.catalog,128);game.world.add_child(standard)
  game.Models.set_thrust(standard,1.6,1.0,true)
  check(is_zero_approx(float(standard.get_node("Flame1").material_override.get_shader_parameter("afterburner_heat"))),"Other ships retain their existing hyperspace exhaust color")
@@ -167,6 +170,11 @@ func run() -> void:
   game.traffic.maverick.victory.stop();game.traffic.maverick.victory_cooldown=0;game.traffic.maverick.celebrate(game)
   heard[game.traffic.maverick.victory.stream.resource_path]=true
  check(heard.size()==2 and heard.has("res://audio/maverick_music.mp3") and heard.has("res://audio/maverick_great_balls.mp3"),"Repeated victory cues randomly select both supplied tracks")
+ for track in game.traffic.maverick.VICTORY_TRACKS:
+  game.traffic.maverick.victory.stream=load(track)
+  game.traffic.maverick.victory.play()
+  game.traffic.maverick.begin_warp(game)
+  check(not game.traffic.maverick.victory.playing and game.audio.maverick_warp.playing,"Hyperspace interrupts kill track: "+track)
  var fading_track="res://audio/maverick_great_balls.mp3"
  check(is_equal_approx(game.traffic.maverick.victory_gain(fading_track,3,6.7),1),"Great Balls of Fire stays at full level before its final two seconds")
  check(is_equal_approx(game.traffic.maverick.victory_gain(fading_track,5.7,6.7),.5) and is_zero_approx(game.traffic.maverick.victory_gain(fading_track,6.7,6.7)),"Great Balls of Fire fades smoothly to silence over the final two seconds")

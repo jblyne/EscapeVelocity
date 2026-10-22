@@ -30,6 +30,9 @@ func _ready() -> void:
 	make_button("ZoomOut","−",Rect2(78,730,52,44),func():chart.change_zoom(1.0/1.35)).tooltip_text="Zoom out · −"
 	make_button("ZoomIn","+",Rect2(140,730,52,44),func():chart.change_zoom(1.35)).tooltip_text="Zoom in · +"
 	clear_button=make_button("ClearRoute","Clear Route",Rect2(218,730,196,44),func():game.map_route.clear();game.destination=-1;chart.queue_redraw();refresh_details())
+	var controller_hint=Label.new();controller_hint.name="ControllerMapHint";controller_hint.position=Vector2(22,713);controller_hint.size=Vector2(832,16)
+	controller_hint.text="Controller: left stick point · right stick pan · Cross select · Square add route · L1/R1 zoom"
+	controller_hint.add_theme_font_override("font",font);controller_hint.add_theme_font_size_override("font_size",12);canvas.add_child(controller_hint)
 	make_button("MapDone","Done",Rect2(674,730,148,44),func():game.set_mode(game.map_return_mode))
 	intel_button=make_button("SystemIntel","Leads & Unlocks",Rect2(438,730,210,44),func():intel_open=not intel_open;refresh_details())
 	intel_button.add_theme_font_size_override("font_size",19)

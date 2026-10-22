@@ -4,7 +4,7 @@ A playable Godot 4 reconstruction built around the original Escape Velocity 1.0.
 
 ## Download and install (no Godot needed)
 
-Download the **0.1.178 acceptance candidate**, `Escape-Velocity-HD-0.1.178-macOS.zip`, from [its GitHub prerelease](https://github.com/jblyne/EscapeVelocity/releases/tag/v0.1.178). The standalone universal app includes Apple Silicon and Intel code; execution on Intel still needs acceptance testing. The [previous regular release](https://github.com/jblyne/EscapeVelocity/releases/latest) remains available. Full manual campaign comparisons are pending; see [Phase 6 acceptance status](research/reports/PHASE_6_ACCEPTANCE.md).
+Download **0.1.234**, `Escape-Velocity-HD-0.1.234-macOS.zip`, from [the GitHub release](https://github.com/jblyne/EscapeVelocity/releases/tag/v0.1.234). The standalone universal app includes Apple Silicon and Intel code; execution on Intel still needs acceptance testing. Full manual campaign comparisons are pending; see [Phase 6 acceptance status](research/reports/PHASE_6_ACCEPTANCE.md).
 
 1. Unzip the download.
 2. Drag **Escape Velocity HD.app** into **Applications**.
@@ -1215,3 +1215,104 @@ Validation: three targeted opening/story checks passed, with native standard and
 The first story illustration now depicts an explorer discovering glowing mineral deposits above a prosperous trading port, with hyperspace arrivals and an ominous alien vessel. It matches the vintage poster treatment and replaces only cue zero; the later frontier/shuttle painting remains unchanged. Built-in image generation prompt and reference are recorded in `godot/assets/story/riches_art_direction.json`.
 
 Validation: three targeted opening/story checks passed; native standard and ultrawide framing reviewed. macOS app rebuilt.
+
+
+## Local build 0.1.214 — Alien Threat achievement
+
+Added a dedicated Alien Threat badge for the original Alien investigation and cruiser finale: Rebel missions 184–189 or Confederation missions 190–194. Each route contributes its own milestone fraction; completing either full chain awards the badge, including existing completed saves. Clicking an incomplete badge follows the selected faction's prerequisites, current mission objective and navigation destinations. The existing overall story calculation remains unchanged because these missions already belong to the military story.
+
+Validation: Alien achievement, existing achievements, guidance, both campaign routes and fleet jump checks passed (5/5). Fleet behavior is unchanged.
+
+
+## Local build 0.1.216 — Exact mission contact guidance
+
+Badge guidance for missions offered at one specific world now identifies other landing sites in the same system where that offer will not appear. When already in the contact system, bar guidance supplies the exact planet-selection hotkey and auto-landing steps. Rescue Rebel Spy is offered at Sirgil III, not neighboring Sirgil Starport. Added regression coverage that verifies both the exclusion and actual bar presentation at the correct planet. Three targeted guidance/bar checks passed.
+
+
+## Local build 0.1.217 — Controller support
+
+Keyboard and standard gamepads now work together, including macOS DualSense devices through Godot's SDL mapping. Left-stick steering is analog with a 22% dead zone; vertical stick motion supplies thrust / retrograde. R2 fires the selected weapon, L2 the secondary weapon, L3 afterburner, R3 face-target, Cross land / launch, Square board, Triangle cycle targets, Circle cloak, L1 / R1 cycle weapons, D-pad up jump, right map, left ship hail and down select the next world. Create opens fleet, Touchpad opens the journal, and Options pauses. Holding R3 adds D-pad next-destination / autopilot / world-hail / information and Circle secondary-safety commands.
+
+In menus, the left stick moves a highlighted pointer and Cross clicks; D-pad selects buttons, the right stick scrolls, and Circle / Options returns. Map targets use the pointer, L1 / R1 zoom, and Triangle cycles destinations. Name/file text entry still uses the keyboard. The Keyboard & Controller screen documents the complete layout. Controllers reconnect without restarting; disconnect, focus loss and mode changes clear held input. Keyboard bindings remain independent and controller shortcuts follow rebound actions.
+
+Validation: eight targeted controller, keyboard, firing, menu, startup and font scripts passed; native-renderer controller pointer activation and help layout were checked. No physical controller was connected, so Bluetooth DualSense hardware mapping and feel still require a playtest.
+
+
+## Local build 0.1.218 — Controller map planning
+
+Right stick pans the map in both axes without changing zoom. Left stick retains the pointer; Cross inspects the pointed system without erasing a planned route. Square adds the selected destination, finding connected intermediate jumps from the current route endpoint. This supports both normal jumps (next hop selected) and chain jumping (final destination selected). L1/R1 still zoom, Triangle cycles destinations and Circle returns to flight. Added an on-map control legend and updated the controller help. Targeted controller, map and chain-jump tests passed (3/3), plus native window route and pointer checks.
+
+
+## Local build 0.1.219 — Controller landing-target gesture
+
+Hold Cross in flight and flick the right stick left/right to cycle backward/forward through landing targets, including stations. Each flick selects one target; return the stick to center before the next flick. Releasing Cross after cycling does not land or auto-land. A normal Cross tap still requests landing and a double-tap still starts auto-landing; flight landing input now resolves on release so it cannot land before the player performs the target gesture. Disconnect, focus loss and mode changes cancel a pending hold. D-pad down remains a target-cycle shortcut. Updated controller help. Four targeted controller, auto-landing, keyboard and map checks passed.
+
+
+## Local build 0.1.220 — Directional controller focus and scrolling
+
+D-pad menu navigation now follows screen geometry: left/right select along rows, up/down along columns, and edges do not wrap into unrelated rows. Selection stays within its scrolling group where possible and explicitly scrolls every enclosing ScrollContainer into view. Gold focus outlines are clipped to the viewport and ancestor clip bounds. Shipyard and mission ItemLists now support internal D-pad selection with automatic scrolling, and long text panels can be scrolled with the D-pad. Right-stick scrolling targets the pointed or selected scrollable area (including text and item lists), with a fallback for menus containing one main scrolling panel.
+
+Validation: six targeted controller, navigation, outfitter, achievements, fleet and shipyard checks passed. Native-renderer navigation tests also passed, including inspection of the outfit grid at its bottom.
+
+
+## Local build 0.1.221 — Faster Sidewinder reload
+
+Halved AIM-9 Sidewinder reload from 100 to 50 original weapon ticks (approximately 1.67 to 0.83 seconds). The shared weapon definition applies to both single fire and Maverick multi-target volleys.
+
+
+## Local build 0.1.222 — Left-stick landing selection
+
+Moved the hold-Cross landing-target gesture from the right stick to left-stick left/right flicks. Controller steering and thrust are suppressed while Cross is held for landing selection; normal keyboard control remains available. Tap / double-tap landing and right-stick map panning remain intact. Controller help updated.
+
+
+## Local build 0.1.223 — Held D-pad navigation
+
+Menu D-pad navigation now repeats while held: immediate first movement, 0.35-second initial delay, then one step every 0.10 seconds. Repeated movement uses the same directional selection and scroll-following behavior as individual presses. Releasing the direction, changing screens, disconnecting, losing application focus or returning to mouse input stops repetition. Flight D-pad actions remain single press. Three targeted controller/navigation/keyboard checks passed.
+
+
+## Local build 0.1.224 — Clean D-pad selection outline
+
+Hide the controller crosshair while D-pad focus highlights a menu item. The gold outline remains; moving the left-stick pointer clears focus and restores the crosshair.
+
+
+## Local build 0.1.225 — Hyperspace exhaust warm-up and F-14 smoke
+
+Hyperspace exhaust starts blue for one second before turning orange. Only the F-14 Tomcat leaves world-space smoke trails while its orange afterburner is active; ordinary ships emit no smoke. Smoke particles expand and fade over one second and stop spawning when the burn stops. This applies to manual F-14 afterburning and hyperspace, with shared bounded particle rendering. Missile smoke retains its existing lifetime.
+
+
+## Local build 0.1.226 — F-14 machine-gun damage
+
+Tripled the F-14 M61 machine gun's armor and shield damage (MassDmg 5→15, EnergyDmg 3→9). Fire rate and ammunition behavior are unchanged.
+
+
+## Local build 0.1.227 — Return controller focus to launcher
+
+Controller activation remembers the launching button by screen and stable identity. Returning from a child menu restores that selection even when the parent menu was rebuilt; nested views restore in reverse order, and same-screen badge details restore their launching card. Restored items are revealed within scroll containers. Existing D-pad outline-only highlighting remains. Four targeted controller, navigation, guidance and pause checks passed.
+
+## Local build 0.1.228 — Hyperspace interrupts kill music
+
+Starting hyperspace stops either Maverick kill celebration track before the hyperspace music begins.
+
+## Local build 0.1.229 — Continue D-pad selection after choosing equipment
+
+Activating a menu item restores controller focus immediately, so the next D-pad direction continues from the selected card instead of restarting at the first slot.
+
+## Local build 0.1.230 — Commodity list typography
+
+Commodity names use the surrounding exchange text font; Buy, Sell and Leave retain the original button font.
+
+## Local build 0.1.231 — Clean menu panel animation backdrop
+
+The title backdrop explicitly covers its baked-in open panels before drawing the animated panels, including when returning from gameplay. Loading artwork remains unchanged.
+
+## Local build 0.1.232 — Controller-friendly pilot picker
+
+Open Pilot uses a classic Mac styled modal listing valid saved pilots by name, ship and system. The D-pad selects and scrolls pilots, Cross opens one, and Circle cancels. File paths and unrelated files are hidden.
+
+## Local build 0.1.233 — Immediate pilot list navigation
+
+Opening the pilot picker preserves its list focus, so the first D-pad Up/Down changes the pilot immediately. Open Pilot also has the classic thick default-button border.
+
+## Local build 0.1.234 — Configure controller buttons
+
+Set Prefs → Keyboard & controller now includes editable flight controller bindings. Select a controller binding, then press a button or trigger; assigning an occupied input swaps the two actions. Preferences persist across launches, and controller defaults can be restored separately. Options remains pause/cancel, menu controls remain consistent, and analog stick movement stays unchanged.

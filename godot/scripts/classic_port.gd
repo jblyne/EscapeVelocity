@@ -103,6 +103,7 @@ func build_exchange() -> void:
 		var b=button_at("Commodity%d" % id,good.name,Rect2(28,y,826,42),func():game.hud.market_good=id;game.hud.rebuild_modal())
 		var style=StyleBoxFlat.new();style.bg_color=Color("126600") if chosen else Color.BLACK
 		for state in ["normal","hover","pressed"]: b.add_theme_stylebox_override(state,style)
+		b.add_theme_font_override("font",font)
 		b.alignment=HORIZONTAL_ALIGNMENT_LEFT
 		label_at("Quantity%d" % id,str(game.fleet_service.commodity_count(id))+" t",Rect2(432,y+6,130,32),22)
 		var base: float=float(good.base_price);var cost: int=int(prices[id])

@@ -26,6 +26,11 @@ func steps(id: String) -> String:
    if branch=="Confederation": return story_steps(Awards.CONFED)
    if branch=="Rebellion": return story_steps(Awards.REBEL)
    return "Choose one military path; completing both is not required.\n\nCONFEDERATION\n"+story_steps(Awards.CONFED)+"\n\nREBELLION\n"+story_steps(Awards.REBEL)
+  "alien_threat":
+   var branch: String=game.achievements.progress().branch
+   if branch=="Confederation": return story_steps(Awards.ALIEN_CONFED)
+   if branch=="Rebellion": return story_steps(Awards.ALIEN_REBEL)
+   return "The Alien investigation follows either faction's military assignments. Choose one path; both are not required.\n\nCONFEDERATION\n"+story_steps(Awards.ALIEN_CONFED)+"\n\nREBELLION\n"+story_steps(Awards.ALIEN_REBEL)
   "special_ops","experimental":
    var branch: String=game.achievements.progress().branch
    if branch=="Confederation": return story_steps(Awards.CARRIER if id=="special_ops" else [170])
@@ -121,5 +126,19 @@ func mission_step(id: int, seen: Array) -> String:
  text+="Land at %s and %s.\n" % [place(port),channel]
  text+="3. " if not reason.is_empty() else "2. "
  text+="Accept the offer and follow its mission-journal objective."
+ if int(f.AvailStel)>=0 and int(f.AvailStel)<5000:
+  var contact_system: int=game.missions.system_of(port)
+  var others: Array[String]=[]
+  for object_id in game.catalog.system(contact_system).get("objects",[]):
+   if int(object_id)!=port and int(game.catalog.field("objects",int(object_id),"Flags"))&1:
+    others.append(str(game.catalog.record("objects",int(object_id)).name))
+  if not others.is_empty():
+   text+="\n\nExact landing site: %s. This offer does not appear at %s." % [str(game.catalog.record("objects",port).name),", ".join(others)]
+  if game.pilot.system_id==contact_system:
+   for index in game.planets.size():
+    if int(game.planets[index].id)==port and index<4:
+     text+="\nIn flight, press %d or F%d to select %s, then double-tap L to auto-land and enter the bar." % [index+1,index+1,str(game.catalog.record("objects",port).name)] if int(f.AvailLoc)==1 else ""
+     break
+
  if int(f.AvailRandom)<100: text+="\n\nThis contact is intermittent. If the offer does not appear, leave and return on a later visit; opening this badge does not trigger an offer."
  return text

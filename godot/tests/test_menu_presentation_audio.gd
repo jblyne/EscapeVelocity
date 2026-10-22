@@ -23,7 +23,10 @@ func run() -> void:
 	menu._process(.6)
 	check(menu.motion_finished and not game.audio.menu_hum.playing and game.audio.menu_slam.playing,"Slam follows visible panel movement")
 	game.set_mode("flight");game.set_mode("title")
-	menu=game.hud.modal_root.get_child(0);game.set_mode("flight")
+	menu=game.hud.modal_root.get_child(0)
+	check(menu.backdrop.hide_static_panels and menu.backdrop.material==null,"Returning from flight masks baked-in panels without relying on a canvas shader")
+	check(menu.animation_time==0,"Returning from flight starts fresh panel motion")
+	game.set_mode("flight")
 	if DisplayServer.get_name()=="headless": await process_frame
 	else: await RenderingServer.frame_post_draw
 	check(not game.audio.menu_hum.playing,"Leaving before presentation cancels pending panel sound")

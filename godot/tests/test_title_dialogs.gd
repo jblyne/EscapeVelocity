@@ -20,7 +20,7 @@ func run() -> void:
 			await RenderingServer.frame_post_draw
 			root.get_texture().get_image().save_png("/tmp/ev192-"+page+".png")
 	menu.open_pilot()
-	check(menu.pilot_picker.use_native_dialog,"Open Pilot uses the native file chooser")
+	check(menu.pilot_picker is ItemList and menu.dialog.visible,"Open Pilot uses the classic modal pilot list")
 	for i in 3: await process_frame
 	if "--visual" in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw

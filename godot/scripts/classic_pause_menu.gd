@@ -24,7 +24,7 @@ func _ready() -> void:
 		["MissionJournal","Mission Journal",func():game.set_mode("flight");game.missions.open()],
 		["ManageFleet","Manage Fleet",game.toggle_fleet_menu],
 		["ToggleCloak","Cloaking Device",func():game.set_mode("flight");game.cloak.toggle()],
-		["KeyboardControls","Keyboard & Game Speed",game.open_controls],
+		["KeyboardControls","Keyboard & Controller",game.open_controls],
 		["Fullscreen","Toggle Fullscreen",func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if DisplayServer.window_get_mode()==DisplayServer.WINDOW_MODE_FULLSCREEN else DisplayServer.WINDOW_MODE_FULLSCREEN)],
 		["ToggleSound","Sound: Off" if game.muted else "Sound: On",func():game.toggle_audio();game.hud.rebuild_modal()]]
 	for i in actions.size():

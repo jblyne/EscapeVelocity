@@ -2,17 +2,28 @@ extends "res://scripts/classic_service.gd"
 var waiting: String=""
 var status: Label
 var buttons: Dictionary={}
+var pad_buttons: Dictionary={}
 func _ready():
  super._ready()
  game.controls.load_settings()
- var heading=Label.new();heading.text="Keyboard & game speed";content.add_child(heading)
- status=Label.new();status.text="Select an action, then press a key. Escape cancels a change.";content.add_child(status)
+ var heading=Label.new();heading.text="Keyboard, controller & game speed";content.add_child(heading)
+ status=Label.new();status.text="Select a keyboard or controller binding to change it. Escape cancels.";content.add_child(status)
  var scroll=ScrollContainer.new();scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;content.add_child(scroll)
  var grid=GridContainer.new();grid.columns=2;grid.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(grid)
  for action in game.controls.DEFAULTS:
   var title=Label.new();title.text=str(action).replace("_"," ").capitalize();title.size_flags_horizontal=Control.SIZE_EXPAND_FILL;grid.add_child(title)
   var button=Button.new();button.text=game.controls.caption(action);grid.add_child(button);buttons[action]=button
   button.pressed.connect(func():waiting=action;status.text="Press a key for "+str(action).replace("_"," ")+"…")
+ var pad_heading=Label.new();pad_heading.text="Controller buttons (flight)";grid.add_child(pad_heading)
+ var reset_pad=Button.new();reset_pad.text="Restore controller defaults";grid.add_child(reset_pad)
+ reset_pad.pressed.connect(func():game.controls.reset_pad();refresh())
+ for action in game.controls.PAD_DEFAULTS:
+  var title=Label.new();title.text=str(action).replace("_"," ").capitalize();grid.add_child(title)
+  var button=Button.new();button.name="BindController_"+action;button.text=game.controls.pad_caption(action);grid.add_child(button);pad_buttons[action]=button
+  button.pressed.connect(func():waiting="";game.controls.capture_action=action;status.text="Press a controller button or trigger for "+str(action).replace("_"," ")+". Options / Escape cancels. Conflicting bindings swap.")
+ game.controls.pad_binding_changed.connect(controller_changed)
+ var controller_help=Label.new();controller_help.name="ControllerHelp";controller_help.text="Default layout (your bindings above take precedence):\n"+("Connected: "+", ".join(Input.get_connected_joypads().map(func(id):return Input.get_joy_name(id))) if not Input.get_connected_joypads().is_empty() else "Connect your controller using macOS Bluetooth or USB.")+"\n\n"+preload("res://scripts/controller.gd").HELP;controller_help.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;controller_help.custom_minimum_size.x=650
+ var help_panel=VBoxContainer.new();grid.add_child(help_panel);help_panel.add_child(controller_help)
  var row=HBoxContainer.new();content.add_child(row)
  for classic in [false,true]:
   var button=Button.new();button.text="Classic flight preset" if classic else "Restore remake defaults";row.add_child(button)
@@ -45,11 +56,21 @@ func mac_restyle(node: Node) -> void:
  if node is Button:
   for state in ["normal","hover","pressed","disabled"]: node.remove_theme_stylebox_override(state)
  for child in node.get_children(): mac_restyle(child)
+func _exit_tree():
+ game.controls.capture_action=""
+func controller_changed(error: String):
+ if error.is_empty(): refresh()
+ else: status.text=error
 func refresh():
  waiting=""
+ for action in pad_buttons: pad_buttons[action].text=game.controls.pad_caption(action)
  for action in buttons: buttons[action].text=game.controls.caption(action)
  status.text="Bindings saved."
 func _input(event):
+ if not game.controls.capture_action.is_empty() and event is InputEventKey and event.pressed:
+  get_viewport().set_input_as_handled()
+  if event.physical_keycode==KEY_ESCAPE: game.controls.capture_action="";refresh()
+  return
  if waiting.is_empty() or not event is InputEventKey or not event.pressed or event.echo: return
  get_viewport().set_input_as_handled()
  if event.physical_keycode==KEY_ESCAPE: refresh();return

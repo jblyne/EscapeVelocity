@@ -212,7 +212,7 @@ func finish() -> void:
 		get_tree().change_scene_to_packed(scene)
 
 func _input(event: InputEvent) -> void:
-	var pressed=(event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_SPACE,KEY_ENTER,KEY_ESCAPE]) or (event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT)
+	var pressed=(event is InputEventJoypadButton and event.pressed and event.button_index in [JOY_BUTTON_A,JOY_BUTTON_START]) or (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_SPACE,KEY_ENTER,KEY_ESCAPE]) or (event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT)
 	if not pressed: return
 	get_viewport().set_input_as_handled()
 	if loading_error:

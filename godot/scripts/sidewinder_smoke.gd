@@ -1,6 +1,7 @@
 extends Node3D
 const LIMIT=1536
 const LIFETIME=1.6
+var lifetime: float=LIFETIME
 var puffs: Array=[]
 var instances: MultiMesh
 func _ready() -> void:
@@ -36,11 +37,11 @@ func emit_segment(shot: Dictionary,start: Vector2,finish: Vector2) -> void:
 func advance(dt: float) -> void:
 	for i in range(puffs.size()-1,-1,-1):
 		puffs[i].age+=dt
-		if puffs[i].age>=LIFETIME: puffs.remove_at(i)
+		if puffs[i].age>=lifetime: puffs.remove_at(i)
 	instances.visible_instance_count=puffs.size()
 	for i in puffs.size():
 		var puff: Dictionary=puffs[i];var age: float=puff.age
-		var radius: float=lerpf(10,24,age/LIFETIME)
+		var radius: float=lerpf(10,24,age/lifetime)
 		var at: Vector2=puff.position+puff.drift*age
 		instances.set_instance_transform(i,Transform3D(Basis.IDENTITY.scaled(Vector3(radius,1,radius)),Vector3(at.x,4,at.y)))
-		instances.set_instance_custom_data(i,Color(pow(1-age/LIFETIME,1.4),puff.seed,0,0))
+		instances.set_instance_custom_data(i,Color(pow(1-age/lifetime,1.4),puff.seed,0,0))

@@ -25,10 +25,9 @@ var screen: VBoxContainer
 var presentation_started: bool=false
 var discard_setup_delta: bool=false
 var animation_time: float = 0.0
-var panel_material: ShaderMaterial
 var dialog: PanelContainer
 var pilot_readout: Label
-var pilot_picker: FileDialog
+var pilot_picker: ItemList
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -42,9 +41,7 @@ func _ready() -> void:
 	backdrop=load("res://scripts/title_bridge.gd").new()
 	backdrop.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop);move_child(backdrop,1)
-	panel_material=ShaderMaterial.new()
-	panel_material.shader=load("res://shaders/menu_panels.gdshader")
-	backdrop.material=panel_material
+	backdrop.hide_static_panels=true
 	var atlas=AtlasTexture.new()
 	var hd: Texture2D=load("res://assets/menu/bridge_hd.png")
 	atlas.atlas=hd
@@ -223,7 +220,7 @@ func line(value: String, font_size: int=16) -> Label:
 
 func small_button(value: String, action: Callable) -> void:
 	var b=Button.new();b.text=value;b.custom_minimum_size=Vector2(180,32);b.size_flags_horizontal=Control.SIZE_SHRINK_END;b.pressed.connect(func():game.sound("menu_click");action.call());screen.add_child(b)
-	if value in ["Begin new flight","Done"]:
+	if value in ["Begin new flight","Done","Open Pilot"]:
 		b.draw.connect(func():b.draw_style_box(MacDialog.box(Color.TRANSPARENT,Color.BLACK,3,0,7),Rect2(Vector2(-4,-4),b.size+Vector2(8,8))))
 		b.resized.connect(b.queue_redraw)
 
@@ -252,20 +249,56 @@ func new_pilot() -> void:
 	actions.add_theme_constant_override("separation",16);screen.add_child(actions)
 	actions.add_child(cancel);actions.add_child(primary)
 
+func saved_pilots() -> Array:
+	var result: Array=[]
+	var directory: String=ProjectSettings.globalize_path(game.save_path).get_base_dir()
+	for filename in DirAccess.get_files_at(directory):
+		if filename.get_extension().to_lower()!="json": continue
+		var path: String=directory.path_join(filename)
+		var saved=JSON.parse_string(FileAccess.get_file_as_string(path))
+		if not saved is Dictionary: continue
+		var candidate: Dictionary=saved.duplicate(true)
+		candidate.strict_dead=false
+		var pilot=preload("res://scripts/pilot.gd").new()
+		if not pilot.restore(candidate,game.catalog): continue
+		result.append({"path":path,"name":pilot.pilot_name,"ship":game.catalog.record("ships",pilot.ship_id).name,"system":game.catalog.system(pilot.system_id).name,"strict":pilot.strict,"dead":saved.get("strict_dead",false)})
+	result.sort_custom(func(a,b):return a.name.naturalnocasecmp_to(b.name)<0 if a.name!=b.name else a.path<b.path)
+	return result
+
 func open_pilot() -> void:
-	if is_instance_valid(pilot_picker):
-		pilot_picker.popup_centered(Vector2i(760,480));return
-	pilot_picker=FileDialog.new();pilot_picker.name="OpenPilotDialog"
-	pilot_picker.title="Open Pilot";pilot_picker.file_mode=FileDialog.FILE_MODE_OPEN_FILE
-	pilot_picker.access=FileDialog.ACCESS_FILESYSTEM
-	pilot_picker.filters=PackedStringArray(["*.json ; Escape Velocity HD pilots"])
-	pilot_picker.use_native_dialog=true
-	var current: String=ProjectSettings.globalize_path(game.save_path)
-	pilot_picker.current_dir=current.get_base_dir()
-	if FileAccess.file_exists(current): pilot_picker.current_file=current.get_file()
-	add_child(pilot_picker)
-	pilot_picker.file_selected.connect(open_pilot_path)
-	pilot_picker.popup_centered(Vector2i(760,480))
+	clear_screen()
+	line("OPEN PILOT",20)
+	line("Choose a pilot to continue their journey.")
+	pilot_picker=ItemList.new();pilot_picker.name="PilotList"
+	pilot_picker.custom_minimum_size=Vector2(460,190)
+	pilot_picker.add_theme_constant_override("v_separation",10)
+	pilot_picker.auto_height=false;pilot_picker.allow_reselect=true
+	screen.add_child(pilot_picker)
+	var entries: Array=saved_pilots()
+	var current: int=0
+	for entry in entries:
+		var index: int=pilot_picker.add_item(entry.name+" · "+entry.ship+" · "+entry.system+" ("+("Deceased" if entry.dead else "Strict" if entry.strict else "Normal")+")")
+		pilot_picker.set_item_metadata(index,entry.path)
+		if ProjectSettings.globalize_path(entry.path)==ProjectSettings.globalize_path(game.save_path): current=index
+	if entries.is_empty():
+		pilot_picker.hide();line("No saved pilots yet. Choose New Pilot to begin.")
+	else: pilot_picker.select(current)
+	small_button("Open Pilot",open_selected_pilot)
+	var open: Button=screen.get_child(screen.get_child_count()-1);open.name="ConfirmOpenPilot";open.disabled=entries.is_empty()
+	small_button("Cancel",pilot_info)
+	var cancel=screen.get_child(screen.get_child_count()-1)
+	screen.remove_child(open);screen.remove_child(cancel)
+	var actions=HBoxContainer.new();actions.alignment=BoxContainer.ALIGNMENT_END;actions.add_theme_constant_override("separation",16);screen.add_child(actions)
+	actions.add_child(cancel);actions.add_child(open)
+	pilot_picker.item_activated.connect(func(_index):open_selected_pilot())
+	if not entries.is_empty():
+		pilot_picker.grab_focus()
+		var pad=game.controls.controller
+		pad.selected=pilot_picker;pad.reveal.call_deferred(pilot_picker)
+
+func open_selected_pilot() -> void:
+	if not is_instance_valid(pilot_picker) or pilot_picker.get_selected_items().is_empty(): return
+	open_pilot_path(str(pilot_picker.get_item_metadata(pilot_picker.get_selected_items()[0])))
 
 func open_pilot_path(path: String) -> void:
 	if is_instance_valid(pilot_picker): pilot_picker.hide()
@@ -289,7 +322,7 @@ func preferences() -> void:
 	var full=CheckBox.new();full.text="Fullscreen";full.button_pressed=DisplayServer.window_get_mode()==DisplayServer.WINDOW_MODE_FULLSCREEN
 	full.toggled.connect(func(enabled):game.sound("menu_click");DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if enabled else DisplayServer.WINDOW_MODE_WINDOWED))
 	screen.add_child(full)
-	small_button("Keyboard & game speed",game.open_controls)
+	small_button("Keyboard & controller",game.open_controls)
 	small_button("Done",pilot_info)
 
 func about() -> void:
@@ -361,6 +394,7 @@ func unlock_forklift() -> void:
 func _input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo: return
 	if get_viewport().gui_get_focus_owner() is LineEdit: return
+	if event.keycode==KEY_ESCAPE and dialog.visible and not is_instance_valid(extras_panel): pilot_info();get_viewport().set_input_as_handled();return
 	if event.keycode==KEY_ESCAPE and is_instance_valid(extras_panel): close_extras();get_viewport().set_input_as_handled();return
 	if (dialog.visible and not is_instance_valid(extras_panel)) or (is_instance_valid(pilot_picker) and pilot_picker.visible): return
 	if event.keycode==KEY_X and not is_instance_valid(extras_panel): haikus();get_viewport().set_input_as_handled();return

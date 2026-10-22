@@ -8,6 +8,8 @@ const COMMON=[
 	{"id":"hunters","name":"Bounty Hunters","missions":[236,237,238,239,240,241]}]
 const CONFED=[171,166,167,168,169,170,190,191,192,193,194]
 const REBEL=[172,163,164,165,184,185,186,187,188,189]
+const ALIEN_REBEL=[184,185,186,187,188,189]
+const ALIEN_CONFED=[190,191,192,193,194]
 const ASTRODYNE=[230,231,232,233,234,235]
 const CARRIER=[242]
 static func fresh() -> Dictionary:
@@ -64,6 +66,7 @@ func badges() -> Array:
 	for track in COMMON:
 		records.append(badge("story_"+track.id,track.name,"Complete this story's main milestones.",roundi(fraction(track.missions)*track.missions.size()),track.missions.size()))
 	records.append(badge("war_hero","War Hero","Complete either faction's main military story.",maxf(fraction(CONFED),fraction(REBEL)),1))
+	records.append(badge("alien_threat","Alien Threat","Complete either faction's Alien mission chain.",maxf(fraction(ALIEN_CONFED),fraction(ALIEN_REBEL)),1))
 	records.append(badge("special_ops","Special Operations","Complete Astrodyne research or the carrier operation.",maxf(fraction(ASTRODYNE),fraction(CARRIER)),1))
 	records.append(badge("new_ship","Moving Up","Command a ship other than the starting shuttle.",1 if p.ship_id not in [128,191] else 0,1))
 	records.append(badge("experimental","Experimental Technology","Earn a particle beam, cloak, or tractor beam.",1 if p.outfit_count(166)>0 or p.outfit_count(167)>0 or p.outfit_count(173)>0 else 0,1))

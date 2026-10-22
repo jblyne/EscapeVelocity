@@ -68,6 +68,7 @@ var cheat_return_mode: String = "flight"
 var fleet_return_mode: String = "flight"
 var shots: Array = []
 var sparks: Array = []
+var engine_smoke: Node3D
 var missile_smoke: Node3D
 var explosions: Array = []
 var shield_hits: Array = []
@@ -171,6 +172,8 @@ func _ready() -> void:
 	hud = HUD.new()
 	hud.game = self
 	add_child(hud)
+	var controller_layer=CanvasLayer.new();controller_layer.name="ControllerOverlay";controller_layer.layer=100;add_child(controller_layer)
+	controls.controller=preload("res://scripts/controller.gd").new();controls.controller.game=self;controller_layer.add_child(controls.controller)
 	achievements.update(false)
 	notify("W / Up thrust · Left / Right turn · S / Down face against drift, then thrust to slow.")
 	notify("L requests landing clearance. Approach slowly, then L again to land.")
@@ -423,6 +426,7 @@ func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) 
 	world = Node3D.new()
 	add_child(world)
 	missile_smoke=preload("res://scripts/sidewinder_smoke.gd").new();world.add_child(missile_smoke)
+	engine_smoke=preload("res://scripts/engine_smoke.gd").new();world.add_child(engine_smoke)
 	planets.clear()
 	npcs.clear()
 	escorts.clear()
@@ -693,6 +697,7 @@ func _physics_process(dt: float) -> void:
 		update_explosions(dt)
 		update_sparks(dt)
 		missile_smoke.advance(dt)
+		engine_smoke.advance(dt)
 	if mode == "dead" and death_reveal_time > 0:
 		death_reveal_time = maxf(0,death_reveal_time-dt)
 		if death_reveal_time == 0: hud.rebuild_modal()
@@ -734,7 +739,7 @@ func _physics_process(dt: float) -> void:
 	cooldown = Flight.reload_remaining(cooldown,dt,controls.pressed("fire") or controls.pressed("secondary_fire"))
 	for weapon in primary_cooldowns: primary_cooldowns[weapon]=Flight.reload_remaining(float(primary_cooldowns[weapon]),dt,controls.pressed("fire"))
 	damage_clock += dt
-	var turn: float = float(controls.pressed("right"))-float(controls.pressed("left"))
+	var turn: float = controls.turn()
 	var thrust: bool = controls.pressed("thrust")
 	var retrograde: bool = controls.pressed("retrograde")
 	var fields: Dictionary = pilot.flight_fields(catalog.record("ships",pilot.ship_id).fields)
