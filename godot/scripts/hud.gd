@@ -31,6 +31,8 @@ var territory: Label
 var ship_status: Label
 var stats: Label
 var destination_label: Label
+var flight_welcome: Label
+var empty_journal_notice: Label
 var log_label: Label
 var mission_label: Label
 var shields: ProgressBar
@@ -100,6 +102,8 @@ func _ready() -> void:
 	combat_return_label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	landing_status=label(flight_messages,"",13,Color("b7bcb5"))
 	landing_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	flight_welcome=label(flight_messages,"",13,Color.WHITE);flight_welcome.name="FlightWelcome"
+	flight_welcome.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;flight_welcome.hide()
 	log_label=label(flight_messages,"",13,Color("b7bcb5"))
 	log_label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	autopilot_indicator=PanelContainer.new();autopilot_indicator.name="AutopilotIndicator"
@@ -139,6 +143,16 @@ func _ready() -> void:
 	modal_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	modal_root.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	root.add_child(modal_root)
+	empty_journal_notice=Label.new();empty_journal_notice.name="EmptyJournalNotice"
+	empty_journal_notice.text="You have no active missions."
+	empty_journal_notice.add_theme_font_override("font",preload("res://assets/fonts/ChicagoFLFRegular.ttf"))
+	empty_journal_notice.add_theme_font_size_override("font_size",13)
+	empty_journal_notice.add_theme_color_override("font_color",Color.WHITE)
+	empty_journal_notice.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	empty_journal_notice.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	empty_journal_notice.offset_left=32;empty_journal_notice.offset_right=-300
+	empty_journal_notice.offset_top=-90;empty_journal_notice.offset_bottom=-60
+	empty_journal_notice.hide();root.add_child(empty_journal_notice)
 
 func panel_style(color: Color=Color.BLACK) -> StyleBoxFlat:
 	var s=StyleBoxFlat.new()
@@ -206,9 +220,11 @@ func _process(_dt: float) -> void:
 	target_panel.refresh()
 	target_panel.visible=game.mode=="info"
 	flight_panel.visible=game.mode!="title"
-	flight_messages.visible=game.mode=="flight"
+	empty_journal_notice.visible=game.empty_journal_seconds>0 and game.mode in ["flight","dock"]
+	flight_messages.visible=game.mode=="flight" and not empty_journal_notice.visible
 	flight_messages.offset_right=-flight_panel.panel_width()-24
-	flight_messages.offset_top=-maxf(64,flight_messages.get_combined_minimum_size().y+14)
+	flight_messages.offset_bottom=-70 if game.flight_welcome_seconds>0 else -14
+	flight_messages.offset_top=flight_messages.offset_bottom-maxf(64,flight_messages.get_combined_minimum_size().y)
 	var contact: Dictionary=game.selected_contact()
 	compact_target.text="Target: none · Tab" if contact.is_empty() else "Target: "+str(contact.name)
 
@@ -250,6 +266,9 @@ func _process(_dt: float) -> void:
 	mission_failure_label.visible=game.missions.flight_alert_seconds>0
 	combat_return_label.text=game.missions.tracked_objective()
 	combat_return_label.visible=not combat_return_label.text.is_empty()
+	flight_welcome.visible=game.flight_welcome_seconds>0
+	flight_welcome.text=game.flight_welcome_text() if flight_welcome.visible else ""
+	log_label.visible=not flight_welcome.visible
 	log_label.text="\n".join(game.messages.slice(0,1))
 	if not game.chain_route.is_empty():
 		mission_label.text="CHAIN HYPERJUMP   /   " + game.catalog.system(game.destination).name + " · J cancels"

@@ -5,6 +5,7 @@ uniform float clock = 0.0;
 uniform float power = 1.0;
 uniform float engine_phase = 0.0;
 uniform float afterburner_heat = 0.0;
+uniform float ignition_flare = 0.0;
 varying vec2 plume_position;
 
 void vertex() {
@@ -26,7 +27,12 @@ void fragment() {
 	float glow = envelope*tail*structure;
 	vec3 blue = mix(vec3(0.16,0.54,1.0),vec3(0.18,0.23,0.65),t);
 	vec3 orange = mix(vec3(1.0,0.38,0.025),vec3(0.9,0.075,0.005),t);
-	vec3 hot_core = mix(vec3(0.82,0.95,1.0),vec3(1.0,0.91,0.48),afterburner_heat);
-	ALBEDO = mix(mix(blue,orange,afterburner_heat),hot_core,clamp(core+diamonds*0.45,0.0,1.0));
-	ALPHA = clamp((glow*0.58+core*0.6+diamonds*envelope*0.18)*(0.65+power*0.35),0.0,0.95);
+	// Ignition rolls outward from the nozzle rather than recoloring the whole jet.
+	float heat = smoothstep(t-0.1,t+0.1,afterburner_heat*1.4-0.2);
+	float ignition_ring = exp(-pow((t-(afterburner_heat*1.4-0.2))*16.0,2.0))*ignition_flare;
+	diamonds *= 1.0+heat*0.55;
+	vec3 hot_core = mix(vec3(0.82,0.95,1.0),vec3(1.0,0.91,0.48),heat);
+	ALBEDO = mix(mix(blue,orange,heat),hot_core,clamp(core+diamonds*0.45,0.0,1.0));
+	ALBEDO = mix(ALBEDO,vec3(0.9,0.96,1.0),clamp(ignition_ring*0.8+core*ignition_flare*0.4,0.0,0.9));
+	ALPHA = clamp((glow*(0.58+ignition_flare*0.15)+core*0.6+diamonds*envelope*0.18+ignition_ring*envelope*0.15)*(0.65+power*0.35),0.0,0.95);
 }

@@ -19,7 +19,7 @@ var readouts: Dictionary={}
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter=Control.MOUSE_FILTER_STOP
-	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+	font=preload("res://scripts/classic_text.gd").body()
 	canvas=Control.new();canvas.size=DESIGN;add_child(canvas)
 	for rect in [Rect2(1,1,878,790),Rect2(18,16,600,600),Rect2(628,16,238,600),Rect2(18,624,848,88)]:
 		var panel=Panel.new();panel.position=rect.position;panel.size=rect.size;panel.mouse_filter=Control.MOUSE_FILTER_IGNORE

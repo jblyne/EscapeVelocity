@@ -110,18 +110,23 @@ static func set_thrust(model: Node3D, power: float, clock: float, hyperdrive_vib
 	var warp_burn: bool=hyperdrive_vibration and power>.02
 	if warp_burn and not model.has_meta("warp_exhaust_started"): model.set_meta("warp_exhaust_started",clock)
 	if not warp_burn: model.remove_meta("warp_exhaust_started")
-	var orange: bool=power>.02 and (afterburner or (warp_burn and clock-float(model.get_meta("warp_exhaust_started",clock))>=1.0))
-	model.set_meta("afterburner_active",orange)
+	var heat: float=1.0 if afterburner and power>.02 and not warp_burn else 0.0
+	if warp_burn and int(model.get_meta("ship_id",-1))==900:
+		var ignition: float=clampf((clock-float(model.get_meta("warp_exhaust_started",clock))-1.0)/.65,0.0,1.0)
+		heat=ignition*ignition*(3.0-2.0*ignition)
+	var ignition_flare: float=sin(heat*PI) if warp_burn else 0.0
+	model.set_meta("afterburner_active",heat>.05)
 	for n in model.get_children():
 		if str(n.name).begins_with("Flame"):
 			n.visible = power > 0.02
 			var pulse: float = sin(clock*48)*0.15 if hyperdrive_vibration else 0.0
-			var length_scale: float = 0.35+power*(0.65+pulse)
-			n.scale = Vector3(0.8+power*0.2,1.0,length_scale)
+			var length_scale: float = (0.35+power*(0.65+pulse))*(1.0+heat*.3+ignition_flare*.22)
+			n.scale = Vector3(0.8+power*0.2+ignition_flare*.16,1.0,length_scale)
 			if n.has_meta("nozzle"):
 				n.position = n.get_meta("nozzle")+Vector3(0,0,0.7*length_scale)
 			if n.material_override is ShaderMaterial:
-				n.material_override.set_shader_parameter("afterburner_heat",1.0 if orange else 0.0)
+				n.material_override.set_shader_parameter("afterburner_heat",heat)
+				n.material_override.set_shader_parameter("ignition_flare",ignition_flare)
 				n.material_override.set_shader_parameter("clock",clock)
 				n.material_override.set_shader_parameter("power",power)
 

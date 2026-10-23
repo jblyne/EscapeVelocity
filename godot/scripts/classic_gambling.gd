@@ -9,6 +9,9 @@ var elapsed: float=0.0
 var spinning: bool=false
 var winnings: int=0
 var rng=RandomNumberGenerator.new()
+var shown_symbols: Array[int]=[-1,-1,-1]
+var stopped_reels: Array[bool]=[false,false,false]
+const SLOT_AUDIO=["slot_flip","slot_lock","slot_win","slot_jackpot"]
 
 func _ready() -> void:
 	super._ready()
@@ -45,25 +48,46 @@ func spin(stake: int) -> void:
 	game.pilot.credits=previous-stake+winnings
 	if not game.save_game(false):
 		game.pilot.credits=previous;result.text="Could not save your pilot. No bet was placed.";return
+	stop_slot_audio()
+	stopped_reels=[false,false,false]
 	spinning=true;elapsed=0;result.text="Spinning…"
+	game.sound("slot_flip")
 	for b in bets: b.disabled=true
 	balance.text="Bet: %s cr" % game.hud.commas(stake)
 
 func show_symbol(index: int,symbol: int) -> void:
+	shown_symbols[index]=symbol
 	var atlas=AtlasTexture.new();atlas.atlas=load("res://assets/classic/9001.png");atlas.region=Rect2(0,symbol*64,64,64)
 	reels[index].texture=atlas
 
 func _process(delta: float) -> void:
 	if not spinning: return
 	elapsed+=delta
+	var flipped: bool=false
 	for i in 3:
 		var stop: float=1.2+i*.5
-		show_symbol(i,int(elapsed*maxf(4,22-elapsed*5)+i*2)%6 if elapsed<stop else outcome[i])
+		var symbol: int=int(elapsed*maxf(4,22-elapsed*5)+i*2)%6 if elapsed<stop else outcome[i]
+		if elapsed<stop and symbol!=shown_symbols[i]: flipped=true
+		if elapsed>=stop and not stopped_reels[i]:
+			stopped_reels[i]=true;game.sound("slot_lock")
+		show_symbol(i,symbol)
+	# Original 0xac44–0xac6c suppresses overlapping flip samples.
+	if flipped and not game.audio.slot_flip.playing: game.sound("slot_flip")
 	if elapsed>=2.2:
 		spinning=false
+		game.audio.slot_flip.stop()
+		if winnings>0:
+			game.sound("slot_jackpot" if outcome[0]==outcome[1] and outcome[1]==outcome[2] else "slot_win")
 		result.text="Congratulations — you win %s credits!" % game.hud.commas(winnings) if winnings else "No match this time."
 		refresh_balance()
 
 func refresh_balance() -> void:
 	balance.text="You have: %s cr" % game.hud.commas(game.pilot.credits)
 	for i in bets.size(): bets[i].disabled=game.pilot.credits<([1000,5000][i])
+
+func stop_slot_audio() -> void:
+	for key in SLOT_AUDIO:
+		if game.audio.has(key): game.audio[key].stop()
+
+func _exit_tree() -> void:
+	stop_slot_audio()

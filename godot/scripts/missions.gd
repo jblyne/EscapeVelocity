@@ -778,5 +778,10 @@ func scan_missions(scanner: Dictionary={}) -> void:
 
 func open() -> void:
 	if game.mode not in ["flight","dock"]: return
+	if channel==2 and state().active.is_empty() and game.pilot.mission.is_empty():
+		game.flight_welcome_seconds=0.0
+		game.empty_journal_seconds=8.0
+		return
+	game.empty_journal_seconds=0.0
 	return_mode=game.mode;selected={};selected_courier=false;last_report=""
 	game.set_mode("missions")

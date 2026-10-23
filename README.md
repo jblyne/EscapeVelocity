@@ -1398,3 +1398,49 @@ Clicking outside the frontmost classic modal plays the recreated System 7 Simple
 Set Prefs keeps the live title menu behind the dialog. Menu music continues through opening and closing preferences, and returning restores the same panels without replaying their entrance. Intro Music and Sound still take effect explicitly; Cancel restores the previous audio preferences. Leaving the title context releases the retained menu.
 
 Validation: seven targeted acceptance scripts passed, including music continuity, exact menu instance/state retention, audio preference cancellation, controller navigation and outside-dialog alerts.
+
+## Local build 0.1.255 — Original Spaceport Bar placement
+
+Moved Spaceport Bar beneath the landing artwork at the bottom left, with Mission Computer beside it, matching the original landing-screen arrangement. Port presentation, bar mission triggers, and controller navigation checks passed; native rendering verified the placement.
+
+## Local build 0.1.256 — Original-style spaceport bar window
+
+The bar now opens as a small black, gray-bordered foreground window over the landing artwork and world description. It uses each port's original bar welcome text and the original two-column arrangement for Hire an Escort, Gamble, Watch Holo-Vid and Leave. Bar Offers remains available as a full-width action above that grid. Mouse and controller input stay in the foreground bar; mission offers, hiring, news and gambling retain their existing behavior.
+
+Validation: port presentation, bar mission triggers, recruitment and controller navigation checks passed, with native rendering of the Levo bar overlay.
+
+## Local build 0.1.257 — Original slot-machine audio
+
+Restored the original Slot Flip and Slot Lock recordings during reel animation, plus the original pair-win and jackpot cues. Winning sounds start after the final reel stops; losses have no payout cue. Leaving the slot machine or starting a new wager clears its audio. Mute and sound volume apply normally.
+
+Validation: original sample bytes verified, four targeted acceptance scripts passed, and native slot-audio checks passed.
+
+## Local build 0.1.258 — Mission header and action order
+
+Mission offer headers now use the original Geneva-style font instead of Times. Accept Mission is on the left and Leave on the right; journal actions retain their existing placement. Port presentation and controller navigation checks passed, with a native mission-screen render.
+
+## Local build 0.1.259 — Original-style map text
+
+The map's system names, information panels, ports, navigation hazards, controller hint and expanded intel use the same original Geneva-style font as the other classic screens. Map, system-intel and controller navigation checks passed, with a native map-screen render.
+
+## Local build 0.1.260 — Original first-flight welcome and Levo placement
+
+Fresh pilots begin stationary just southeast of Levo, with the original reference's approximate diagonal distance from the planet. First flight displays the original welcome and landing-clearance guidance in the bold classic message font for 30 seconds, or until landing. The landing prompt reflects the active keyboard/controller binding. A saved per-pilot flag prevents repeats; older saves default to already introduced and retain their saved positions. New pilot creation still returns to the main menu before Enter Ship.
+
+Validation: five targeted acceptance scripts passed; ten native first-flight checks passed and the welcome/position were rendered for inspection.
+
+## Local build 0.1.261 — Correct welcome text size
+
+Reduced the first-flight welcome from 24 to 13 design pixels, matching regular flight messages while retaining the classic font and white text. First-flight regression and native render checks passed.
+
+## Local build 0.1.262 — F-14 hyperspace ignition
+
+Orange hyperspace afterburner is now exclusive to the F-14; other ships keep their blue jets throughout departure. After the first second of blue exhaust, the F-14 smoothly ignites over 0.65 seconds with a traveling white-hot flare, expanding plume and intensified shock diamonds before settling into orange. Existing F-14 smoke trails and their one-second dissipation remain.
+
+Validation: exhaust and hyperspace-departure acceptance scripts passed, along with 18 native exhaust checks and rendered blue/ignition/orange stages.
+
+## Local build 0.1.263 — Original empty-journal message
+
+Requesting the journal with no active campaign or courier missions now shows “You have no active missions.” in the classic flight-message font for eight seconds, leaving the current screen and flight simulation running. Active journals and port mission-offer lists still open normally. The empty notice also works while docked.
+
+Validation: four targeted acceptance scripts and native empty-journal checks passed.

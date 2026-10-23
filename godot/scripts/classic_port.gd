@@ -12,7 +12,7 @@ var compact_service: bool=false
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
 	font=preload("res://scripts/classic_text.gd").body()
-	compact_service=game.hud.port_page in ["exchange","bar","intel","gambling"]
+	compact_service=game.hud.port_page in ["exchange","intel","gambling"]
 	canvas=Control.new();canvas.size=DESIGN;add_child(canvas)
 	panel(Rect2(Vector2.ZERO,DESIGN))
 	match game.hud.port_page:
@@ -75,8 +75,7 @@ func build_landing() -> void:
 		["OpenOutfitter","Outfit Ship",func():game.set_mode("outfitter")]]
 	if int(port.fields.Flags)&8: actions.append(["OpenShipyard","Visit Shipyard",func():game.set_mode("shipyard")])
 	actions.append(["LocalLeads","Local Leads",func():page("intel")])
-	actions.append(["OpenSpaceportBar","Spaceport Bar",func():page("bar")])
-	var y: float=548-actions.size()*48
+	var y: float=500-actions.size()*48
 	for action in actions:
 		var b=button_at(action[0],action[1],Rect2(752,y,396,38),action[2])
 		if action[0]=="OpenExchange": b.disabled=not int(port.fields.Flags)&2
@@ -86,7 +85,8 @@ func build_landing() -> void:
 			b.disabled=game.pilot.fuel>=game.pilot.fuel_capacity() or bool(int(port.fields.Flags)&32) or (game.refuel_cost()>0 and game.pilot.credits<=0)
 			if game.pilot.fuel>=game.pilot.fuel_capacity(): b.tooltip_text="Fuel tank full."
 		y+=48
-	button_at("OpenMissions","Mission Computer",Rect2(186,572,320,44),func():mission_computer(0))
+	button_at("OpenSpaceportBar","Spaceport Bar",Rect2(16,572,328,44),func():page("bar"))
+	button_at("OpenMissions","Mission Computer",Rect2(354,572,328,44),func():mission_computer(0))
 	button_at("LeavePort","Leave",Rect2(752,572,396,44),game.launch).tooltip_text="Launch · L"
 
 func build_exchange() -> void:
@@ -131,15 +131,34 @@ func trade(buying: bool) -> void:
 	if amount>0: game.save_game(false)
 	game.hud.rebuild_modal()
 
+func suspend_landing_input(node: Node) -> void:
+	if node is Control:
+		node.mouse_filter=Control.MOUSE_FILTER_IGNORE
+		node.focus_mode=Control.FOCUS_NONE
+	if node is RichTextLabel: node.scroll_active=false
+	for child in node.get_children(): suspend_landing_input(child)
+
 func build_bar() -> void:
-	label_at("BarTitle","Spaceport Bar",Rect2(32,28,700,44),28,Color("55ee33"))
-	label_at("BarWorld",game.catalog.record("objects",game.docked_id).name,Rect2(32,90,700,38),22)
-	label_at("BarDescription","Captains and travelers trade news and look for work. Check the bar's offers, watch the news, or hire captains for your fleet.",Rect2(32,152,700,168),22)
-	button_at("BarOffers","Bar Offers",Rect2(800,270,360,44),func():mission_computer(1))
-	button_at("OpenNews","Watch Holo-Vid",Rect2(800,332,360,44),game.world_activity.open_news)
-	button_at("HireEscorts","Hire an Escort",Rect2(800,394,360,44),game.toggle_fleet_menu)
-	button_at("Gamble","Gamble",Rect2(800,456,360,44),func():page("gambling"))
-	button_at("LeaveBar","Leave",Rect2(800,568,360,44),func():page("landing"))
+	# The original bar is a small foreground window over the unchanged landing page.
+	build_landing()
+	for child in canvas.get_children(): suspend_landing_input(child)
+	var shield=Control.new();shield.name="BarInputShield";shield.size=DESIGN;shield.mouse_filter=Control.MOUSE_FILTER_STOP;canvas.add_child(shield)
+	var landing_canvas: Control=canvas
+	var bar=Control.new();bar.name="BarMenu";bar.position=Vector2(232,220);bar.size=Vector2(504,338);bar.mouse_filter=Control.MOUSE_FILTER_STOP;landing_canvas.add_child(bar)
+	canvas=bar
+	panel(Rect2(Vector2.ZERO,bar.size))
+	var body=RichTextLabel.new();body.name="BarDescription";body.position=Vector2(16,12);body.size=Vector2(472,140)
+	body.add_theme_font_override("normal_font",font);body.add_theme_font_size_override("normal_font_size",20)
+	body.add_theme_color_override("default_color",Color("dddddd"));body.scroll_active=true
+	body.text=str(game.catalog.data.descriptions.get(str(10000+game.docked_id-128),""))
+	if body.text.is_empty(): body.text="Captains and travelers trade news and look for work in the spaceport bar."
+	canvas.add_child(body)
+	button_at("BarOffers","Bar Offers",Rect2(16,166,472,44),func():mission_computer(1))
+	button_at("HireEscorts","Hire an Escort",Rect2(16,222,232,44),game.toggle_fleet_menu)
+	button_at("Gamble","Gamble",Rect2(256,222,232,44),func():page("gambling"))
+	button_at("OpenNews","Watch Holo-Vid",Rect2(16,278,232,44),game.world_activity.open_news)
+	button_at("LeaveBar","Leave",Rect2(256,278,232,44),func():page("landing"))
+	canvas=landing_canvas
 
 func build_intel() -> void:
 	label_at("LocalIntelHeading","Local Leads — "+str(game.catalog.record("objects",game.docked_id).name),Rect2(24,18,1140,40),24)

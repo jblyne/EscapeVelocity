@@ -3,8 +3,11 @@ import unittest
 import wave
 from extract_menu_audio import ROOT, SOURCES
 from extract_interface_audio import SOUNDS
+from extract_gambling_audio import SOUNDS as SLOT_SOUNDS
 SOURCES={fork:dict(names) for fork,names in SOURCES.items()}
 SOURCES["EV Sounds.rsrc"].update(SOUNDS)
+SOURCES["EV Sounds.rsrc"].update(SLOT_SOUNDS)
+SOURCES["EV Sounds.rsrc"].update({300:"heavy_explosion",303:"explosion"})
 from extract_special_effects import pcm_sound
 from inspect_ev import read_resources
 

@@ -2,7 +2,7 @@ extends Control
 signal changed
 var game
 var locations: Dictionary={}
-var font=ThemeDB.fallback_font
+var font: Font=preload("res://scripts/classic_text.gd").body()
 var picked: int=-1
 var dragging: bool=false
 const DOMINATED_COLOR=Color("00ff00")

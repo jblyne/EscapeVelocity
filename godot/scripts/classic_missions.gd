@@ -122,8 +122,7 @@ func show_details() -> void:
 		if not journal and game.missions.channel==1:
 			briefing="No bar offers match your standing and story progress at this port.\n\nRecruitment starts at neutral standing: visit a Rebel port for Rebel Parcels, or a Confederation port for Confed Documents. Later jobs unlock after completing their introductions.\n\nThis list shows all eligible local jobs. Spontaneous bar approaches still vary between visits."
 	if not journal:
-		var name_label=label_at("MissionTitle",title,Rect2(420,58,598,44),28)
-		var serif=SystemFont.new();serif.font_names=PackedStringArray(["Times New Roman","Times","serif"]);name_label.add_theme_font_override("font",serif)
+		label_at("MissionTitle",title,Rect2(420,58,598,44),28)
 	if not journal and not entry.is_empty():
 		var info: Dictionary=comparisons[selected_index]
 		var nearest_note: String=" · CLOSEST" if info.jumps>=0 and info.jumps==nearest else ""
@@ -136,7 +135,7 @@ func show_details() -> void:
 	var body=RichTextLabel.new();body.name="MissionBriefing";body.position=Vector2(390,52) if journal else Vector2(420,194)
 	body.size=Vector2(494,174) if journal else Vector2(598,136);body.bbcode_enabled=false;body.fit_content=false
 	body.add_theme_font_override("normal_font",font);body.add_theme_font_size_override("normal_font_size",18);body.text=briefing;detail.add_child(body)
-	button_at("CloseMissions","Done" if journal else "Leave",Rect2(514,252,236,44) if journal else Rect2(460,344,236,44),func():game.set_mode(game.missions.return_mode))
+	button_at("CloseMissions","Done" if journal else "Leave",Rect2(514,252,236,44) if journal else Rect2(712,344,236,44),func():game.set_mode(game.missions.return_mode))
 	var action: Button
 	if journal:
 		action=button_at("AbortCourier" if entry.get("courier",false) else "AbortMission%d" % int(entry.get("id",-1)),"Abort Mission",Rect2(72,252,236,44),func():
@@ -146,7 +145,7 @@ func show_details() -> void:
 		if action.disabled and not entry.is_empty():
 			action.text="Cannot Abort";action.tooltip_text=game.missions.abort_reason(entry)
 	else:
-		action=button_at("AcceptCourier" if entry.get("courier",false) else "AcceptMission%d" % int(entry.get("id",-1)),"Accept Mission",Rect2(712,344,236,44),func():
+		action=button_at("AcceptCourier" if entry.get("courier",false) else "AcceptMission%d" % int(entry.get("id",-1)),"Accept Mission",Rect2(460,344,236,44),func():
 			if entry.get("courier",false): game.accept_job()
 			else: game.missions.accept(entry))
 		var cargo: int=5 if entry.get("courier",false) else int(entry.get("qty",0))

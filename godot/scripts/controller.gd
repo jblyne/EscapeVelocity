@@ -136,6 +136,9 @@ func menu_scope() -> Node:
    if child.get_script()==preload("res://scripts/title_menu.gd"):
     if is_instance_valid(child.extras_panel): return child.extras_panel
     if child.dialog.visible: return child.dialog
+ if game.mode=="dock" and game.hud.port_page=="bar":
+  var bar=scope.find_child("BarMenu",true,false)
+  if is_instance_valid(bar): return bar
  return scope
 func collect_buttons(node: Node,result: Array):
  if node is Control and not node.is_visible_in_tree(): return

@@ -104,6 +104,8 @@ var landing_target: int = -1
 var landing_clearance: int = -1
 var docked_id: int = -1
 var messages: Array = []
+var flight_welcome_seconds: float=0.0
+var empty_journal_seconds: float=0.0
 var muted: bool = false
 var audio: Dictionary = {}
 var title_music_position: float=0.0
@@ -289,14 +291,15 @@ func setup_environment() -> void:
 	add_child(camera)
 
 func setup_audio() -> void:
-	for key in ["maverick_afterburner", "afterburner", "maverick_warp", "sidewinder_launch", "maverick_target", "maverick_missile", "maverick_gun", "laser", "impact", "explosion", "heavy_explosion", "jump", "land", "arrival", "forklift", "cloak_on", "cloak_off", "menu_click", "menu_hum", "menu_slam", "menu_music", "ui_target", "ui_open", "ui_select", "ui_error", "ui_confirm", "modal_alert", "airlock", "jump_start", "death_star_warp", "death_star_charge", "death_star_fire"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS:
+	for key in ["maverick_afterburner", "afterburner", "maverick_warp", "sidewinder_launch", "maverick_target", "maverick_missile", "maverick_gun", "laser", "impact", "explosion", "heavy_explosion", "jump", "land", "arrival", "forklift", "cloak_on", "cloak_off", "menu_click", "menu_hum", "menu_slam", "menu_music", "ui_target", "ui_open", "ui_select", "ui_error", "ui_confirm", "modal_alert", "slot_flip", "slot_lock", "slot_win", "slot_jackpot", "airlock", "jump_start", "death_star_warp", "death_star_charge", "death_star_fire"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS:
 		if key=="menu_music":
 			var boot_music=get_tree().root.get_node_or_null("BootTitleMusic")
 			if boot_music!=null:
 				boot_music.reparent(self);audio[key]=boot_music
 				continue
 		var player = AudioStreamPlayer.new()
-		player.stream = load("res://audio/" + key + (".mp3" if key in ["maverick_afterburner","maverick_gun","maverick_warp","sidewinder_launch","maverick_target","maverick_missile"] else ".wav"))
+		var stream_key: String={"slot_win":"heavy_explosion","slot_jackpot":"explosion"}.get(key,key)
+		player.stream = load("res://audio/" + stream_key + (".mp3" if key in ["maverick_afterburner","maverick_gun","maverick_warp","sidewinder_launch","maverick_target","maverick_missile"] else ".wav"))
 		# Stretch the rising jump sound across the complete departure burn.
 		if key == "jump": player.pitch_scale = player.stream.get_length() / Hyperspace.ACCELERATION_SECONDS
 		player.volume_db = -4 if (key.begins_with("panic_") or key.begins_with("death_cry")) else (-13 if key == "laser" else -9)
@@ -317,6 +320,9 @@ func setup_audio() -> void:
 			player.max_polyphony=1
 		if key.begins_with("ui_") or key=="modal_alert":
 			player.volume_db=-14;player.max_polyphony=1
+		if key.begins_with("slot_"):
+			player.volume_db=-14 if key in ["slot_flip","slot_lock"] else -20
+			player.max_polyphony=3 if key=="slot_lock" else 1
 		if key in ["sidewinder_launch","maverick_target","maverick_missile"]: player.volume_db=-12;player.max_polyphony=1
 		if key=="afterburner":
 			player.stream.loop_mode=AudioStreamWAV.LOOP_FORWARD;player.stream.loop_begin=0;player.stream.loop_end=44100
@@ -473,7 +479,7 @@ func load_system(arrival_heading: Variant = null, preserve_chain: bool = false) 
 		velocity = entry.velocity
 	# New pilots start beside the first world, including offset primaries.
 	elif pilot.position == Vector2(0,330) and not planets.is_empty():
-		pilot.position += planets[0].position
+		pilot.position = planets[0].position + (Vector2.ONE*planets[0].radius*1.4 if not pilot.flight_welcome_seen else Vector2(0,330))
 	player_model = ShipModels.create(catalog,pilot.ship_id,-1)
 	player_base_scale = player_model.scale
 	world.add_child(player_model)
@@ -683,6 +689,9 @@ func set_mode(value: String) -> void:
 		map_preview_system=-1;map_selected=pilot.system_id;map_center=Vector2(INF,INF)
 	if value in ["dock","dead"]: cloak.set_active(false)
 	mode = value
+	if value=="flight" and pilot_ready and not pilot.flight_welcome_seen:
+		pilot.flight_welcome_seen=true;flight_welcome_seconds=30.0
+	elif value=="dock": flight_welcome_seconds=0.0
 	if value=="flight": hud.port_page="landing"
 	engine_audio.stop()
 	death_reveal_time = 0.9 if value == "dead" else 0.0
@@ -851,6 +860,8 @@ func _physics_process(dt: float) -> void:
 		save_game(false)
 
 func _process(dt: float) -> void:
+	empty_journal_seconds=maxf(0,empty_journal_seconds-dt)
+	if mode=="flight": flight_welcome_seconds=maxf(0,flight_welcome_seconds-dt)
 	update_afterburner_audio(dt)
 	traffic.maverick.advance_warp(self,dt)
 	traffic.maverick.advance_victory_fade()
@@ -1791,6 +1802,10 @@ func enter_ship_with_intro(force_intro: bool=false) -> void:
 	intro.story_revealed.connect(layer.queue_free)
 	layer.add_child(intro)
 
+func flight_welcome_text() -> String:
+	var landing: String=controls.pad_caption("land") if controls.controller.using_pad else controls.caption("land")
+	return "Welcome to Escape Velocity - it would be a good idea to start by landing on Levo and checking out the prices. Hit '%s' to request landing clearance, then hit it again to land." % landing
+
 func remember_active_pilot() -> void:
 	if not remember_pilot_selection: return
 	var file=FileAccess.open(pilot_selection_path+".tmp",FileAccess.WRITE)
@@ -1835,9 +1850,10 @@ func restart(new_pilot: Variant=null,enter_flight: bool=true) -> void:
 	missions.landing_reports.clear()
 	missions.active_landing_report.clear()
 	pilot = Pilot.new() if new_pilot==null else new_pilot
+	flight_welcome_seconds=0.0;empty_journal_seconds=0.0;messages.clear()
 	load_system()
 	if enter_flight: set_mode("flight")
-	notify("Fresh test flight. Save with F5 when ready.")
+
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
