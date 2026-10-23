@@ -5,7 +5,7 @@ var layout=Vector2(730,410)
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter=Control.MOUSE_FILTER_STOP
-	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+	font=preload("res://scripts/classic_text.gd").body()
 	canvas=Control.new();canvas.size=layout;add_child(canvas)
 	panel(Rect2(Vector2.ZERO,layout))
 	var report: Dictionary=game.missions.active_landing_report

@@ -171,6 +171,10 @@ func append_map_route(chart):
  game.destination=int(game.map_route.back()) if game.pilot.cheat_chain_jump else int(game.map_route.front())
  game.sound("ui_select");chart.queue_redraw();chart.changed.emit()
 func menu_button(button: int):
+ if game.mode=="controls" and button in [JOY_BUTTON_LEFT_SHOULDER,JOY_BUTTON_RIGHT_SHOULDER]:
+  var preferences=game.hud.modal_root.get_child(0)
+  if not is_instance_valid(preferences.speed_panel):preferences.select_tab("controller" if preferences.selected_tab=="keyboard" else "keyboard")
+  return
  if button==JOY_BUTTON_B:
   send_key(KEY_ESCAPE);return
  if game.mode=="map":

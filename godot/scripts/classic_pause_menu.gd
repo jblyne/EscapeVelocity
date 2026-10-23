@@ -2,7 +2,7 @@ extends "res://scripts/classic_port.gd"
 const LAYOUT=Vector2(960,620)
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
-	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+	font=preload("res://scripts/classic_text.gd").body()
 	canvas=Control.new();canvas.size=LAYOUT;add_child(canvas);panel(Rect2(Vector2.ZERO,LAYOUT))
 	label_at("PauseHeading","Flight Paused",Rect2(22,15,500,36),26)
 	label_at("OverallProgress","Overall progress: %.1f%%" % (game.achievements.progress().overall*100),Rect2(564,18,372,30),19)

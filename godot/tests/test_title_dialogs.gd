@@ -9,13 +9,13 @@ func run() -> void:
 	var game=load("res://main.tscn").instantiate();game.save_path="/tmp/ev192-dialog-pilot.json";game.controls.path="/tmp/ev192-dialog-controls.json"
 	game.traffic.enabled=false;game.muted=true;root.add_child(game);game.set_process(false);game.set_physics_process(false)
 	game.set_mode("title");var menu=game.hud.modal_root.get_child(0);menu.animation_time=3;menu.update_presentation()
-	for page in ["new_pilot","preferences","about"]:
+	for page in ["new_pilot","about"]:
 		if page=="about": menu.about_with_modifiers(false,false)
 		else: menu.call(page)
 		for i in 4: await process_frame
 		check(menu.dialog.theme.get_stylebox("panel","PanelContainer").bg_color==Color("e8eeee"),"Original light Mac dialog: "+page)
 		check(menu.get_global_rect().encloses(menu.dialog.get_global_rect()),"Dialog stays on screen: "+page)
-		check(menu.screen.get_child(0).get_theme_color("font_color")==Color.BLACK,"Black caption text: "+page)
+		check((menu.screen.find_child("NewPilotPrompt",true,false).get_theme_color("font_color") if page=="new_pilot" else menu.screen.get_child(0).get_theme_color("font_color"))==Color.BLACK,"Black caption text: "+page)
 		if "--visual" in OS.get_cmdline_user_args():
 			await RenderingServer.frame_post_draw
 			root.get_texture().get_image().save_png("/tmp/ev192-"+page+".png")
@@ -31,7 +31,7 @@ func run() -> void:
 	menu.close_extras();await process_frame
 	game.open_controls();await process_frame
 	var controls=game.hud.modal_root.get_child(0)
-	check(controls.canvas.theme.get_stylebox("normal","Button").bg_color==Color("e8eeee"),"Main-menu keyboard preferences share classic buttons")
+	check(controls.canvas.get_node("PreferencesPaper").get_theme_stylebox("panel").bg_color==Color.WHITE and controls.tabs.size()==2,"Main-menu preferences use the white classic tabbed dialog")
 	if "--visual" in OS.get_cmdline_user_args():
 		for i in 3: await process_frame
 		await RenderingServer.frame_post_draw

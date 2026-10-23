@@ -8,7 +8,7 @@ var cards: Dictionary={}
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
-	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+	font=preload("res://scripts/classic_text.gd").body()
 	canvas=Control.new();canvas.size=LAYOUT;add_child(canvas);panel(Rect2(Vector2.ZERO,LAYOUT))
 	var scroll=ScrollContainer.new();scroll.name="OutfitterScroll";scroll.position=Vector2(16,14);scroll.size=Vector2(548,492)
 	scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;canvas.add_child(scroll)

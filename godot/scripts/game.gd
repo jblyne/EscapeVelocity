@@ -134,6 +134,7 @@ func open_controls() -> void:
 
 func _ready() -> void:
 	controls.load_settings()
+	controls.apply_audio()
 	get_window().title = "Escape Velocity HD — First Flight · v" + str(ProjectSettings.get_setting("application/config/version"))
 	var launch_args = OS.get_cmdline_user_args()
 	for i in launch_args.size():
@@ -288,7 +289,7 @@ func setup_environment() -> void:
 	add_child(camera)
 
 func setup_audio() -> void:
-	for key in ["maverick_afterburner", "afterburner", "maverick_warp", "sidewinder_launch", "maverick_target", "maverick_missile", "maverick_gun", "laser", "impact", "explosion", "heavy_explosion", "jump", "land", "arrival", "forklift", "cloak_on", "cloak_off", "menu_click", "menu_hum", "menu_slam", "menu_music", "ui_target", "ui_open", "ui_select", "ui_error", "ui_confirm", "airlock", "jump_start", "death_star_warp", "death_star_charge", "death_star_fire"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS:
+	for key in ["maverick_afterburner", "afterburner", "maverick_warp", "sidewinder_launch", "maverick_target", "maverick_missile", "maverick_gun", "laser", "impact", "explosion", "heavy_explosion", "jump", "land", "arrival", "forklift", "cloak_on", "cloak_off", "menu_click", "menu_hum", "menu_slam", "menu_music", "ui_target", "ui_open", "ui_select", "ui_error", "ui_confirm", "modal_alert", "airlock", "jump_start", "death_star_warp", "death_star_charge", "death_star_fire"] + Arsenal.PANIC_KEYS + Arsenal.DEATH_KEYS + Arsenal.WEAPON_SOUND_KEYS:
 		if key=="menu_music":
 			var boot_music=get_tree().root.get_node_or_null("BootTitleMusic")
 			if boot_music!=null:
@@ -314,7 +315,7 @@ func setup_audio() -> void:
 		if key.begins_with("menu_"):
 			player.volume_db={"menu_click":-12,"menu_hum":-17,"menu_slam":-18,"menu_music":-20}[key]
 			player.max_polyphony=1
-		if key.begins_with("ui_"):
+		if key.begins_with("ui_") or key=="modal_alert":
 			player.volume_db=-14;player.max_polyphony=1
 		if key in ["sidewinder_launch","maverick_target","maverick_missile"]: player.volume_db=-12;player.max_polyphony=1
 		if key=="afterburner":
@@ -352,11 +353,25 @@ func update_afterburner_audio(dt: float) -> void:
 	player.volume_db=(-11 if pilot.ship_id==900 else -20)+linear_to_db(maxf(.0001,afterburner_audio_gain))
 	if not player.playing: player.play()
 
+func title_audio_active() -> bool:
+	return mode=="title" or (mode=="controls" and controls_return_mode=="title")
+
+func sync_title_music() -> void:
+	if not title_audio_active(): return
+	if muted or not controls.intro_music:
+		if audio.menu_music.playing: title_music_position=audio.menu_music.get_playback_position()
+		audio.menu_music.stop()
+	elif not audio.menu_music.playing:
+		audio.menu_music.volume_db=-20
+		audio.menu_music.play(title_music_position)
+
 func start_title_audio() -> void:
 	if mode!="title": return
 	title_music_position=audio.menu_music.get_playback_position() if audio.menu_music.playing else 0.0
 	if not muted:
-		if not audio.menu_music.playing: audio.menu_music.play()
+		if controls.intro_music and not audio.menu_music.playing:
+			audio.menu_music.volume_db=-20;audio.menu_music.play()
+		elif not controls.intro_music: audio.menu_music.stop()
 		audio.menu_hum.play()
 
 func finish_title_motion() -> void:
@@ -649,7 +664,7 @@ func toggle_audio() -> void:
 		if audio.menu_music.playing: title_music_position=audio.menu_music.get_playback_position()
 		engine_audio.stop()
 		for a in audio.values(): a.stop()
-	elif mode=="title": audio.menu_music.play(title_music_position)
+	elif title_audio_active() and controls.intro_music: audio.menu_music.play(title_music_position)
 	for effect in explosions:
 		if effect is Breakup: effect.set_audio_state(muted,mode in ["flight","dead"])
 	world_killer.set_audio_state(muted,mode=="flight")
@@ -662,7 +677,7 @@ func set_mode(value: String) -> void:
 	if value!="flight": auto_boarding={};last_board_tap=-1000;auto_landing=false;last_land_tap=-1000;self_destruct_seconds=0
 	if value=="flight" and pilot.strict_dead: value="dead"
 	if value=="outfitter" and mode!="outfitter": outfitter.begin_visit()
-	if value!="title": stop_title_audio()
+	if value!="title" and not (value=="controls" and controls_return_mode=="title"): stop_title_audio()
 	if value=="map" and mode!="map":
 		map_return_mode=mode if mode in ["missions","dock"] else "flight"
 		map_preview_system=-1;map_selected=pilot.system_id;map_center=Vector2(INF,INF)
@@ -1789,12 +1804,13 @@ func preserve_current_pilot() -> String:
 	if pilot.shield<=0 and pilot.armor<=0 and not pilot.strict_dead: return ""
 	return "" if save_game(false) else "Could not save the current pilot. No pilot was replaced. Check the save folder permissions and try again."
 
-func create_pilot(name: String,strict_rules: bool) -> bool:
+func create_pilot(name: String,strict_rules: bool,ship_name: String="Adventurer",launch_now: bool=true) -> bool:
 	pilot_file_error=preserve_current_pilot()
 	if not pilot_file_error.is_empty(): return false
 	var candidate=Pilot.new()
 	candidate.pilot_name=name.strip_edges().left(64) if not name.strip_edges().is_empty() else "Captain"
 	candidate.strict=strict_rules
+	candidate.ship_name=ship_name.strip_edges().left(64) if not ship_name.strip_edges().is_empty() else "Adventurer"
 	var stem: String="pilot-"+candidate.pilot_name.to_snake_case().validate_filename().left(48)
 	var directory: String=save_path.get_base_dir()
 	var path: String=directory.path_join(stem+".json")
@@ -1808,11 +1824,11 @@ func create_pilot(name: String,strict_rules: bool) -> bool:
 	file.store_string(JSON.stringify(candidate.snapshot(),"\t"));file.close()
 	if DirAccess.rename_absolute(ProjectSettings.globalize_path(path+".tmp"),ProjectSettings.globalize_path(path))!=OK:
 		pilot_file_error="Could not finish saving the new pilot. Your current pilot is still active.";return false
-	save_path=path;remember_active_pilot();restart(candidate);opening_story_seen=false
-	enter_ship_with_intro()
+	save_path=path;remember_active_pilot();restart(candidate,launch_now);opening_story_seen=false
+	if launch_now: enter_ship_with_intro()
 	return true
 
-func restart(new_pilot: Variant=null) -> void:
+func restart(new_pilot: Variant=null,enter_flight: bool=true) -> void:
 	autopilot.cancel("New flight.",false)
 	pilot_ready = true
 	missions.approach={};missions.approached.clear();missions.approach_port=-1;missions.bar_port=-1;missions.bar_rolls.clear();missions.bar_queue.clear()
@@ -1820,7 +1836,7 @@ func restart(new_pilot: Variant=null) -> void:
 	missions.active_landing_report.clear()
 	pilot = Pilot.new() if new_pilot==null else new_pilot
 	load_system()
-	set_mode("flight")
+	if enter_flight: set_mode("flight")
 	notify("Fresh test flight. Save with F5 when ready.")
 
 func _notification(what: int) -> void:

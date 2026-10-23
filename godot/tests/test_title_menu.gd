@@ -26,9 +26,11 @@ func run() -> void:
 	check(not game.pilot_ready,"new pilot requires explicit Begin action")
 	event.physical_keycode=KEY_ENTER;menu._unhandled_key_input(event)
 	check(game.mode=="title","Enter does not bypass new-pilot creation")
-	for child in menu.screen.find_children("*","Button",true,false):
-		if child is Button and child.text=="Begin new flight": child.pressed.emit();break
-	check(game.pilot_ready and game.mode=="flight","New Pilot begins a flight")
+	menu.screen.find_child("ConfirmPilotName",true,false).pressed.emit()
+	check(not game.pilot_ready and menu.naming_stage=="ship","Pilot name advances to shuttle naming before creating a save")
+	menu.screen.find_child("ConfirmShipName",true,false).pressed.emit()
+	check(game.pilot_ready and game.mode=="title","New Pilot returns to main menu and waits for Enter Ship")
+	check("Ship Name:" in menu.pilot_readout.text and game.pilot.ship_name in menu.pilot_readout.text,"Menu readout shows named ship")
 	game.pilot.credits=23456;game.save_game(false)
 	game.pilot.credits=99;game.set_mode("title")
 	menu=game.hud.modal_root.get_child(0)
@@ -43,7 +45,8 @@ func run() -> void:
 	check(game.pilot.position==position,"flight pauses behind menu")
 	menu=game.hud.modal_root.get_child(0)
 	event.physical_keycode=KEY_P;menu._unhandled_key_input(event)
-	check(menu.screen.get_child(1) is CheckBox,"preferences offers sound control")
+	check(game.mode=="controls" and game.hud.modal_root.find_child("SoundEnabledToggle",true,false) is CheckBox,"Set Prefs opens the tabbed preferences with sound control")
+	game.set_mode("title");menu=game.hud.modal_root.get_child(0)
 	menu.pilot_info()
 	if "--visual" in OS.get_cmdline_user_args():
 		for i in 10: await process_frame

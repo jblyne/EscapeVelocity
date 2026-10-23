@@ -37,5 +37,5 @@ void fragment() {
 		// pixel pattern and timing; only the settled lettering is smoothed.
 		coverage=smoothstep(.62,.76,ink.g)*step(ink.b,.3)*step(.12,ink.r);
 	}
-	COLOR=vec4(vec3(.62,1.0,.12)*brightness,coverage)*vertex_tint;
+	COLOR=vec4(vec3(.60,1.0,0.0)*brightness,pow(coverage,.85))*vertex_tint;
 }

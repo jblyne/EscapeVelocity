@@ -20,7 +20,7 @@ func run() -> void:
 	check(menu.animation_time==0 and not game.audio.menu_slam.playing,"First presented update discards setup delta")
 	menu._process(.2)
 	check(menu.animation_time==.2 and game.audio.menu_hum.playing,"Visible animation and machinery progress together")
-	menu._process(.6)
+	menu._process(menu.MOTION_DURATION-.2+.001)
 	check(menu.motion_finished and not game.audio.menu_hum.playing and game.audio.menu_slam.playing,"Slam follows visible panel movement")
 	game.set_mode("flight");game.set_mode("title")
 	menu=game.hud.modal_root.get_child(0)

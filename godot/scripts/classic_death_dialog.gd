@@ -3,7 +3,7 @@ extends "res://scripts/classic_port.gd"
 const LAYOUT=Vector2(660,214)
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
-	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+	font=preload("res://scripts/classic_text.gd").body()
 	canvas=Control.new();canvas.size=LAYOUT;add_child(canvas);panel(Rect2(Vector2.ZERO,LAYOUT))
 	label_at("DestroyedMessage","Your ship has been destroyed.",Rect2(24,22,612,38),22)
 	label_at("PilotRecoveryStatus","This strict pilot has died permanently." if game.pilot.strict_dead else "You may load your last saved pilot or start a new flight.",Rect2(24,70,612,54),18)

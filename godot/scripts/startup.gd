@@ -39,6 +39,9 @@ var discard_setup_delta: bool=false
 var complete_elapsed: float=0
 
 func _ready() -> void:
+	var preferences=preload("res://scripts/control_settings.gd").new()
+	preferences.load_settings();preferences.apply_audio()
+	music_muted=music_muted or not preferences.intro_music
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var args=OS.get_cmdline_user_args()
 	if not story_only and not replay_only and Array(args).any(func(arg):return arg in ["--skip-intro","--show-menu","--show-map","--show-port","--show-cheats"]):
@@ -92,7 +95,7 @@ func _ready() -> void:
 	fade_cover.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);add_child(fade_cover)
 	resized.connect(fit);fit()
 	music=replay_music if is_instance_valid(replay_music) else AudioStreamPlayer.new()
-	if not replay_only: music.volume_db=-20;music.max_polyphony=1
+	if not replay_only: music.volume_db=-80 if music_muted else -20;music.max_polyphony=1
 	if story_only:
 		music.volume_db=-80 if music_muted else -20
 		add_child(music);music.finished.connect(next_drum)

@@ -26,7 +26,16 @@ func run() -> void:
  pad.selected=menu.canvas.get_node("OpenPilot")
  pad.menu_button(JOY_BUTTON_A)
  check(menu.pilot_picker.visible and menu.pilot_picker.item_count==2,"Custom list shows only valid pilots, excluding preferences and invalid saves")
+ check(menu.canvas.get_node("LogoCreditsHotspot").get_index()<menu.dialog.get_index(),"Logo hotspot stays behind pilot dialog and cannot block the first row")
+ check(menu.pilot_picker.get_theme_stylebox("hovered_selected_focus").bg_color==Color.BLACK and menu.pilot_picker.get_theme_color("font_hovered_selected_color")==Color.WHITE,"Focused selected pilot retains contrasting colors on hover")
  check(pad.selected==menu.pilot_picker,"Controller activation preserves the pilot list focus handoff")
+ if "--visual" in OS.get_cmdline_user_args():
+  menu.animation_time=5;menu.update_presentation();menu.set_process(false)
+  for i in 4: await process_frame
+  pad.queue_redraw()
+  await process_frame
+  await RenderingServer.frame_post_draw
+  root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../builds/validation/open-pilot-0.1.251.png"))
  var before: int=menu.pilot_picker.get_selected_items()[0]
  pad.menu_button(JOY_BUTTON_DPAD_DOWN)
  check(menu.pilot_picker.get_selected_items()[0]==before+1,"First D-pad press immediately changes pilot, without entering list first")

@@ -1,0 +1,1 @@
+Original Escape Velocity 1.0.5 application icon: icl8 128, masked by ICN# 128 from Escape Velocity.rsrc. Uses the Macintosh standard 256-color palette. Reproduce with python3 tools/extract_app_icon.py. HD PNG enlarges original pixels without changing the design. Original resource provenance and rights apply.

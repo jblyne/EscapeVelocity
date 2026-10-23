@@ -20,6 +20,7 @@ var hector_banner: Label
 var outfitter_scroll: int = 0
 var selected_outfit: int = 128
 var root: Control
+var saved_title_menu: Control
 var modal_root: Control
 var modal_tween: Tween
 var modal_outgoing: Control
@@ -60,8 +61,7 @@ func _ready() -> void:
 	root.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 	var theme=Theme.new()
-	var font=SystemFont.new()
-	font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+	var font=preload("res://scripts/classic_text.gd").body()
 	theme.default_font=font
 	theme.default_font_size=15
 	for button_type in ["Button","OptionButton","CheckBox","CheckButton"]:
@@ -340,6 +340,14 @@ func rebuild_modal() -> void:
 		target_panel.hide()
 	var old_scroll = modal_root.find_child("OutfitterScroll",true,false)
 	if old_scroll != null: outfitter_scroll = old_scroll.scroll_vertical
+	# Keep the live title presentation behind preferences, including its animation state.
+	if game.mode=="controls" and game.controls_return_mode=="title" and modal_mode=="title" and modal_root.get_child_count()>0:
+		saved_title_menu=modal_root.get_child(0)
+		saved_title_menu.reparent(root)
+		root.move_child(saved_title_menu,modal_root.get_index())
+		saved_title_menu.process_mode=Node.PROCESS_MODE_DISABLED
+	if is_instance_valid(saved_title_menu) and game.mode not in ["title","controls"]:
+		saved_title_menu.queue_free();saved_title_menu=null
 	begin_modal_motion()
 	for child in modal_root.get_children():
 		modal_root.remove_child(child)
@@ -369,6 +377,11 @@ func rebuild_modal() -> void:
 		build_info()
 		return
 	if game.mode=="title":
+		if is_instance_valid(saved_title_menu):
+			saved_title_menu.reparent(modal_root)
+			saved_title_menu.process_mode=Node.PROCESS_MODE_INHERIT
+			saved_title_menu=null
+			return
 		var menu=TitleMenu.new()
 		menu.game=game
 		modal_root.add_child(menu)

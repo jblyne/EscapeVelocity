@@ -4,7 +4,7 @@ extends "res://scripts/classic_port.gd"
 var layout=Vector2(820,374)
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
-	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+	font=preload("res://scripts/classic_text.gd").body()
 	var comms=game.interactions;var npc: Dictionary=comms.contact
 	if comms.page=="person_mission": layout.y=430
 	canvas=Control.new();canvas.size=layout;add_child(canvas);panel(Rect2(Vector2.ZERO,layout))

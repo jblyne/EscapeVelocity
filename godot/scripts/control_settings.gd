@@ -9,6 +9,8 @@ var controller
 var bindings: Dictionary=DEFAULTS.duplicate(true)
 var speed: float=1.0
 var classic_fire: bool=false
+var sound_volume: float=1.0
+var intro_music: bool=true
 var path: String="user://preferences.json"
 func load_settings() -> void:
  if not FileAccess.file_exists(path): return
@@ -52,10 +54,12 @@ func load_settings() -> void:
   if valid: pad_bindings=next_pad
  classic_fire=data.get("classic_fire",false)==true
  speed=clampf(float(data.get("speed",1)),.5,2.0)
+ sound_volume=clampf(float(data.get("sound_volume",1)),0,1)
+ intro_music=data.get("intro_music",true)==true
 func save_settings() -> bool:
  var file=FileAccess.open(path+".tmp",FileAccess.WRITE)
  if file==null: return false
- file.store_string(JSON.stringify({"bindings":bindings,"speed":speed,"classic_fire":classic_fire,"controller_bindings":pad_bindings}));file.close()
+ file.store_string(JSON.stringify({"bindings":bindings,"speed":speed,"classic_fire":classic_fire,"controller_bindings":pad_bindings,"sound_volume":sound_volume,"intro_music":intro_music}));file.close()
  return DirAccess.rename_absolute(ProjectSettings.globalize_path(path+".tmp"),ProjectSettings.globalize_path(path))==OK
 func bind(action: String,key: int) -> String:
  if not DEFAULTS.has(action) or key<=0: return "Choose a keyboard key."
@@ -122,3 +126,6 @@ func bind_pad(action: String,token: String) -> String:
 func reset_pad() -> void:
  pad_bindings=PAD_DEFAULTS.duplicate();save_settings()
  if is_instance_valid(controller): controller.reset()
+
+func apply_audio() -> void:
+ AudioServer.set_bus_volume_db(0,linear_to_db(maxf(sound_volume,.0001)))

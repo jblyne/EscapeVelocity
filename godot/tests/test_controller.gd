@@ -108,7 +108,7 @@ func run():
  if "--visual" in OS.get_cmdline_user_args():
   await create_timer(.3).timeout
   var help=game.hud.modal_root.find_child("ControllerHelp",true,false)
-  help.get_parent().get_parent().get_parent().ensure_control_visible(help)
+  game.hud.modal_root.get_child(0).select_tab("controller")
   await process_frame;await RenderingServer.frame_post_draw
   root.get_texture().get_image().save_png("/tmp/ev217-controller-help.png")
  print("Connected controllers: ",Input.get_connected_joypads())

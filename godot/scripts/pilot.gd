@@ -19,6 +19,7 @@ const LEGACY_TEST_FUEL: float = 100000.0
 var system_id: int = 128
 var ship_id: int = 128
 var pilot_name: String="Captain"
+var ship_name: String="Adventurer"
 var strict: bool=false
 var strict_dead: bool=false
 var credits: int = 10000
@@ -135,7 +136,7 @@ func deliver(object_id: int) -> int:
 
 func snapshot() -> Dictionary:
 	return {"version": SAVE_VERSION, "fuel_rules":2, "system_id": system_id, "ship_id": ship_id,
-		"maverick_equipment_granted":maverick_equipment_granted,"maverick_afterburner_granted":maverick_afterburner_granted,"pilot_name":pilot_name,"strict":strict,"strict_dead":strict_dead,"credits": credits, "fuel": fuel, "shield": shield, "armor": armor,
+		"maverick_equipment_granted":maverick_equipment_granted,"maverick_afterburner_granted":maverick_afterburner_granted,"pilot_name":pilot_name,"ship_name":ship_name,"strict":strict,"strict_dead":strict_dead,"credits": credits, "fuel": fuel, "shield": shield, "armor": armor,
 		"lasers": lasers, "cargo": cargo.duplicate(), "mission": mission.duplicate(),
 		"visited": visited.duplicate(), "position": [position.x, position.y], "heading": heading,
 		"cheats": {"world_killer":cheat_world_killer,"cloak": cheat_cloak, "chain_jump": cheat_chain_jump, "all_weapons": cheat_all_weapons, "infinite_fuel": cheat_infinite_fuel, "invincibility": cheat_invincibility, "deflection": cheat_deflection, "weapon": selected_weapon if selected_weapon < 10000 else 128},
@@ -149,6 +150,7 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 	if not value.get("strict",false) is bool or not value.get("strict_dead",false) is bool or not value.get("pilot_name","Captain") is String: return false
 	if value.get("strict_dead",false): return false
 	if str(value.get("pilot_name","Captain")).length()>64: return false
+	if not value.get("ship_name","Adventurer") is String or str(value.get("ship_name","Adventurer")).length()>64: return false
 	if value.has("fuel_rules") and value.fuel_rules!=2: return false
 	var required = ["version", "system_id", "ship_id", "credits", "fuel", "shield", "armor", "lasers", "cargo", "mission", "visited", "position", "heading"]
 	for key in required:
@@ -310,7 +312,7 @@ func restore(value: Variant, catalog: EVCatalog) -> bool:
 	system_id = int(value.system_id)
 	credits = int(value.credits)
 	fuel = minf(float(value.fuel),candidate.fuel_capacity())
-	strict=bool(value.get("strict",false));strict_dead=false;pilot_name=str(value.get("pilot_name","Captain"))
+	strict=bool(value.get("strict",false));strict_dead=false;pilot_name=str(value.get("pilot_name","Captain"));ship_name=str(value.get("ship_name","Adventurer"))
 	shield = float(value.shield)
 	armor = float(value.armor)
 	lasers = int(value.lasers)

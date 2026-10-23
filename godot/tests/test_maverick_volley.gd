@@ -49,6 +49,28 @@ func run():
  check(not v.update(true,1),"Other ships do not gain Maverick volley")
  game.pilot.ship_id=900;game.pilot.cheat_all_weapons=true;game.pilot.outfits.erase("902");v.update(true,.5);v.update(false,.01)
  check(v.ready and v.targets.size()==3,"Unlimited-ammo cheat locks all remaining eligible enemies")
+ # Every targeting weapon uses its own range, target override and reload.
+ for id in [131,132,133,134,143,144,148,149,191,903]:
+  v.reset();clear_shots();game.pilot.selected_weapon=id;game.pilot.heading=-PI/2
+  check(v.update(true,.5) and v.ready,"Targeted weapon acquires a multi-lock: %d" % id)
+  var locked: Array=v.targets.duplicate()
+  v.update(false,.01);v.update(true,.01)
+  check(game.shots.size()==locked.size() and game.shots.size()>1,"Targeted weapon fires entire volley together: %d" % id)
+  if id!=149:
+   for i in game.shots.size(): check(game.shots[i].target==locked[i].model,"Volley respects distinct target override: %d" % id)
+  check(game.cooldown>0,"Targeted volley starts weapon reload: %d" % id)
+ v.reset();clear_shots();game.pilot.selected_weapon=132;v.update(true,.5);v.update(false,.01)
+ game.pilot.selected_weapon=903;v.update(false,.01)
+ check(not v.ready and v.targets.is_empty(),"Switching targeted weapons cancels old locks")
+ for id in [128,139,140,141,142,147,150,152]: check(not v.supports(id),"Forward-only weapons, bombs, flares and beams keep normal firing: %d" % id)
+ game.pilot.cheat_all_weapons=false;game.pilot.selected_weapon=131
+ for outfit in game.catalog.data.outfits.values():
+  if int(outfit.fields.ModType)==1 and int(outfit.fields.ModVal)==131: game.pilot.outfits[str(outfit.id)]=1
+ var torpedo_ammo: int=game.outfitter.ammo_id(131);game.pilot.outfits[str(torpedo_ammo)]=2
+ v.reset();clear_shots();v.update(true,.5);v.update(false,.01)
+ check(v.targets.size()==2,"Torpedo locks are limited by their own ammunition")
+ v.update(true,.01)
+ check(game.shots.size()==2 and game.outfitter.count(torpedo_ammo)==0,"Torpedo volley spends one round per target")
  v.reset();game.world_activity.hunter_celebration={"generation":1,"sponsor":"Pirate's Cove (NGC-4812 system)","income":8000,"gave_up":false}
  var banner=game.hud.hunter_announcement;banner._process(0);banner._process(1)
  check(banner.visible and banner.reward.text.contains("5,000") and banner.detail.text.contains("8,000"),"Hunter celebration prominently shows reward and employer")

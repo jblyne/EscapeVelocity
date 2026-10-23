@@ -38,6 +38,11 @@ static func make() -> Theme:
 	t.set_color("font_placeholder_color","LineEdit",Color("b0b8b8"));t.set_color("selection_color","LineEdit",Color("606868"))
 	t.set_stylebox("panel","Tree",box(Color.WHITE,Color.BLACK,1,4))
 	t.set_stylebox("panel","ItemList",box(Color.WHITE,Color.BLACK,1,4))
+	t.set_color("font_hovered_color","ItemList",Color.BLACK)
+	t.set_color("font_hovered_selected_color","ItemList",Color.WHITE)
+	t.set_stylebox("hovered","ItemList",box(Color("dce4e4"),Color.TRANSPARENT,0,2))
+	for state in ["hovered_selected","hovered_selected_focus"]:
+		t.set_stylebox(state,"ItemList",box(Color("454b50"),Color.BLACK,1,2))
 	for type in ["Tree","ItemList"]:
 		t.set_stylebox("selected",type,box(Color("454b50"),Color.BLACK,0,2))
 		t.set_stylebox("selected_focus",type,box(Color("454b50"),Color.BLACK,1,2))
@@ -51,9 +56,24 @@ static func make() -> Theme:
 	t.set_color("title_color","Window",Color.BLACK);t.set_color("title_outline_modulate","Window",Color.TRANSPARENT)
 	t.set_constant("title_height","Window",26)
 	return t
-static func frame(panel: Control) -> void:
+static func frame(panel: Control,game: Node=null) -> void:
+	if game!=null:
+		var guard=preload("res://scripts/classic_modal_guard.gd").new()
+		guard.name="ModalOutsideClick";guard.panel=panel;guard.game=game;panel.add_child(guard)
 	panel.draw.connect(func():
 		var bounds=Rect2(Vector2(3,3),panel.size-Vector2(6,6))
 		panel.draw_rect(bounds,Color.WHITE,false,1)
 		panel.draw_rect(bounds.grow(-2),Color.BLACK,false,1))
 	panel.resized.connect(panel.queue_redraw)
+
+static func classic_scrollbar(bar: ScrollBar) -> void:
+	bar.add_theme_stylebox_override("scroll",box(Color.WHITE,Color.BLACK,1,0))
+	bar.add_theme_stylebox_override("scroll_focus",StyleBoxEmpty.new())
+	for state in ["grabber","grabber_highlight","grabber_pressed"]:
+		bar.add_theme_stylebox_override(state,box(Color("dddddd"),Color.BLACK,1,0))
+	for direction in ["decrement","increment"]:
+		var points: String="8,3 3,8 6,8 6,13 10,13 10,8 13,8" if direction=="decrement" else "6,3 10,3 10,8 13,8 8,13 3,8 6,8"
+		var svg='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect x=".5" y=".5" width="15" height="15" fill="white" stroke="black"/><polygon points="%s" fill="#ddd" stroke="#888" stroke-width="1"/></svg>' % points
+		var image=Image.new();image.load_svg_from_string(svg)
+		var icon=ImageTexture.create_from_image(image)
+		for suffix in ["","_highlight","_pressed"]: bar.add_theme_icon_override(direction+suffix,icon)

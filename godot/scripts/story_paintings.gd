@@ -13,8 +13,9 @@ const CUES=[
 	{"line":62,"image":"freighter_years_poster","side":0,"half":-1},
 	{"line":65,"image":"first_ship_poster","side":1,"half":-1},
 	{"line":69,"image":"levo_journey_poster","side":0,"half":-1},
-	{"line":74,"image":"good_luck_poster","side":1,"half":-1}]
+	{"line":71,"image":"good_luck_poster","side":1,"half":-1}]
 const FADE=2.5
+const STORY=preload("res://data/intro_story.json")
 var panels: Array[TextureRect]=[]
 var active_cue: int=-1
 var current_opacity: float=0
@@ -46,8 +47,10 @@ func present(scroll_y: float,line_height: float,speed: float,clip_height: float)
 			if CUES[next].side==CUES[i].side:
 				var replacement_age: float=(current_line-float(CUES[next].line))*line_height/speed
 				opacity*=1-smoothstep(0,FADE*.5,replacement_age);break
-		# Both final pictures linger through the send-off, then dissolve as it exits.
-		opacity*=1-smoothstep(83,88,current_line)
+		# Begin dissolving once the final line has travelled a third of the
+		# viewport upward, finishing while it is still on screen.
+		var final_y: float=scroll_y+(STORY.data.size()-1)*line_height
+		opacity*=smoothstep(clip_height/6.0,clip_height*2.0/3.0,final_y)
 		panels[i].visible=opacity>0;panels[i].modulate.a=opacity
 
 		if opacity>0: active_cue=i;current_opacity=opacity

@@ -4,13 +4,14 @@ extends Control
 # fitted to the window from a fixed design canvas; raster art stays registered.
 const MacDialog=preload("res://scripts/mac_dialog_theme.gd")
 const Lettering=preload("res://scripts/menu_lettering.gd")
+const MenuGlobe=preload("res://scripts/menu_globe.gd")
 const PanelMotion=preload("res://scripts/menu_panel_motion.gd")
 const FADE_SECONDS: float=16.0/60.0
-const PANEL_STOP_SECONDS: float=12.0/15.0
+const PANEL_STOP_SECONDS: float=12.0/PanelMotion.FRAME_RATE
 const GREEN=Color("80ed73")
-const FRAME_RATE: float=15.0
+const FRAME_RATE: float=PanelMotion.FRAME_RATE
 const OPENING_DURATION: float=17.0/FRAME_RATE
-const MOTION_DURATION: float=11.0/FRAME_RATE
+const MOTION_DURATION: float=2.0*PanelMotion.ROW_SECONDS+PANEL_STOP_SECONDS
 # Registered against PICT 8000's actual asymmetrical button/rail locations.
 const LEFT_ORIGINS=[Vector2(96,316),Vector2(96,387),Vector2(96,455)]
 const RIGHT_ORIGINS=[Vector2(499,313),Vector2(499,384),Vector2(499,452)]
@@ -18,6 +19,7 @@ var fade_cover: ColorRect
 var bridge: Texture2D
 var backdrop: Control
 var motion_finished: bool=false
+var completed_rows: int=0
 var game
 var canvas: Control
 var screen: VBoxContainer
@@ -26,7 +28,11 @@ var presentation_started: bool=false
 var discard_setup_delta: bool=false
 var animation_time: float = 0.0
 var dialog: PanelContainer
-var pilot_readout: Label
+var pilot_readout: RichTextLabel
+const DEFAULT_NAMES=preload("res://data/original_default_names.json")
+var naming_stage: String=""
+var pending_pilot_name: String=""
+var pending_strict: bool=false
 var pilot_picker: ItemList
 
 func _ready() -> void:
@@ -67,11 +73,14 @@ func _ready() -> void:
 			var placement: Rect2=Lettering.bounds(i,side)
 			label.position=placement.position;label.size=placement.size
 			canvas.add_child(label)
-	pilot_readout=Label.new()
+			var globe=MenuGlobe.new()
+			globe.name="Globe%d%d" % [i,side];globe.row=i;globe.side=side
+			globe.position=MenuGlobe.bounds(i,side).position;globe.size=MenuGlobe.bounds(i,side).size
+			canvas.add_child(globe)
+	pilot_readout=RichTextLabel.new()
+	pilot_readout.bbcode_enabled=true;pilot_readout.scroll_active=false;pilot_readout.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	pilot_readout.position=Vector2(365,350)
 	pilot_readout.size=Vector2(104,150)
-	pilot_readout.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	pilot_readout.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
 	pilot_readout.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	# EV 1.0.5 readout: TextFont(3 / Geneva), TextSize(9), at 0x4d024.
 	# The HD design canvas scales the original 640 x 480 coordinates by 1.3.
@@ -79,23 +88,23 @@ func _ready() -> void:
 	readout_font.font_names=PackedStringArray(["Geneva"])
 	readout_font.hinting=TextServer.HINTING_NORMAL
 	readout_font.subpixel_positioning=TextServer.SUBPIXEL_POSITIONING_DISABLED
-	pilot_readout.add_theme_font_override("font",readout_font)
-	pilot_readout.add_theme_font_size_override("font_size",12)
-	pilot_readout.add_theme_color_override("font_color",GREEN)
+	pilot_readout.add_theme_font_override("normal_font",readout_font)
+	pilot_readout.add_theme_font_size_override("normal_font_size",12)
+	pilot_readout.add_theme_color_override("default_color",Color("00b800"))
 	canvas.add_child(pilot_readout)
 	dialog=PanelContainer.new()
 	dialog.position=Vector2(236,290)
 	dialog.size=Vector2(360,290)
 	dialog.theme=MacDialog.make()
-	MacDialog.frame(dialog)
+	MacDialog.frame(dialog,game)
 	canvas.add_child(dialog)
 	screen=VBoxContainer.new()
 	screen.add_theme_constant_override("separation",12)
 	dialog.add_child(screen)
-	var logo=Control.new();logo.position=Vector2(140,55);logo.size=Vector2(550,220)
+	var logo=Control.new();logo.name="LogoCreditsHotspot";logo.position=Vector2(140,55);logo.size=Vector2(550,220)
 	logo.gui_input.connect(func(event):
 		if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT and event.alt_pressed: original_credits(true))
-	canvas.add_child(logo)
+	canvas.add_child(logo);canvas.move_child(logo,dialog.get_index())
 	pilot_info()
 	fade_cover=ColorRect.new();fade_cover.name="OpeningFade";fade_cover.color=Color.BLACK
 	fade_cover.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -118,10 +127,12 @@ func _process(dt: float) -> void:
 		credits_position+=dt*20
 		credits_scroll.scroll_vertical=int(credits_position)
 	animation_time+=dt
-	if not motion_finished and animation_time>=MOTION_DURATION:
-		motion_finished=true
-		game.finish_title_motion()
-	if dialog.visible:
+	while completed_rows<3 and animation_time>=completed_rows*PanelMotion.ROW_SECONDS+PANEL_STOP_SECONDS:
+		completed_rows+=1
+		if completed_rows==3:
+			motion_finished=true;game.finish_title_motion()
+		else: game.sound("menu_slam")
+	if dialog.visible and naming_stage.is_empty():
 		dialog.size=Vector2(520,dialog.get_combined_minimum_size().y)
 		dialog.position=(canvas.size-dialog.size)*.5
 	update_presentation()
@@ -150,10 +161,16 @@ func update_presentation() -> void:
 	for button in canvas.get_children():
 		if button is Button: button.modulate.a=1.0
 		elif button is Lettering:
-			button.at=animation_time
+			button.at=PanelMotion.row_time(animation_time,button.row)
 			if button.side==1 and button.row==0:
 				button.material.set_shader_parameter("brightness",.35 if canvas.get_node("EnterShip").disabled else 1.0)
 			button.queue_redraw()
+	for row in 3:
+		for side in 2:
+			var button: Button=canvas.get_node((["NewPilot","OpenPilot","QuitEV"] if side==0 else ["EnterShip","SetPrefs","AboutEV"])[row])
+			var globe=canvas.get_node("Globe%d%d" % [row,side])
+			globe.active=not dialog.visible and not button.disabled and PanelMotion.row_time(animation_time,row)>=OPENING_DURATION and (button.is_hovered() or button.has_focus())
+			globe.at=animation_time;globe.queue_redraw()
 	canvas.get_node("OriginalAnimation").queue_redraw()
 
 func draw_animation(surface: Control) -> void:
@@ -180,7 +197,7 @@ func menu_button(caption: String, pos: Vector2, action: Callable) -> Button:
 	var b=Button.new()
 	b.name=caption.replace(" ","")
 	b.modulate.a=1
-	b.tooltip_text=caption
+	b.tooltip_text=""
 	b.text=""
 	b.alignment=HORIZONTAL_ALIGNMENT_RIGHT if pos.x<400 else HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_size_override("font_size",19)
@@ -191,7 +208,8 @@ func menu_button(caption: String, pos: Vector2, action: Callable) -> Button:
 	clear.content_margin_left=12;clear.content_margin_right=12
 	b.add_theme_stylebox_override("normal",clear)
 	b.add_theme_stylebox_override("disabled",clear)
-	b.add_theme_stylebox_override("hover",style(Color(0.4,1,0.2,0.12),GREEN,12))
+	b.add_theme_stylebox_override("hover",clear)
+	b.add_theme_stylebox_override("focus",clear)
 	b.add_theme_stylebox_override("pressed",style(Color(0,0,0,0.45),GREEN,12))
 	b.pressed.connect(func():game.sound("menu_click");action.call())
 	canvas.add_child(b)
@@ -205,6 +223,8 @@ func text_at(value: String, pos: Vector2, dimensions: Vector2, font_size: int, c
 	canvas.add_child(l)
 
 func clear_screen() -> void:
+	naming_stage=""
+	dialog.remove_theme_stylebox_override("panel")
 	dialog.size=Vector2(520,340);dialog.position=(canvas.size-dialog.size)*.5
 	dialog.show()
 	for child in screen.get_children():
@@ -228,26 +248,82 @@ func pilot_info() -> void:
 	clear_screen()
 	dialog.position=Vector2(236,290);dialog.size=Vector2(360,290)
 	dialog.hide()
-	pilot_readout.text="NO PILOT\n\nNew Pilot\nto begin" if not game.pilot_ready else (game.pilot.pilot_name+"\n"+("STRICT" if game.pilot.strict else "NORMAL")+"\n\n")+str(game.catalog.system(game.pilot.system_id).name)+"\n\nEnter Ship"
+	pilot_readout.position=Vector2(366,337);pilot_readout.size=Vector2(108,199)
+	pilot_readout.add_theme_font_override("normal_font",preload("res://scripts/classic_text.gd").body())
+	pilot_readout.add_theme_font_size_override("normal_font_size",10)
+	pilot_readout.add_theme_constant_override("line_separation",-2)
+	if not game.pilot_ready:
+		pilot_readout.text="No Pilot File Loaded"
+	else:
+		var system: Dictionary=game.catalog.system(game.pilot.system_id)
+		var faction: int=int(system.fields.Govt)
+		var legal: String="Offender" if game.Factions.hostile_to_pilot(game.catalog,game.pilot,faction) else "Clean"
+		var rating: String="Harmless" if int(game.pilot.campaign.rating)==0 else str(int(game.pilot.campaign.rating))
+		var local_date: Dictionary=Time.get_datetime_dict_from_system(false)
+		var date: Dictionary=Time.get_date_dict_from_unix_time(Time.get_unix_time_from_datetime_dict(local_date)+int(game.pilot.campaign.day)*86400)
+		var months=["Jan.","Feb.","Mar.","Apr.","May","Jun.","Jul.","Aug.","Sep.","Oct.","Nov.","Dec."]
+		var day: int=int(date.day)
+		var suffix: String="th" if day in [11,12,13] else "st" if day%10==1 else "nd" if day%10==2 else "rd" if day%10==3 else "th"
+		var values=[game.pilot.pilot_name.left(18),game.pilot.ship_name.left(18),game.catalog.record("ships",game.pilot.ship_id).name,legal,rating,"%s %d%s, %d" % [months[int(date.month)-1],day,suffix,int(date.year)+250]]
+		var headers=["Pilot Name:","Ship Name:","Ship Type:","Legal status in\n%s system:" % system.name,"Combat Rating:","Current Date:"]
+		var sections: PackedStringArray=[]
+		for i in headers.size():
+			sections.append(headers[i]+"\n[color=#00ff00]  "+str(values[i]).replace("[","[lb]") +"[/color]")
+		pilot_readout.text="\n[font_size=6]\n[/font_size]".join(sections)
+
+
+func naming_panel(stage: String,dimensions: Vector2) -> Control:
+	clear_screen();naming_stage=stage
+	dialog.add_theme_stylebox_override("panel",MacDialog.box(Color.WHITE,Color("4c4c5c"),2,20))
+	var layout=Control.new();layout.custom_minimum_size=dimensions;screen.add_child(layout)
+	layout.theme=MacDialog.make();layout.theme.default_font=preload("res://assets/fonts/ChicagoFLFRegular.ttf")
+	var icon=TextureRect.new();icon.texture=preload("res://assets/icon/original-32.png");icon.position=Vector2(0,0);icon.size=Vector2(42,42);icon.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;icon.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST;icon.mouse_filter=Control.MOUSE_FILTER_IGNORE;layout.add_child(icon)
+	dialog.size=dimensions+Vector2(40,40);dialog.position=(canvas.size-dialog.size)*.5
+	return layout
+
+func naming_label(layout: Control,id: String,value: String,rect: Rect2,points: int=16) -> Label:
+	var label=Label.new();label.name=id;label.text=value;label.position=rect.position;label.size=rect.size;label.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size",points);layout.add_child(label);return label
+
+func naming_entry(layout: Control,id: String,value: String,rect: Rect2) -> LineEdit:
+	var entry=LineEdit.new();entry.name=id;entry.text=value;entry.max_length=64;entry.position=rect.position;entry.size=rect.size;entry.add_theme_font_size_override("font_size",16);layout.add_child(entry)
+	for state in ["normal","focus"]: entry.add_theme_stylebox_override(state,MacDialog.box(Color.BLACK,Color.BLACK,1,6))
+	entry.draw.connect(func():entry.draw_rect(Rect2(Vector2(2,2),entry.size-Vector2(4,4)),Color.WHITE,false,1))
+	entry.grab_focus();entry.select_all();return entry
+
+func naming_button(layout: Control,id: String,value: String,rect: Rect2,action: Callable,primary: bool=false) -> Button:
+	var button=Button.new();button.name=id;button.text=value;button.position=rect.position;button.size=rect.size;layout.add_child(button)
+	for state in ["normal","hover"]: button.add_theme_stylebox_override(state,MacDialog.box(Color.WHITE,Color.BLACK,1,4,5))
+	button.pressed.connect(func():game.sound("menu_click");action.call())
+	if primary:
+		button.draw.connect(func():button.draw_style_box(MacDialog.box(Color.TRANSPARENT,Color.BLACK,3,0,7),Rect2(Vector2(-4,-4),button.size+Vector2(8,8))))
+		button.resized.connect(button.queue_redraw)
+	return button
 
 func new_pilot() -> void:
-	clear_screen()
-	line("NEW PILOT",20)
-	line("Your current pilot will be saved. The new pilot gets a separate file.")
-	var name=LineEdit.new();name.placeholder_text="Captain's name";name.max_length=64;screen.add_child(name)
-	name.grab_focus()
-	var strict=CheckBox.new();strict.text="Strict play — permanent death";screen.add_child(strict)
-	line("Strict pilots cannot reload after death. An escape pod can still save you.")
-	small_button("Begin new flight",func():
-		if not game.create_pilot(name.text,strict.button_pressed):
-			clear_screen();line("PILOT NOT CREATED",20);line(game.pilot_file_error);small_button("Back",new_pilot);small_button("Cancel",pilot_info))
-	small_button("Cancel",pilot_info)
-	var primary=screen.get_child(screen.get_child_count()-2)
-	var cancel=screen.get_child(screen.get_child_count()-1)
-	screen.remove_child(primary);screen.remove_child(cancel)
-	var actions=HBoxContainer.new();actions.alignment=BoxContainer.ALIGNMENT_END
-	actions.add_theme_constant_override("separation",16);screen.add_child(actions)
-	actions.add_child(cancel);actions.add_child(primary)
+	var layout=naming_panel("pilot",Vector2(334,168))
+	naming_label(layout,"NewPilotPrompt","Enter your name, pilot:",Rect2(60,0,274,26))
+	var name=naming_entry(layout,"PilotName",str(DEFAULT_NAMES.data.pilots.pick_random()),Rect2(66,34,268,28))
+	var strict=CheckBox.new();strict.name="StrictPlay";strict.text="Strict Play";strict.position=Vector2(64,78);strict.size=Vector2(270,26);layout.add_child(strict)
+	naming_label(layout,"StrictHelp","If you check this box, when you're dead,\nyou're dead. No reincarnation allowed.",Rect2(88,104,246,36),11)
+	var proceed=func():
+		pending_pilot_name=name.text.strip_edges() if not name.text.strip_edges().is_empty() else str(DEFAULT_NAMES.data.pilots.pick_random())
+		pending_strict=strict.button_pressed;name_ship()
+	naming_button(layout,"CancelNewPilot","Cancel",Rect2(152,146,76,26),pilot_info)
+	naming_button(layout,"ConfirmPilotName","OK",Rect2(250,146,80,26),proceed,true)
+	name.text_submitted.connect(func(_text):proceed.call())
+
+func name_ship() -> void:
+	var layout=naming_panel("ship",Vector2(434,160))
+	naming_label(layout,"NameShipPrompt","Now, please christen your brand-new\nRendelli StarDrive 805R cargo shuttle:",Rect2(60,0,374,46))
+	var name=naming_entry(layout,"ShipName",str(DEFAULT_NAMES.data.ships.pick_random()),Rect2(108,74,274,28))
+	var proceed=func():
+		if not game.create_pilot(pending_pilot_name,pending_strict,name.text,false):
+			clear_screen();line("PILOT NOT CREATED",20);line(game.pilot_file_error);small_button("Back",new_pilot);small_button("Cancel",pilot_info);return
+		pilot_info();canvas.get_node("EnterShip").disabled=false
+	naming_button(layout,"CancelShipName","Cancel",Rect2(260,136,76,26),pilot_info)
+	naming_button(layout,"ConfirmShipName","OK",Rect2(358,136,72,26),proceed,true)
+	name.text_submitted.connect(func(_text):proceed.call())
 
 func saved_pilots() -> Array:
 	var result: Array=[]
@@ -266,35 +342,49 @@ func saved_pilots() -> Array:
 	return result
 
 func open_pilot() -> void:
-	clear_screen()
-	line("OPEN PILOT",20)
-	line("Choose a pilot to continue their journey.")
+	var layout=naming_panel("open",Vector2(520,252))
+	naming_label(layout,"OpenPilotHeading","Open Pilot",Rect2(60,0,330,24))
+	naming_label(layout,"OpenPilotPrompt","Choose a saved pilot.",Rect2(60,26,330,18),11)
 	pilot_picker=ItemList.new();pilot_picker.name="PilotList"
-	pilot_picker.custom_minimum_size=Vector2(460,190)
-	pilot_picker.add_theme_constant_override("v_separation",10)
+	pilot_picker.position=Vector2(0,54);pilot_picker.size=Vector2(380,172)
+	pilot_picker.add_theme_constant_override("v_separation",6)
 	pilot_picker.auto_height=false;pilot_picker.allow_reselect=true
-	screen.add_child(pilot_picker)
+	# Original Mac selection stays black under both mouse and controller focus.
+	for state in ["selected","selected_focus","hovered_selected","hovered_selected_focus"]:
+		pilot_picker.add_theme_stylebox_override(state,MacDialog.box(Color.BLACK,Color.BLACK,0,2))
+	pilot_picker.add_theme_stylebox_override("hovered",MacDialog.box(Color.WHITE,Color.WHITE,0,2))
+	pilot_picker.add_theme_stylebox_override("focus",StyleBoxEmpty.new())
+	pilot_picker.add_theme_color_override("font_hovered_color",Color.BLACK)
+	pilot_picker.add_theme_color_override("font_hovered_selected_color",Color.WHITE)
+	layout.add_child(pilot_picker)
+	MacDialog.classic_scrollbar(pilot_picker.get_v_scroll_bar())
+	var details=naming_label(layout,"PilotDetails","",Rect2(0,234,380,18),11)
 	var entries: Array=saved_pilots()
 	var current: int=0
 	for entry in entries:
-		var index: int=pilot_picker.add_item(entry.name+" · "+entry.ship+" · "+entry.system+" ("+("Deceased" if entry.dead else "Strict" if entry.strict else "Normal")+")")
+		var index: int=pilot_picker.add_item(entry.name)
 		pilot_picker.set_item_metadata(index,entry.path)
+		pilot_picker.set_item_tooltip_enabled(index,false)
 		if ProjectSettings.globalize_path(entry.path)==ProjectSettings.globalize_path(game.save_path): current=index
-	if entries.is_empty():
-		pilot_picker.hide();line("No saved pilots yet. Choose New Pilot to begin.")
-	else: pilot_picker.select(current)
-	small_button("Open Pilot",open_selected_pilot)
-	var open: Button=screen.get_child(screen.get_child_count()-1);open.name="ConfirmOpenPilot";open.disabled=entries.is_empty()
-	small_button("Cancel",pilot_info)
-	var cancel=screen.get_child(screen.get_child_count()-1)
-	screen.remove_child(open);screen.remove_child(cancel)
-	var actions=HBoxContainer.new();actions.alignment=BoxContainer.ALIGNMENT_END;actions.add_theme_constant_override("separation",16);screen.add_child(actions)
-	actions.add_child(cancel);actions.add_child(open)
+	var describe=func(index: int):
+		var entry: Dictionary=entries[index]
+		details.text=entry.ship+" · "+entry.system+" ("+("Deceased" if entry.dead else "Strict" if entry.strict else "Normal")+")"
+	pilot_picker.item_selected.connect(describe)
+	if entries.is_empty(): details.text="No saved pilots. Choose New Pilot to begin."
+	else:
+		pilot_picker.select(current);describe.call(current)
+	# Same white buttons and heavy default-action border as New Pilot.
+	var separator=ColorRect.new();separator.mouse_filter=Control.MOUSE_FILTER_IGNORE;separator.color=Color("999999");separator.position=Vector2(408,134);separator.size=Vector2(110,1);layout.add_child(separator)
+	var cancel=naming_button(layout,"CancelOpenPilot","Cancel",Rect2(408,158,110,26),pilot_info)
+	var open=naming_button(layout,"ConfirmOpenPilot","Open Pilot",Rect2(408,204,110,28),open_selected_pilot,true)
+	open.disabled=entries.is_empty()
 	pilot_picker.item_activated.connect(func(_index):open_selected_pilot())
 	if not entries.is_empty():
 		pilot_picker.grab_focus()
 		var pad=game.controls.controller
 		pad.selected=pilot_picker;pad.reveal.call_deferred(pilot_picker)
+	else:
+		cancel.grab_focus();game.controls.controller.selected=cancel
 
 func open_selected_pilot() -> void:
 	if not is_instance_valid(pilot_picker) or pilot_picker.get_selected_items().is_empty(): return
@@ -315,15 +405,7 @@ func enter_ship() -> void:
 	if game.pilot_ready: game.enter_ship_with_intro()
 
 func preferences() -> void:
-	clear_screen();line("PREFERENCES",20)
-	var sound=CheckBox.new();sound.text="Sound effects";sound.button_pressed=not game.muted
-	sound.toggled.connect(func(_enabled):game.toggle_audio();game.sound("menu_click"))
-	screen.add_child(sound)
-	var full=CheckBox.new();full.text="Fullscreen";full.button_pressed=DisplayServer.window_get_mode()==DisplayServer.WINDOW_MODE_FULLSCREEN
-	full.toggled.connect(func(enabled):game.sound("menu_click");DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if enabled else DisplayServer.WINDOW_MODE_WINDOWED))
-	screen.add_child(full)
-	small_button("Keyboard & controller",game.open_controls)
-	small_button("Done",pilot_info)
+	game.open_controls()
 
 func about() -> void:
 	about_with_modifiers(Input.is_physical_key_pressed(KEY_ALT),Input.is_physical_key_pressed(KEY_META))
@@ -355,7 +437,7 @@ func original_credits(parody: bool=false, additional: bool=false) -> void:
 	parody_credits=parody
 	extras_panel=PanelContainer.new()
 	extras_panel.position=Vector2(100,50);extras_panel.size=Vector2(632,524)
-	extras_panel.theme=MacDialog.make();MacDialog.frame(extras_panel)
+	extras_panel.theme=MacDialog.make();MacDialog.frame(extras_panel,game)
 	canvas.add_child(extras_panel)
 	var column=VBoxContainer.new();extras_panel.add_child(column)
 	credits_scroll=ScrollContainer.new();credits_scroll.custom_minimum_size=Vector2(580,450)
@@ -377,7 +459,7 @@ func close_extras() -> void:
 func haikus() -> void:
 	close_extras()
 	extras_panel=PanelContainer.new();extras_panel.position=Vector2(196,90)
-	extras_panel.theme=MacDialog.make();MacDialog.frame(extras_panel)
+	extras_panel.theme=MacDialog.make();MacDialog.frame(extras_panel,game)
 	canvas.add_child(extras_panel)
 	var column=VBoxContainer.new();extras_panel.add_child(column)
 	var art=TextureRect.new();art.texture=load("res://assets/classic/8011.png");column.add_child(art)
@@ -393,9 +475,9 @@ func unlock_forklift() -> void:
 
 func _input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo: return
-	if get_viewport().gui_get_focus_owner() is LineEdit: return
 	if event.keycode==KEY_ESCAPE and dialog.visible and not is_instance_valid(extras_panel): pilot_info();get_viewport().set_input_as_handled();return
 	if event.keycode==KEY_ESCAPE and is_instance_valid(extras_panel): close_extras();get_viewport().set_input_as_handled();return
+	if get_viewport().gui_get_focus_owner() is LineEdit: return
 	if (dialog.visible and not is_instance_valid(extras_panel)) or (is_instance_valid(pilot_picker) and pilot_picker.visible): return
 	if event.keycode==KEY_X and not is_instance_valid(extras_panel): haikus();get_viewport().set_input_as_handled();return
 	if Input.is_physical_key_pressed(KEY_S) and Input.is_physical_key_pressed(KEY_O) and Input.is_physical_key_pressed(KEY_L):

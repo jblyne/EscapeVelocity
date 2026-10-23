@@ -31,8 +31,8 @@ func _ready() -> void:
 	var shader=Shader.new()
 	shader.code="shader_type canvas_item; void fragment(){ vec4 c=texture(TEXTURE,UV); float v=dot(c.rgb,vec3(0.299,0.587,0.114)); COLOR=vec4(vec3(0.32,1.0,0.24)*v,c.a); }"
 	var material=ShaderMaterial.new();material.shader=shader;preview.material=material
-	hotspot(Rect2(0,0,288,288),"Local radar · click for the galaxy map",func():game.set_mode("map"))
-	hotspot(Rect2(0,288,288,84),"Shields, armor and fuel · click for ship information",func():game.set_mode("info"))
+	hotspot(Rect2(0,0,288,284),"Local radar · click for the galaxy map",func():game.set_mode("map"))
+	hotspot(Rect2(0,288,288,80),"Shields, armor and fuel · click for ship information",func():game.set_mode("info"))
 	nav_hit=hotspot(Rect2(0,372,288,88),"Navigation · M opens the map · J jumps",func():game.set_mode("map"))
 	hotspot(Rect2(0,510,288,40),"Q / E changes weapon · click for next weapon",func():game.cycle_weapon(1))
 	info_hit=hotspot(Rect2(0,554,288,372),"Ship and target information · P",func():game.set_mode("info"))
@@ -107,7 +107,7 @@ func weapon_caption() -> String:
 	return caption
 
 func draw_panel() -> void:
-	for rect in [Rect2(0,0,288,288),Rect2(0,288,288,84),Rect2(0,372,288,88),Rect2(0,464,288,42),Rect2(0,510,288,40),Rect2(0,554,288,208),Rect2(0,766,288,194)]: well(rect)
+	for rect in [Rect2(0,0,288,284),Rect2(0,288,288,80),Rect2(0,372,288,88),Rect2(0,464,288,42),Rect2(0,510,288,40),Rect2(0,554,288,208),Rect2(0,766,288,194)]: well(rect)
 	draw_radar()
 	var p=game.pilot
 	meter(303,"Shield:",p.shield/maxf(1,p.max_shield()),Color("53ce24"))

@@ -5,7 +5,7 @@ var trades: bool=false
 var choices: Array=[]
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
-	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+	font=preload("res://scripts/classic_text.gd").body()
 	canvas=Control.new();canvas.size=LAYOUT;add_child(canvas);panel(Rect2(Vector2.ZERO,LAYOUT))
 	label_at("AutopilotHeading","Autopilot",Rect2(24,16,900,38),26)
 	label_at("AutopilotInstructions","Choose a row to engage. A cancels at any time.",Rect2(24,60,940,30),18)

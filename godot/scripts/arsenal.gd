@@ -269,7 +269,7 @@ func fire(id: int, pos: Vector2, heading: float, enemy: bool = false, source: Di
 	var npc_shot: bool = not source.is_empty()
 	var contact: Dictionary = target_override if npc_shot or not target_override.is_empty() else ({} if enemy else target(pos))
 	if id in [133,134,143]:
-		if not npc_shot and not enemy: contact=game.selected_contact()
+		if not npc_shot and not enemy and target_override.is_empty(): contact=game.selected_contact()
 		if contact.is_empty() or not is_instance_valid(contact.get("model")): return false
 		if id==143 and Vector2(-sin(heading),cos(heading)).dot((Vector2(contact.position)-pos).normalized())<=0: return false
 	if type == "bay":

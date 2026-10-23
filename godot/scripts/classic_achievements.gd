@@ -2,7 +2,7 @@ extends "res://scripts/classic_port.gd"
 const LAYOUT=Vector2(1000,650)
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
-	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+	font=preload("res://scripts/classic_text.gd").body()
 	canvas=Control.new();canvas.size=LAYOUT;add_child(canvas);panel(Rect2(Vector2.ZERO,LAYOUT))
 	var progress: Dictionary=game.achievements.progress()
 	label_at("AchievementsHeading","Achievements & Progress",Rect2(22,14,940,40),26)

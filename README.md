@@ -1316,3 +1316,85 @@ Opening the pilot picker preserves its list focus, so the first D-pad Up/Down ch
 ## Local build 0.1.234 — Configure controller buttons
 
 Set Prefs → Keyboard & controller now includes editable flight controller bindings. Select a controller binding, then press a button or trigger; assigning an occupied input swaps the two actions. Preferences persist across launches, and controller defaults can be restored separately. Options remains pause/cancel, menu controls remain consistent, and analog stick movement stays unchanged.
+
+## Local build 0.1.235 — F-14 multi-target weapons
+
+The F-14 hold-to-lock, release, then press-to-fire volley now works with all installed targeting weapons: guided projectiles, EMP, turrets, swivel guns and tractor beam. Each uses its own range, ammunition and reload; changing weapons clears old locks. Forward-only guns, beams, rockets, bombs and flares retain normal firing, as do other ships and classic firing mode.
+
+## Local build 0.1.236 — Consistent flight panel spacing
+
+Radar, shield/armor/fuel and navigation boxes now have the same four-unit gaps as the lower flight instrument boxes.
+
+## Local build 0.1.237 — Fade story send-off artwork with text
+
+Both final paintings slowly dissolve once the final send-off has travelled one-third up the viewport, disappearing before the text scrolls off the top. Timing follows viewport height at every aspect ratio.
+
+## Local build 0.1.238 — Readable pilot row hover
+
+Pilot rows retain readable text on hover, including selected rows. Redundant row tooltips are disabled.
+
+## Local build 0.1.239 — Pilot list clicks and selected hover
+
+The invisible logo credits hotspot stays behind menu dialogs, restoring first-row mouse selection. Focused selected pilot rows keep their dark highlight and white text while hovered.
+
+## Local build 0.1.240 — Leads stay in Local Leads
+
+Landing descriptions no longer prepend a local-lead preview. Lead guidance remains available through the Local Leads button.
+
+## Local build 0.1.241 — Classic Geneva body text
+
+Description and information screens share Geneva rendered from its classic nine-point strike and scaled for HD. Original executable references repeatedly select TextFont(3) and TextSize(9), including 0x4d024–0x4d034. The installed Mac font is loaded at runtime without redistributing Apple font data; other platforms retain the previous system-font fallback. Sillycon button/instrument lettering and main-menu dialogs remain separate.
+
+## Local build 0.1.242 — Original application icon
+
+The macOS app and project now use the original framed ship icon recovered from EV 1.0.5 icl8/ICN# resource 128, preserving the exact pixel artwork.
+
+## Local build 0.1.243 — Sequential menu panel pairs
+
+The top two main-menu panels swing in and resolve their lettering first, then the middle pair, then the bottom pair. Each pair retains the recovered fold poses and text materialization, with a lock sound per pair.
+
+## Local build 0.1.244 — Original pilot and ship naming sequence
+
+New Pilot matches the classic name/Strict Play dialog and selects from the recovered STR# 128 pilot defaults. OK advances to the Rendelli shuttle naming dialog using the original ship defaults. Only completing both creates the pilot; cancellation preserves the previous pilot. Ship names persist compatibly in saves. Creation returns to the menu summary with pilot name, ship name/type, legal status, combat rating and date; Enter Ship starts the game.
+
+## Local build 0.1.245 — Original menu typography and spacing
+
+The center summary now aligns left, indents bright green values beneath dimmer headers, and uses tighter grouping plus ordinal dates. Button captions are larger, moved toward their original panel edges and brighter, retaining original glyph artwork and sequential reveal.
+
+## Local build 0.1.246 — Preserve original panel fold angles
+
+Main-menu fold poses now scale their displacement uniformly instead of stretching the original rotation through the HD plate aspect ratio. Moving face edges retain the recovered original angles, with captions attached to the same geometry and unchanged final registration.
+
+## Local build 0.1.247 — Bottom-forward panel swing
+
+Reversed the main-menu panel pitch so the bottom edge comes forward and the top tilts away. Artwork remains upright, each pair keeps its sequential timing, and the final panel positions are unchanged.
+
+## Local build 0.1.248 — Captured original menu swing
+
+The moving panel assemblies now use the original animation views, including the rotating hinge surfaces, registered to the HD menu. Once the swing stops they blend into the HD finish. Removed the reversed vertical reflection; the lower edge projects farther inward as confirmed by the live original screenshots in research/reports/original-menu-motion/complete.
+
+## Local build 0.1.249 — Faster menu, stable settling and hover globes
+
+Panel playback is 20 fps (25% shorter than the prior entrance), with the HD artwork transition completed during the final closing poses so the assembly stays fixed once it stops. Hovering or focusing an enabled panel lights its sphere using the original four-frame rotation atlas; leaving it, disabling it, or opening a modal restores the resting appearance.
+
+## Local build 0.1.250 — Quicker panel entrance
+
+Panel playback increases from 20 to 24 fps, making the entrance about 17% shorter while retaining the sequential pairs, settling geometry and hover animation.
+
+## Local build 0.1.251 — Classic Open Pilot dialog
+
+Open Pilot now shares the New Pilot dialogs' white frame, Chicago lettering, ship icon and thick primary-button border. A black-highlighted list shows pilot names, with ship/system details beneath and classic scrollbar arrows. Cancel and Open Pilot sit in the right action column; controller list navigation remains immediate.
+
+## Local build 0.1.252 — Original-style tabbed preferences
+
+Set Prefs opens a white Chicago-font dialog with dotted Navigation, Escort, Weapon and Miscellaneous groups and outlined key fields. Keyboard and Controller tabs retain every existing binding; L1/R1 switches tabs. The shared footer provides sound volume, intro music, classic firing, fullscreen and a game-speed dialog. OK saves; Cancel/Escape restores settings from entry. Controller capture keeps focus on the edited field.
+
+## Local build 0.1.253 — Original outside-dialog alert
+
+Clicking outside the frontmost classic modal plays the recreated System 7 Simple Beep and consumes the click without closing the dialog or activating the menu behind it. All classic title dialogs, preferences and the game-speed popover share the handler. The alert respects mute and sound volume, with bounded playback. See research/reports/ORIGINAL_MODAL_ALERT.md for original executable/resource evidence and the reproducible renderer.
+
+## Local build 0.1.254 — Preferences preserve the main menu
+
+Set Prefs keeps the live title menu behind the dialog. Menu music continues through opening and closing preferences, and returning restores the same panels without replaying their entrance. Intro Music and Sound still take effect explicitly; Cancel restores the previous audio preferences. Leaving the title context releases the retained menu.
+
+Validation: seven targeted acceptance scripts passed, including music continuity, exact menu instance/state retention, audio preference cancellation, controller navigation and outside-dialog alerts.

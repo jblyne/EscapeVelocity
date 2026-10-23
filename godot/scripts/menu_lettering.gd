@@ -16,7 +16,7 @@ var reveal: Array[Texture2D]=[
 	preload("res://assets/classic/8315.png"),preload("res://assets/classic/8316.png")]
 
 static func phase(at_seconds: float) -> int:
-	var tick: float=at_seconds*15.0
+	var tick: float=at_seconds*Motion.FRAME_RATE
 	# Reveal begins during the last folding poses and remains on the same
 	# panel surface. Preserve the original four noise images and resolved ink.
 	if tick<10: return -1
@@ -30,7 +30,9 @@ static func bounds(row_index: int,side_index: int) -> Rect2:
 	var top: float=[474.0,587.0,701.0][row_index]
 	var bottom: float=[568.0,682.0,798.0][row_index]
 	var center=Motion.design(Vector2(608.0 if side_index==0 else 1060.0,(top+bottom)*.5))
-	return Rect2(center-Vector2(39,22),Vector2(78,44))
+	center+=Vector2(6.0 if side_index==0 else -6.0,-1.0)
+	var dimensions=Vector2(87.36,47.52)
+	return Rect2(center-dimensions*.5,dimensions)
 
 func _ready() -> void:
 	mouse_filter=Control.MOUSE_FILTER_IGNORE

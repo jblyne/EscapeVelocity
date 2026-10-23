@@ -4,7 +4,7 @@ var contents: VBoxContainer
 
 func _ready() -> void:
  set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
- font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+ font=preload("res://scripts/classic_text.gd").body()
  canvas=Control.new();canvas.size=LAYOUT;add_child(canvas);panel(Rect2(Vector2.ZERO,LAYOUT))
  var service=game.fleet_service
  label_at("FleetHeading","YOUR FLEET · %d / %d" % [game.pilot.fleet.size(),service.LIMIT],Rect2(20,16,600,34),24)

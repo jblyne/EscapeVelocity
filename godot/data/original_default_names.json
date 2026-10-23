@@ -1,0 +1,13 @@
+{
+  "pilots": [
+    "Rick Hardslab",
+    "Dash Riprock",
+    "Stud Beefpile"
+  ],
+  "ships": [
+    "Starseeker",
+    "Adventurer",
+    "Journeyman"
+  ],
+  "source": "Escape Velocity 1.0.5, STR# 128 Default Names; first three pilot names, last three ship names."
+}

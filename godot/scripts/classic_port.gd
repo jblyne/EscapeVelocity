@@ -11,7 +11,7 @@ var compact_service: bool=false
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);mouse_filter=Control.MOUSE_FILTER_STOP
-	font=SystemFont.new();font.font_names=PackedStringArray(["Geneva","Helvetica","Arial"])
+	font=preload("res://scripts/classic_text.gd").body()
 	compact_service=game.hud.port_page in ["exchange","bar","intel","gambling"]
 	canvas=Control.new();canvas.size=DESIGN;add_child(canvas)
 	panel(Rect2(Vector2.ZERO,DESIGN))
@@ -66,8 +66,6 @@ func build_landing() -> void:
 	body.bbcode_enabled=false;body.fit_content=false;body.scroll_active=true;body.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	body.add_theme_font_override("normal_font",font);body.add_theme_font_size_override("normal_font_size",20)
 	body.add_theme_color_override("default_color",Color("dddddd"));body.text=description
-	var leads: Dictionary=Intel.report(game,game.pilot.system_id,game.docked_id)
-	if not leads.hints.is_empty(): body.text="LOCAL LEAD: "+str(leads.hints[0]).split(". ")[0]+". See Local Leads for details.\n\n"+description
 	var rebuilding: String=game.world_killer.reconstruction_text(game.docked_id)
 	if not rebuilding.is_empty(): body.text=rebuilding+"\n\n"+body.text
 	canvas.add_child(body)

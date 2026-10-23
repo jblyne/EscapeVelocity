@@ -22,7 +22,7 @@ func _draw() -> void:
 		for row in 3:
 			var top: float=[474.0,587.0,701.0][row]
 			var bottom: float=[568.0,682.0,798.0][row]
-			for span in [Vector2(399,699),Vector2(973,1285)]:
+			for span in [Vector2(478.0-96.0*(bottom-top)/59.0,699),Vector2(973,1199.0+96.0*(bottom-top)/59.0)]:
 				var start=Vector2((span.x-210.0)/1254.0,(top-1.0)/941.0)*center_size+origin
 				var finish=Vector2((span.y-208.0)/1254.0,(bottom+1.0)/941.0)*center_size+origin
 				draw_rect(Rect2(start,finish-start),Color.BLACK)

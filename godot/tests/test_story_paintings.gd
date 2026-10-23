@@ -26,6 +26,14 @@ func run() -> void:
 			if "--visual" in OS.get_cmdline_user_args():
 				await process_frame;await RenderingServer.frame_post_draw
 				root.get_texture().get_image().save_png("/tmp/ev213-story-%d-%d.png" % [line,dimensions.x])
+		var last_line: int=paintings.STORY.data.size()-1
+		for fraction in [2.0/3.0,5.0/12.0,1.0/6.0,0.0]:
+			paintings.present(intro.story_clip.size.y*fraction-last_line*39,39,intro.STORY_SPEED,intro.story_clip.size.y)
+			for index in [paintings.panels.size()-2,paintings.panels.size()-1]:
+				var alpha: float=paintings.panels[index].modulate.a
+				if fraction>=2.0/3.0: check(alpha>.99,"Final artwork remains visible until send-off travels a third upward")
+				elif fraction>1.0/6.0: check(alpha>0 and alpha<1,"Both final paintings fade gradually with send-off position")
+				else: check(is_zero_approx(alpha),"Final paintings disappear before last text leaves viewport")
 		# Fade starts independently: right arrives while left keeps showing.
 		paintings.present(intro.story_clip.size.y*.5-8.5*39,39,intro.STORY_SPEED,intro.story_clip.size.y)
 		check(paintings.panels[0].modulate.a>.99 and paintings.panels[1].modulate.a>0 and paintings.panels[1].modulate.a<1,"Independent left/right fade")
